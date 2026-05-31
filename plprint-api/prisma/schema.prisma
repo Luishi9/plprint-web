@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model roles {
+  id       Int        @id @default(autoincrement())
+  nombre   String     @unique @db.VarChar(50)
+  usuarios usuarios[]
+}
+
+model sucursales {
+  id                   Int                    @id @default(autoincrement())
+  nombre               String                 @db.VarChar(100)
+  direccion            String?                @db.Text
+  telefono             String?                @db.VarChar(20)
+  activa               Boolean                @default(true)
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @default(now()) @updatedAt
+  inventario           inventario[]
+  kardex_movimientos   kardex_movimientos[]
+  usuarios_sucursales  usuarios_sucursales[]
+  ventas               ventas[]
+}
+
+model usuarios {
+  id                  Int                   @id @default(autoincrement())
+  nombre              String                @db.VarChar(100)
+  email               String                @unique @db.VarChar(150)
+  password_hash       String                @db.Text
+  rol_id              Int?
+  activo              Boolean               @default(true)
+  token_version       Int                   @default(0)
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @default(now()) @updatedAt
+  roles               roles?                @relation(fields: [rol_id], references: [id])
+  kardex_movimientos  kardex_movimientos[]
+  usuarios_sucursales usuarios_sucursales[]
+  ventas              ventas[]
+
+  @@index([rol_id])
+}
+
+model usuarios_sucursales {
+  id          Int        @id @default(autoincrement())
+  usuario_id  Int
+  sucursal_id Int
+  usuarios    usuarios   @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  sucursales  sucursales @relation(fields: [sucursal_id], references: [id], onDelete: Cascade)
+
+  @@unique([usuario_id, sucursal_id])
+}
+
+model categorias {
+  id         Int        @id @default(autoincrement())
+  nombre     String     @db.VarChar(100)
+  activo     Boolean    @default(true)
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now()) @updatedAt
+  productos  productos[]
+}
+
+model proveedores {
+  id         Int         @id @default(autoincrement())
+  nombre     String      @db.VarChar(150)
+  contacto   String?     @db.VarChar(100)
+  telefono   String?     @db.VarChar(20)
+  email      String?     @db.VarChar(150)
+  direccion  String?     @db.Text
+  activo     Boolean     @default(true)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @default(now()) @updatedAt
+  productos  productos[]
+}
+
+model productos {
+  id                 Int                  @id @default(autoincrement())
+  codigo             String?              @unique @db.VarChar(50)
+  nombre             String               @db.VarChar(150)
+  descripcion        String?              @db.Text
+  precio_venta       Decimal              @db.Decimal(10, 2)
+  precio_compra      Decimal?             @db.Decimal(10, 2)
+  categoria_id       Int?
+  proveedor_id       Int?
+  unidad_medida      String               @default("unidad") @db.VarChar(20)
+  imagen_url         String?              @db.Text
+  activo             Boolean              @default(true)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @default(now()) @updatedAt
+  categorias         categorias?          @relation(fields: [categoria_id], references: [id])
+  proveedores        proveedores?         @relation(fields: [proveedor_id], references: [id])
+  inventario         inventario[]
+  kardex_movimientos kardex_movimientos[]
+  venta_detalle      venta_detalle[]
+
+  @@index([categoria_id])
+  @@index([activo])
+}
+
+model inventario {
+  id           Int        @id @default(autoincrement())
+  producto_id  Int
+  sucursal_id  Int
+  cantidad     Int        @default(0)
+  stock_minimo Int        @default(0)
+  stock_maximo Int?
+  updated_at   DateTime   @default(now()) @updatedAt
+  productos    productos  @relation(fields: [producto_id], references: [id], onDelete: Cascade)
+  sucursales   sucursales @relation(fields: [sucursal_id], references: [id], onDelete: Cascade)
+
+  @@unique([producto_id, sucursal_id])
+  @@index([producto_id, sucursal_id])
+}
+
+model clientes {
+  id         Int      @id @default(autoincrement())
+  nombre     String   @db.VarChar(150)
+  telefono   String?  @db.VarChar(20)
+  email      String?  @db.VarChar(150)
+  direccion  String?  @db.Text
+  activo     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  ventas     ventas[]
+}
+
+model ventas {
+  id                 Int                  @id @default(autoincrement())
+  sucursal_id        Int?
+  cliente_id         Int?
+  usuario_id         Int?
+  total              Decimal              @db.Decimal(10, 2)
+  descuento          Decimal              @default(0) @db.Decimal(10, 2)
+  metodo_pago        String               @default("efectivo") @db.VarChar(30)
+  estado             String               @default("completada") @db.VarChar(20)
+  notas              String?              @db.Text
+  created_at         DateTime             @default(now())
+  sucursales         sucursales?          @relation(fields: [sucursal_id], references: [id])
+  clientes           clientes?            @relation(fields: [cliente_id], references: [id])
+  usuarios           usuarios?            @relation(fields: [usuario_id], references: [id])
+  venta_detalle      venta_detalle[]
+  kardex_movimientos kardex_movimientos[]
+
+  @@index([sucursal_id])
+  @@index([cliente_id])
+  @@index([created_at])
+}
+
+model venta_detalle {
+  id              Int       @id @default(autoincrement())
+  venta_id        Int
+  producto_id     Int?
+  cantidad        Int
+  precio_unitario Decimal   @db.Decimal(10, 2)
+  descuento       Decimal   @default(0) @db.Decimal(10, 2)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  ventas          ventas    @relation(fields: [venta_id], references: [id], onDelete: Cascade)
+  productos       productos? @relation(fields: [producto_id], references: [id])
+}
+
+model kardex_movimientos {
+  id          Int        @id @default(autoincrement())
+  producto_id Int?
+  sucursal_id Int?
+  tipo        String     @db.VarChar(20)
+  cantidad    Int
+  venta_id    Int?
+  referencia  String?    @db.VarChar(100)
+  notas       String?    @db.Text
+  usuario_id  Int?
+  created_at  DateTime   @default(now())
+  productos   productos?  @relation(fields: [producto_id], references: [id])
+  sucursales  sucursales? @relation(fields: [sucursal_id], references: [id])
+  ventas      ventas?     @relation(fields: [venta_id], references: [id], onDelete: SetNull)
+  usuarios    usuarios?   @relation(fields: [usuario_id], references: [id])
+
+  @@index([producto_id, sucursal_id])
+  @@index([created_at])
+}
