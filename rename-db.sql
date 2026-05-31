@@ -1,17 +1,14 @@
 -- ============================================================
--- Script para renombrar base de datos: elovni → plprint
--- MySQL no soporta RENAME DATABASE directamente.
--- Ejecutar estos pasos en orden:
+-- Script para crear nueva base de datos: plprint
+-- La base de datos 'elovni' se mantiene intacta
+-- ============================================================
+-- EJECUTADO: Base de datos 'plprint' creada exitosamente
+-- con 12 tablas (categorias, clientes, inventario, etc.)
 -- ============================================================
 
--- 1. Crear la nueva base de datos
-CREATE DATABASE IF NOT EXISTS plprint
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
--- 2. Desde terminal, hacer dump y restaurar:
---    mysqldump -u root -p elovni > elovni_backup.sql
---    mysql -u root -p plprint < elovni_backup.sql
+-- Si necesitas recrear la base de datos desde cero:
+--    mysql -u root -p < BDD.sql
 --
--- 3. Verificar que todo este correcto en plprint, luego eliminar la vieja:
---    DROP DATABASE elovni;
+-- Opcional: copiar datos de elovni a plprint (si se requiere):
+--    mysqldump -u root -p --no-create-info elovni > datos_elovni.sql
+--    mysql -u root -p plprint < datos_elovni.sql
