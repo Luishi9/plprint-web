@@ -11,21 +11,18 @@ import QRTicketModal from './components/QRTicketModal';
 import { ventasApi } from '@/api/ventas.api';
 import { Venta } from '@/types/venta.types';
 import { useSucursalStore } from '@/store/sucursalStore';
+import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
+import { useMetodosPago } from '@/hooks/useMetodosPago';
+import { useMoney } from '@/hooks/useMoney';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-const METODO_LABEL: Record<string, string> = {
-  efectivo: 'Efectivo',
-  tarjeta: 'Tarjeta',
-  transferencia: 'Transferencia',
-  otro: 'Otro',
-};
+import { RequirePermission } from '@/components/RequirePermission';
 
 const ESTADO_CONFIG: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
   completada: {
     label: 'Completada',
     icon: <BadgeCheck size={12} />,
-    cls: 'bg-[#99ff3d]/10 text-[#99ff3d] border-[#99ff3d]/30',
+    cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30',
   },
   cancelada: {
     label: 'Cancelada',
@@ -48,6 +45,9 @@ export default function VentasPage() {
   const [qrData, setQrData] = useState<TicketData | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { sucursalActiva } = useSucursalStore();
+  const { src: logoSrc } = useEmpresaLogo();
+  const { getLabel: getMetodoLabel } = useMetodosPago();
+  const { format: money } = useMoney();
   const navigate = useNavigate();
 
   function handleReprintTicket(venta: Venta, e: React.MouseEvent) {
@@ -57,7 +57,7 @@ export default function VentasPage() {
       0,
     );
     const data = buildTicketData(venta, subtotal);
-    const html = buildTicketHtml(data);
+    const html = buildTicketHtml(data, logoSrc);
     const win = window.open('', '_blank', 'width=400,height=600');
     if (win) {
       win.document.write(html);
@@ -82,8 +82,9 @@ export default function VentasPage() {
       fecha: new Date(venta.created_at),
       sucursal: venta.sucursales?.nombre ?? sucursalActiva?.nombre ?? 'PLPrint',
       cajero: venta.usuarios?.nombre ?? 'Cajero',
-      cliente: venta.clientes?.nombre ?? 'P\u00fablico General',
+      cliente: venta.clientes?.nombre ?? 'Público General',
       metodoPago: venta.metodo_pago,
+      metodoPagoLabel: getMetodoLabel(venta.metodo_pago),
       items: venta.venta_detalle.map((d) => ({
         nombre: d.productos?.nombre ?? `Producto #${d.id}`,
         cantidad: d.cantidad,
@@ -92,6 +93,10 @@ export default function VentasPage() {
       })),
       subtotal,
       descuentoGlobal: Number(venta.descuento ?? 0),
+      base: subtotal,
+      iva: 0,
+      ivaPorcentaje: 0,
+      ivaActivo: false,
       total: Number(venta.total),
     };
   }
@@ -145,7 +150,7 @@ export default function VentasPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <ShoppingCart className="text-[#99ff3d]" size={32} />
+            <ShoppingCart className="text-[#2e9e9b]" size={32} />
             Historial de Ventas
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -161,22 +166,24 @@ export default function VentasPage() {
         >
           <div className="relative w-full sm:w-64">
             {isSearching
-              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#99ff3d] animate-spin" />
+              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
               : <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />}
             <Input
               placeholder="Buscar por # o cliente..."
-              className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#99ff3d]"
+              className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#2e9e9b]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button
-            onClick={() => navigate('/ventas/nueva')}
-            className="h-10 px-4 bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva Venta
-          </Button>
+          <RequirePermission modulo="ventas" accion="crear">
+            <Button
+              onClick={() => navigate('/ventas/nueva')}
+              className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Venta
+            </Button>
+          </RequirePermission>
         </motion.div>
       </div>
 
@@ -184,7 +191,7 @@ export default function VentasPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           { label: 'Total ventas', value: totales.count, prefix: '' },
-          { label: 'Ingresos', value: totales.monto.toFixed(2), prefix: '$' },
+          { label: 'Ingresos', value: money(totales.monto) },
           {
             label: 'Completadas',
             value: ventas.filter((v) => v.estado === 'completada').length,
@@ -199,7 +206,7 @@ export default function VentasPage() {
             className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-1"
           >
             <span className="text-xs text-muted-foreground uppercase tracking-widest">{stat.label}</span>
-            <span className="text-2xl font-bold text-[#99ff3d]">{stat.prefix}{stat.value}</span>
+            <span className="text-2xl font-bold text-[#2e9e9b]">{stat.prefix}{stat.value}</span>
           </motion.div>
         ))}
       </div>
@@ -229,7 +236,7 @@ export default function VentasPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#99ff3d]" />
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando ventas...</p>
                   </td>
                 </tr>
@@ -263,10 +270,10 @@ export default function VentasPage() {
                           <td className="px-6 py-4 text-sm">{venta.clientes?.nombre ?? 'Público General'}</td>
                           <td className="px-6 py-4 text-sm text-muted-foreground">{venta.usuarios?.nombre ?? '—'}</td>
                           <td className="px-6 py-4 text-sm text-muted-foreground">
-                            {METODO_LABEL[venta.metodo_pago] ?? venta.metodo_pago}
+                            {getMetodoLabel(venta.metodo_pago)}
                           </td>
-                          <td className="px-6 py-4 font-bold text-[#99ff3d] font-mono text-right">
-                            ${Number(venta.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          <td className="px-6 py-4 font-bold text-[#2e9e9b] font-mono text-right">
+                            {money(Number(venta.total))}
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${estado.cls}`}>
@@ -278,14 +285,14 @@ export default function VentasPage() {
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={(e) => handleReprintTicket(venta, e)}
-                                className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-[#99ff3d] transition-colors"
+                                className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                                 title="Reimprimir ticket"
                               >
                                 <Printer size={16} />
                               </button>
                               <button
                                 onClick={(e) => handleShowQR(venta, e)}
-                                className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-[#99ff3d] transition-colors"
+                                className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                                 title="QR para cliente"
                               >
                                 <QrCode size={16} />
@@ -320,10 +327,10 @@ export default function VentasPage() {
                                         <td className="py-2">{d.productos?.nombre ?? `Producto #${d.id}`}</td>
                                         <td className="text-right text-muted-foreground">{d.cantidad}</td>
                                         <td className="text-right text-muted-foreground font-mono">
-                                          ${Number(d.precio_unitario).toFixed(2)}
+                                          {money(Number(d.precio_unitario))}
                                         </td>
-                                        <td className="text-right font-mono text-[#99ff3d]">
-                                          ${Number(d.subtotal).toFixed(2)}
+                                        <td className="text-right font-mono text-[#2e9e9b]">
+                                          {money(Number(d.subtotal))}
                                         </td>
                                       </tr>
                                     ))}

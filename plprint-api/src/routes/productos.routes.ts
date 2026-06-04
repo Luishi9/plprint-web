@@ -35,11 +35,30 @@ const createSchema = z.object({
   codigo: z.string().optional(),
   unidadMedida: z.string().optional(),
   cantidadInicial: z.coerce.number().int().min(0).optional(),
-  sucursalId: z.coerce.number().int().positive().optional()
+  sucursalId: z.coerce.number().int().positive().optional(),
+  insumos: z.preprocess(
+    (val) => {
+      if (typeof val === 'string') {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          return undefined;
+        }
+      }
+      return val;
+    },
+    z.array(
+      z.object({
+        insumoId: z.coerce.number().int().positive(),
+        cantidadRequerida: z.coerce.number().positive(),
+      })
+    ).optional()
+  ),
 });
 
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
+router.get('/:id/insumos', controller.getInsumos);
 router.post(
   '/',
   authorize(ROLES.ADMIN, ROLES.OPERADOR),

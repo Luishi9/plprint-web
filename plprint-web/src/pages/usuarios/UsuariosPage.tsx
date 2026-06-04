@@ -17,7 +17,7 @@ const ROL_CONFIG: Record<string, { label: string; cls: string; icon: React.React
   admin: {
     label: 'Admin',
     icon: <ShieldCheck size={11} />,
-    cls: 'bg-[#99ff3d]/10 text-[#99ff3d] border-[#99ff3d]/30',
+    cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30',
   },
   vendedor: {
     label: 'Vendedor',
@@ -97,7 +97,7 @@ export default function UsuariosPage() {
       >
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Users className="text-[#99ff3d]" size={24} />
+            <Users className="text-[#2e9e9b]" size={24} />
             Usuarios
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -116,7 +116,7 @@ export default function UsuariosPage() {
           </div>
           <Button
             onClick={() => { setEditando(null); setModalOpen(true); }}
-            className="h-9 px-4 bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
+            className="h-9 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
           >
             <Plus className="mr-1.5 h-4 w-4" />
             Nuevo usuario
@@ -128,7 +128,7 @@ export default function UsuariosPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total', value: usuarios.length, cls: 'text-white' },
-          { label: 'Admins', value: porRol('admin'), cls: 'text-[#99ff3d]' },
+          { label: 'Admins', value: porRol('admin'), cls: 'text-[#2e9e9b]' },
           { label: 'Vendedores', value: porRol('vendedor'), cls: 'text-blue-400' },
           { label: 'Operadores', value: porRol('operador'), cls: 'text-purple-400' },
         ].map((stat, i) => (
@@ -169,7 +169,7 @@ export default function UsuariosPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#99ff3d]" />
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando usuarios…</p>
                   </td>
                 </tr>
@@ -196,7 +196,7 @@ export default function UsuariosPage() {
                         <td className="px-6 py-4 font-mono text-xs text-muted-foreground">#{u.id}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#99ff3d]/20 to-[#99ff3d]/5 border border-[#99ff3d]/20 flex items-center justify-center text-[#99ff3d] font-bold text-xs shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#2e9e9b]/20 to-[#2e9e9b]/5 border border-[#2e9e9b]/20 flex items-center justify-center text-[#2e9e9b] font-bold text-xs shrink-0">
                               {u.nombre.charAt(0).toUpperCase()}
                             </div>
                             <span className="font-medium text-sm text-white">{u.nombre}</span>
@@ -231,7 +231,7 @@ export default function UsuariosPage() {
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={() => { setEditando(u); setModalOpen(true); }}
-                              className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#99ff3d] transition-colors"
+                              className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                               title="Editar"
                             >
                               <Pencil size={13} />

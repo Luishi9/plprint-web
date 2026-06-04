@@ -19,6 +19,7 @@ import { ventasApi } from '@/api/ventas.api';
 import { inventarioApi } from '@/api/inventario.api';
 import { productosApi } from '@/api/productos.api';
 import { useNavigate } from 'react-router-dom';
+import { useMoney } from '@/hooks/useMoney';
 
 interface KPI {
   label: string;
@@ -147,8 +148,8 @@ function useDashboard(fecha: string) {
   return { data, loading, error, refresh: fetchData };
 }
 
-const fmt = (n: number) =>
-  n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+const fmt = (simbolo: string, n: number) =>
+  `${simbolo}${n.toLocaleString('es-MX', { maximumFractionDigits: 0 })}`;
 
 const fmtTime = (iso: string) => {
   try { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
@@ -157,12 +158,12 @@ const fmtTime = (iso: string) => {
 
 function KpiCard({ kpi }: { kpi: KPI }) {
   return (
-    <Card className="relative overflow-hidden group hover:border-[#99ff3d]/30 transition-colors duration-300">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#99ff3d]/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+    <Card className="relative overflow-hidden group hover:border-[#2e9e9b]/30 transition-colors duration-300">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#2e9e9b]/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-3">
           <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">{kpi.label}</span>
-          <div className="p-2 rounded-lg bg-[#99ff3d]/10 text-[#99ff3d]">{kpi.icon}</div>
+          <div className="p-2 rounded-lg bg-[#2e9e9b]/10 text-[#2e9e9b]">{kpi.icon}</div>
         </div>
         <div className="flex items-end gap-2">
           <span className="text-3xl font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>{kpi.value}</span>
@@ -198,12 +199,13 @@ function EstadoBadge({ estado }: { estado: string }) {
 }
 
 function ChartTooltip({ active, payload, label }: any) {
+  const { simbolo } = useMoney();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-lg px-3 py-2 text-xs space-y-1 shadow-xl">
-      <p className="text-[#99ff3d] font-semibold">{label}</p>
+      <p className="text-[#2e9e9b] font-semibold">{label}</p>
       <p className="text-foreground">Ventas: <span className="font-bold">{payload[0]?.value ?? 0}</span></p>
-      <p className="text-muted-foreground">Monto: <span className="font-bold text-foreground">{fmt(payload[1]?.value ?? 0)}</span></p>
+      <p className="text-muted-foreground">Monto: <span className="font-bold text-foreground">{fmt(simbolo, payload[1]?.value ?? 0)}</span></p>
     </div>
   );
 }
@@ -215,6 +217,7 @@ export default function DashboardPage() {
   const { data, loading, error, refresh } = useDashboard(fechaVer);
   const navigate = useNavigate();
   const [chartTab, setChartTab] = useState('area');
+  const { simbolo } = useMoney();
 
   const esHoy = fechaVer === todayStr();
   const labelDia = esHoy
@@ -230,8 +233,8 @@ export default function DashboardPage() {
 
   const kpis: KPI[] = data ? [
     { label: `Ventas · ${labelDia}`, value: String(data.ventasHoy), sub: 'Transacciones completadas', icon: <ShoppingCart size={16} />, trend: esHoy ? 'up' : undefined },
-    { label: `Ingresos · ${labelDia}`, value: fmt(data.totalHoy), sub: 'Total facturado', icon: <DollarSign size={16} />, trend: data.totalHoy > 0 ? 'up' : 'neutral' },
-    { label: 'Ticket Promedio', value: fmt(data.ticketPromedio), sub: 'Promedio por venta', icon: <TrendingUp size={16} /> },
+    { label: `Ingresos · ${labelDia}`, value: fmt(simbolo, data.totalHoy), sub: 'Total facturado', icon: <DollarSign size={16} />, trend: data.totalHoy > 0 ? 'up' : 'neutral' },
+    { label: 'Ticket Promedio', value: fmt(simbolo, data.ticketPromedio), sub: 'Promedio por venta', icon: <TrendingUp size={16} /> },
     { label: 'Productos', value: String(data.productosCount), sub: 'En catálogo', icon: <Package size={16} /> },
   ] : [];
 
@@ -268,7 +271,7 @@ export default function DashboardPage() {
               <ChevronLeft size={14} />
             </button>
             <div className="relative flex items-center">
-              <CalendarDays size={13} className="absolute left-2 text-[#99ff3d] pointer-events-none" />
+              <CalendarDays size={13} className="absolute left-2 text-[#2e9e9b] pointer-events-none" />
               <input
                 type="date"
                 value={fechaVer}
@@ -288,7 +291,7 @@ export default function DashboardPage() {
           </div>
 
           <Button size="icon" variant="ghost" onClick={refresh} disabled={loading}
-            className="text-muted-foreground hover:text-[#99ff3d]" title="Actualizar"
+            className="text-muted-foreground hover:text-[#2e9e9b]" title="Actualizar"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </Button>
@@ -312,7 +315,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <BarChart3 size={16} className="text-[#99ff3d]" /> Actividad · {labelDia}
+                  <BarChart3 size={16} className="text-[#2e9e9b]" /> Actividad · {labelDia}
                 </CardTitle>
                 <CardDescription>Ventas por hora</CardDescription>
               </div>
@@ -331,15 +334,15 @@ export default function DashboardPage() {
                   <AreaChart data={data?.grafica ?? []} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradVentas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#99ff3d" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#99ff3d" stopOpacity={0} />
+                        <stop offset="5%" stopColor="#2e9e9b" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#2e9e9b" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 14% 18%)" />
                     <XAxis dataKey="hora" tick={{ fill: 'hsl(215 16% 55%)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: 'hsl(215 16% 55%)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Area type="monotone" dataKey="ventas" stroke="#99ff3d" strokeWidth={2} fill="url(#gradVentas)" />
+                    <Area type="monotone" dataKey="ventas" stroke="#2e9e9b" strokeWidth={2} fill="url(#gradVentas)" />
                     <Area type="monotone" dataKey="monto" stroke="#818cf8" strokeWidth={1.5} fill="none" strokeDasharray="4 2" />
                   </AreaChart>
                 ) : (
@@ -348,7 +351,7 @@ export default function DashboardPage() {
                     <XAxis dataKey="hora" tick={{ fill: 'hsl(215 16% 55%)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: 'hsl(215 16% 55%)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="ventas" fill="#99ff3d" opacity={0.85} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="ventas" fill="#2e9e9b" opacity={0.85} radius={[3, 3, 0, 0]} />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -403,7 +406,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <ShoppingCart size={16} className="text-[#99ff3d]" /> Ventas Recientes
+                <ShoppingCart size={16} className="text-[#2e9e9b]" /> Ventas Recientes
               </CardTitle>
               <Button size="sm" variant="ghost" className="text-xs text-muted-foreground h-7 px-2" onClick={() => navigate('/ventas')}>
                 Ver todas
@@ -432,11 +435,11 @@ export default function DashboardPage() {
                 {data?.ventasRecientes.map((v) => (
                   <div key={v.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center px-2 py-2 rounded-lg hover:bg-accent/50 transition-colors">
                     <div>
-                      <span className="text-sm font-semibold text-[#99ff3d]">#{v.id}</span>
+                      <span className="text-sm font-semibold text-[#2e9e9b]">#{v.id}</span>
                       <span className="text-xs text-muted-foreground ml-2">{fmtTime(v.fecha)}</span>
                     </div>
                     <span className="text-sm text-right text-muted-foreground">{v.items}</span>
-                    <span className="text-sm font-semibold text-right">{fmt(v.total)}</span>
+                    <span className="text-sm font-semibold text-right">{fmt(simbolo, v.total)}</span>
                     <div className="flex justify-end"><EstadoBadge estado={v.estado} /></div>
                   </div>
                 ))}
@@ -448,12 +451,12 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Zap size={16} className="text-[#99ff3d]" /> Acciones Rápidas
+              <Zap size={16} className="text-[#2e9e9b]" /> Acciones Rápidas
             </CardTitle>
             <CardDescription>Acceso directo a funciones clave</CardDescription>
           </CardHeader>
           <CardContent className="pt-2 space-y-2">
-            <Button variant="lime" className="w-full justify-start gap-3 font-semibold" onClick={() => navigate('/ventas')}>
+            <Button variant="lime" className="w-full justify-start gap-3 font-semibold" onClick={() => navigate('/ventas/nueva')}>
               <ShoppingCart size={16} /> Nueva Venta
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3" onClick={() => navigate('/productos')}>

@@ -15,6 +15,7 @@ export interface SucursalDTO {
   telefono?: string;
   activa?: boolean;
   copiarProductos?: boolean;
+  copiarInsumos?: boolean;
 }
 
 export const sucursalesApi = {

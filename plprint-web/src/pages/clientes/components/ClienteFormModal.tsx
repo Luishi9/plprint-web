@@ -72,7 +72,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <User size={18} className="text-[#99ff3d]" />
+            <User size={18} className="text-[#2e9e9b]" />
             {isEdit ? 'Editar cliente' : 'Nuevo cliente'}
           </DialogTitle>
         </DialogHeader>
@@ -141,7 +141,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
                 onChange={(e) => setDireccion(e.target.value)}
                 placeholder="Calle, colonia, ciudad…"
                 rows={2}
-                className="w-full pl-8 pr-3 py-2 text-sm rounded-md border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#99ff3d]/30 resize-none"
+                className="w-full pl-8 pr-3 py-2 text-sm rounded-md border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2e9e9b]/30 resize-none"
               />
             </div>
           </div>
@@ -153,7 +153,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
             <Button
               type="submit"
               disabled={isSaving}
-              className="bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold gap-2"
+              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
             >
               {isSaving && <Loader2 size={14} className="animate-spin" />}
               {isEdit ? 'Guardar cambios' : 'Crear cliente'}

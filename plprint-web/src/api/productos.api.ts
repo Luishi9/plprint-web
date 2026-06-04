@@ -10,6 +10,7 @@ export interface ProductoParams {
 export const productosApi = {
   getAll: (params: ProductoParams) => apiClient.get('/productos', { params }),
   getById: (id: number) => apiClient.get(`/productos/${id}`),
+  getInsumos: (id: number) => apiClient.get(`/productos/${id}/insumos`),
   create: (data: FormData) =>
     apiClient.post('/productos', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   update: (id: number, data: FormData) =>

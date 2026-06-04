@@ -7,6 +7,7 @@ export interface JwtPayload {
   rolId: number;
   sucursales: number[];
   tokenVersion: number;   // se incrementa al cerrar sesión
+  permisos: string[];     // ['productos.ver', 'ventas.crear', ...]
 }
 
 // Sin expiración: el token es válido hasta que el usuario cierre sesión

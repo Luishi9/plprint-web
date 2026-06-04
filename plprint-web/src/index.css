@@ -6,8 +6,52 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── Tema dark: PLPrint ── */
+  /* ── Tema light: PLPrint ── */
   :root {
+    color-scheme: light;
+    /* Base */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    /* Card */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    /* Primary (water-leaf) */
+    --primary: 178 55% 40%;
+    --primary-foreground: 0 0% 100%;
+    /* Secondary */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    /* Muted */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    /* Accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    /* Border / Input / Ring */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 178 55% 40%;
+    /* Radius */
+    --radius: 0.625rem;
+    /* ── Sidebar ── */
+    --sidebar: 0 0% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 178 55% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 178 55% 40%;
+  }
+
+  /* ── Tema dark: PLPrint ── */
+  .dark {
     color-scheme: dark;
     /* Base */
     --background: 220 20% 7%;
@@ -18,9 +62,9 @@
     /* Popover */
     --popover: 220 18% 11%;
     --popover-foreground: 210 40% 96%;
-    /* Primary (lime-green) */
-    --primary: 85 100% 62%;
-    --primary-foreground: 220 20% 7%;
+    /* Primary (water-leaf) */
+    --primary: 178 55% 40%;
+    --primary-foreground: 180 55% 8%;
     /* Secondary */
     --secondary: 220 16% 16%;
     --secondary-foreground: 210 40% 96%;
@@ -36,18 +80,18 @@
     /* Border / Input / Ring */
     --border: 220 14% 18%;
     --input: 220 14% 18%;
-    --ring: 85 100% 62%;
+    --ring: 178 55% 40%;
     /* Radius */
     --radius: 0.625rem;
     /* ── Sidebar ── */
     --sidebar: 220 18% 9%;
     --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 85 100% 62%;
-    --sidebar-primary-foreground: 220 20% 7%;
+    --sidebar-primary: 178 55% 40%;
+    --sidebar-primary-foreground: 180 55% 8%;
     --sidebar-accent: 220 16% 16%;
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 220 14% 18%;
-    --sidebar-ring: 85 100% 62%;
+    --sidebar-ring: 178 55% 40%;
   }
 
   * {

@@ -14,6 +14,7 @@ const sucursalSchema = z.object({
   telefono: z.string().max(20).optional(),
   activa: z.boolean().optional(),
   copiarProductos: z.boolean().optional(),
+  copiarInsumos: z.boolean().optional(),
 });
 
 router.get('/', controller.getAll);

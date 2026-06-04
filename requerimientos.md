@@ -171,12 +171,23 @@ Además, sugiere funcionalidades adicionales para hacer el sistema más completo
   - cambiar logo de la empresa
   - aplicar algun tipo de iva al costo de los productos
   - check para aplicar siempre ese iva o no
-  - modificar informacion de los tickets, logo que saldra en los tickets
+  - modificar informacion de los tickets, logo que saldra en los tickets, mensaje, formato de fecha y hora
 [] Control de permisos basado en roles (RBAC)
   - ventana para crear o modificar roles existentes
-  - asignar permisos que tendra ese rol
+  - asignar permisos y modulos a los que tendra ese rol
 [] Control de acceso a los modulos del sistema:
   - dependiendo del rol asignar que modulos del sistema tendra acceso
+
+Para el IVA, como quieres manejarlo?
+IVA global unico
+Para el RBAC, que nivel de granularidad quieres?
+quiero el control de acceso a modulos completos con acciones basicas, pero esto solo para usuarios admin y a usuarios a los que se les asigne esta opcion
+Que otras opciones te gustaria incluir en configuracion?
+Datos de la empresa, Formato de moneda, Tipos de pago personalizados, Reportes y exportacion, Respaldo de datos, Notificaciones, Bitacora/Audit log
+
+
+
+
 [] Ventas con pendiente de pago y abonos
 [] Reportes de ventas (diarios, mensuales)
 [] Exportación a Excel/PDF

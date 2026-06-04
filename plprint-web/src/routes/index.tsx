@@ -9,11 +9,12 @@ const ProductosPage  = lazy(() => import('@/pages/productos/ProductosPage'));
 const VentasPage     = lazy(() => import('@/pages/ventas/VentasPage'));
 const NuevaVentaPage = lazy(() => import('@/pages/ventas/NuevaVentaPage'));
 const ClientesPage   = lazy(() => import('@/pages/clientes/ClientesPage'));
-const InventarioPage = lazy(() => import('@/pages/inventario/InventarioPage'));
+const InsumosPage    = lazy(() => import('@/pages/insumos/InsumosPage'));
 const UsuariosPage   = lazy(() => import('@/pages/usuarios/UsuariosPage'));
 const CategoriasPage   = lazy(() => import('@/pages/categorias/CategoriasPage'));
 const SucursalesPage   = lazy(() => import('@/pages/sucursales/SucursalesPage'));
 const TicketPublicoPage = lazy(() => import('@/pages/ventas/TicketPublicoPage'));
+const ConfiguracionPage = lazy(() => import('@/pages/configuracion/ConfiguracionPage'));
 
 const Loader = () => (
   <div className="flex h-screen items-center justify-center">
@@ -35,7 +36,8 @@ export const AppRoutes = () => (
           <Route path="/ventas"     element={<VentasPage />} />
           <Route path="/ventas/nueva" element={<NuevaVentaPage />} />
           <Route path="/clientes"   element={<ClientesPage />} />
-          <Route path="/inventario" element={<InventarioPage />} />
+          <Route path="/insumos"    element={<InsumosPage />} />
+          <Route path="/inventario" element={<Navigate to="/insumos" replace />} />
           <Route path="/usuarios"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -56,6 +58,14 @@ export const AppRoutes = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <SucursalesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/configuracion"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ConfiguracionPage />
               </ProtectedRoute>
             }
           />

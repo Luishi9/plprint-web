@@ -3,13 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { TicketData } from './components/TicketImpresion';
 import plprintLogo from '@/assets/logo.png';
 
-const METODO_LABEL: Record<string, string> = {
-  efectivo: 'Efectivo',
-  tarjeta: 'Tarjeta',
-  transferencia: 'Transferencia',
-  otro: 'Otro',
-};
-
 export default function TicketPublicoPage() {
   const [params] = useSearchParams();
   const [data, setData] = useState<TicketData | null>(null);
@@ -53,6 +46,10 @@ export default function TicketPublicoPage() {
     hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(data.fecha);
 
+  const simbolo = data.monedaSimbolo || '$';
+  const decimales = typeof data.monedaDecimales === 'number' ? data.monedaDecimales : 2;
+  const fmt = (n: number) => `${simbolo}${n.toFixed(decimales)}`;
+
   return (
     <>
       <style>{`
@@ -78,7 +75,7 @@ export default function TicketPublicoPage() {
         }
         .ticket-store {
           font-size: 22px; font-weight: 800; letter-spacing: 3px;
-          color: #99ff3d;
+          color: #2e9e9b;
         }
         .ticket-subtitle {
           font-size: 11px; color: #888; margin-top: 2px; letter-spacing: 1px;
@@ -86,7 +83,7 @@ export default function TicketPublicoPage() {
         .ticket-id-badge {
           display: inline-block;
           margin-top: 12px;
-          background: #99ff3d;
+          background: #2e9e9b;
           color: #000;
           font-size: 11px; font-weight: 700;
           padding: 4px 14px; border-radius: 20px;
@@ -141,7 +138,7 @@ export default function TicketPublicoPage() {
           display: block; width: calc(100% - 48px);
           margin: 20px 24px 0;
           padding: 14px;
-          background: #0a0a0a; color: #99ff3d;
+          background: #0a0a0a; color: #2e9e9b;
           border: none; border-radius: 12px;
           font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
           cursor: pointer; text-align: center;
@@ -182,7 +179,7 @@ export default function TicketPublicoPage() {
             </div>
             <div className="info-row">
               <span className="info-label">Método de pago</span>
-              <span className="info-value">{METODO_LABEL[data.metodoPago] ?? data.metodoPago}</span>
+              <span className="info-value">{data.metodoPagoLabel || data.metodoPago}</span>
             </div>
 
             <hr className="divider" />
@@ -203,10 +200,10 @@ export default function TicketPublicoPage() {
                     <tr key={i}>
                       <td>
                         <div className="producto-name">{item.nombre}</div>
-                        <div style={{ fontSize: 11, color: '#999' }}>${item.precioUnitario.toFixed(2)} c/u</div>
+                        <div style={{ fontSize: 11, color: '#999' }}>{fmt(item.precioUnitario)} c/u</div>
                       </td>
                       <td style={{ color: '#666' }}>{item.cantidad}</td>
-                      <td style={{ fontWeight: 700 }}>${lineTotal.toFixed(2)}</td>
+                      <td style={{ fontWeight: 700 }}>{fmt(lineTotal)}</td>
                     </tr>
                   );
                 })}
@@ -218,17 +215,17 @@ export default function TicketPublicoPage() {
           <div className="totals-section">
             <div className="total-row">
               <span>Subtotal</span>
-              <span>${data.subtotal.toFixed(2)}</span>
+              <span>{fmt(data.subtotal)}</span>
             </div>
             {data.descuentoGlobal > 0 && (
               <div className="total-row" style={{ color: '#e07b00' }}>
                 <span>Descuento</span>
-                <span>-${data.descuentoGlobal.toFixed(2)}</span>
+                <span>-{fmt(data.descuentoGlobal)}</span>
               </div>
             )}
             <div className="total-final">
               <span>TOTAL</span>
-              <span className="amount">${data.total.toFixed(2)}</span>
+              <span className="amount">{fmt(data.total)}</span>
             </div>
           </div>
 

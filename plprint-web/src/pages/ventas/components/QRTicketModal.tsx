@@ -28,7 +28,7 @@ export default function QRTicketModal({ data, open, onClose }: QRTicketModalProp
       <DialogContent className="max-w-sm bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <QrCode size={18} className="text-[#99ff3d]" />
+            <QrCode size={18} className="text-[#2e9e9b]" />
             Compartir ticket
           </DialogTitle>
         </DialogHeader>

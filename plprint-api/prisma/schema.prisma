@@ -8,9 +8,15 @@ datasource db {
 }
 
 model roles {
-  id       Int        @id @default(autoincrement())
-  nombre   String     @unique @db.VarChar(50)
-  usuarios usuarios[]
+  id           Int            @id @default(autoincrement())
+  nombre       String         @unique @db.VarChar(50)
+  descripcion  String?        @db.VarChar(200)
+  activo       Boolean        @default(true)
+  es_sistema   Boolean        @default(false)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @default(now()) @updatedAt
+  usuarios     usuarios[]
+  rol_permisos rol_permisos[]
 }
 
 model sucursales {
@@ -25,6 +31,7 @@ model sucursales {
   kardex_movimientos   kardex_movimientos[]
   usuarios_sucursales  usuarios_sucursales[]
   ventas               ventas[]
+  insumos_inventario   insumos_inventario[]
 }
 
 model usuarios {
@@ -41,6 +48,7 @@ model usuarios {
   kardex_movimientos  kardex_movimientos[]
   usuarios_sucursales usuarios_sucursales[]
   ventas              ventas[]
+  audit_log           audit_log[]
 
   @@index([rol_id])
 }
@@ -75,6 +83,7 @@ model proveedores {
   created_at DateTime    @default(now())
   updated_at DateTime    @default(now()) @updatedAt
   productos  productos[]
+  insumos    insumos[]
 }
 
 model productos {
@@ -96,6 +105,7 @@ model productos {
   inventario         inventario[]
   kardex_movimientos kardex_movimientos[]
   venta_detalle      venta_detalle[]
+  producto_insumos   producto_insumos[]
 
   @@index([categoria_id])
   @@index([activo])
@@ -136,18 +146,21 @@ model ventas {
   total              Decimal              @db.Decimal(10, 2)
   descuento          Decimal              @default(0) @db.Decimal(10, 2)
   metodo_pago        String               @default("efectivo") @db.VarChar(30)
+  metodo_pago_id     Int?
   estado             String               @default("completada") @db.VarChar(20)
   notas              String?              @db.Text
   created_at         DateTime             @default(now())
   sucursales         sucursales?          @relation(fields: [sucursal_id], references: [id])
   clientes           clientes?            @relation(fields: [cliente_id], references: [id])
   usuarios           usuarios?            @relation(fields: [usuario_id], references: [id])
+  metodos_pago       metodos_pago?        @relation(fields: [metodo_pago_id], references: [id])
   venta_detalle      venta_detalle[]
   kardex_movimientos kardex_movimientos[]
 
   @@index([sucursal_id])
   @@index([cliente_id])
   @@index([created_at])
+  @@index([metodo_pago_id])
 }
 
 model venta_detalle {
@@ -180,4 +193,123 @@ model kardex_movimientos {
 
   @@index([producto_id, sucursal_id])
   @@index([created_at])
+}
+
+model insumos {
+  id               Int                  @id @default(autoincrement())
+  codigo           String?              @unique @db.VarChar(50)
+  nombre           String               @db.VarChar(150)
+  descripcion      String?              @db.Text
+  unidad_medida    String               @default("unidad") @db.VarChar(20)
+  precio_compra    Decimal?             @db.Decimal(10, 2)
+  proveedor_id     Int?
+  activo           Boolean              @default(true)
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @default(now()) @updatedAt
+  proveedores      proveedores?         @relation(fields: [proveedor_id], references: [id])
+  inventario       insumos_inventario[]
+  producto_insumos producto_insumos[]
+
+  @@index([activo])
+}
+
+model insumos_inventario {
+  id           Int        @id @default(autoincrement())
+  insumo_id    Int
+  sucursal_id  Int
+  cantidad     Decimal    @default(0) @db.Decimal(12, 3)
+  stock_minimo Decimal    @default(0) @db.Decimal(12, 3)
+  updated_at   DateTime   @default(now()) @updatedAt
+  insumos      insumos    @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+  sucursales   sucursales @relation(fields: [sucursal_id], references: [id], onDelete: Cascade)
+
+  @@unique([insumo_id, sucursal_id])
+  @@index([insumo_id, sucursal_id])
+}
+
+model producto_insumos {
+  id                 Int       @id @default(autoincrement())
+  producto_id        Int
+  insumo_id          Int
+  cantidad_requerida Decimal   @db.Decimal(12, 3)
+  productos          productos @relation(fields: [producto_id], references: [id], onDelete: Cascade)
+  insumos            insumos   @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+
+  @@unique([producto_id, insumo_id])
+  @@index([producto_id])
+  @@index([insumo_id])
+}
+
+model configuracion {
+  id         Int      @id @default(autoincrement())
+  clave      String   @unique @db.VarChar(100)
+  valor      String?  @db.Text
+  tipo       String   @default("string") @db.VarChar(20)
+  grupo      String   @db.VarChar(50)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@index([grupo])
+}
+
+model permisos {
+  id           Int            @id @default(autoincrement())
+  modulo       String         @db.VarChar(50)
+  accion       String         @db.VarChar(50)
+  descripcion  String?        @db.VarChar(200)
+  created_at   DateTime       @default(now())
+  rol_permisos rol_permisos[]
+
+  @@unique([modulo, accion])
+  @@index([modulo])
+}
+
+model rol_permisos {
+  id         Int      @id @default(autoincrement())
+  rol_id     Int
+  permiso_id Int
+  roles      roles    @relation(fields: [rol_id], references: [id], onDelete: Cascade)
+  permisos   permisos @relation(fields: [permiso_id], references: [id], onDelete: Cascade)
+
+  @@unique([rol_id, permiso_id])
+  @@index([rol_id])
+  @@index([permiso_id])
+}
+
+model metodos_pago {
+  id         Int      @id @default(autoincrement())
+  nombre     String   @db.VarChar(50)
+  icono      String?  @db.VarChar(30)
+  activo     Boolean  @default(true)
+  es_sistema Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  ventas     ventas[]
+
+  @@unique([nombre])
+  @@index([activo])
+}
+
+model audit_log {
+  id         Int       @id @default(autoincrement())
+  usuario_id Int?
+  accion     String    @db.VarChar(50)
+  modulo     String    @db.VarChar(50)
+  detalle    String?   @db.Text
+  ip         String?   @db.VarChar(45)
+  created_at DateTime  @default(now())
+  usuarios   usuarios? @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+
+  @@index([usuario_id])
+  @@index([modulo])
+  @@index([created_at])
+}
+
+model notificaciones_config {
+  id         Int      @id @default(autoincrement())
+  tipo       String   @unique @db.VarChar(50)
+  activo     Boolean  @default(true)
+  umbral     Decimal? @db.Decimal(12, 3)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
 }

@@ -5,4 +5,6 @@ export const ventasApi = {
   getById: (id: number) => apiClient.get(`/ventas/${id}`),
   create: (data: object) => apiClient.post('/ventas', data),
   cancel: (id: number) => apiClient.patch(`/ventas/${id}/cancelar`),
+  validarInsumos: (data: { sucursalId: number; items: Array<{ productoId: number; cantidad: number }> }) =>
+    apiClient.post('/ventas/validar-insumos', data),
 };

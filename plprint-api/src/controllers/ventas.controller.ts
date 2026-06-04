@@ -53,4 +53,14 @@ export class VentasController {
       next(err);
     }
   };
+
+  validarInsumos = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { sucursalId, items } = req.body;
+      const resultado = await this.ventasService.validarInsumos(sucursalId, items);
+      sendSuccess(res, resultado);
+    } catch (err) {
+      next(err);
+    }
+  };
 }

@@ -103,7 +103,7 @@ export default function ClientesPage() {
       >
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Users className="text-[#99ff3d]" size={24} />
+            <Users className="text-[#2e9e9b]" size={24} />
             Clientes
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -122,7 +122,7 @@ export default function ClientesPage() {
           </div>
           <Button
             onClick={() => { setEditando(null); setModalOpen(true); }}
-            className="h-9 px-4 bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
+            className="h-9 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
           >
             <Plus className="mr-1.5 h-4 w-4" />
             Nuevo cliente
@@ -133,7 +133,7 @@ export default function ClientesPage() {
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
-          { label: 'Total clientes', value: total, cls: 'text-[#99ff3d]' },
+          { label: 'Total clientes', value: total, cls: 'text-[#2e9e9b]' },
           { label: 'Con teléfono', value: clientes.filter((c) => c.telefono).length, cls: 'text-blue-400' },
           { label: 'Con correo', value: clientes.filter((c) => c.email).length, cls: 'text-purple-400' },
         ].map((stat, i) => (
@@ -171,7 +171,7 @@ export default function ClientesPage() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-48 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#99ff3d]" />
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
                   <p className="mt-2 text-xs text-muted-foreground">Cargando clientes…</p>
                 </TableCell>
               </TableRow>
@@ -247,7 +247,7 @@ export default function ClientesPage() {
                         </button>
                         <button
                           onClick={() => { setEditando(c); setModalOpen(true); }}
-                          className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#99ff3d] transition-colors"
+                          className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                           title="Editar"
                         >
                           <Pencil size={13} />

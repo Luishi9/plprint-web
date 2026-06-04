@@ -32,8 +32,20 @@ export class ProductosController {
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const imagenUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+      
+      // Parsear insumos si viene como string JSON
+      let insumos = req.body.insumos;
+      if (typeof insumos === 'string') {
+        try {
+          insumos = JSON.parse(insumos);
+        } catch (e) {
+          insumos = undefined;
+        }
+      }
+      
       const producto = await this.productosService.create({
         ...req.body,
+        insumos,
         imagenUrl,
         usuarioId: req.user?.sub,
       });
@@ -46,8 +58,20 @@ export class ProductosController {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const imagenUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+      
+      // Parsear insumos si viene como string JSON
+      let insumos = req.body.insumos;
+      if (typeof insumos === 'string') {
+        try {
+          insumos = JSON.parse(insumos);
+        } catch (e) {
+          insumos = undefined;
+        }
+      }
+      
       const producto = await this.productosService.update(Number(req.params.id), {
         ...req.body,
+        insumos,
         ...(imagenUrl && { imagenUrl }),
       });
       sendSuccess(res, producto);
@@ -60,6 +84,15 @@ export class ProductosController {
     try {
       await this.productosService.softDelete(Number(req.params.id));
       sendNoContent(res);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  getInsumos = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const insumos = await this.productosService.getInsumosByProducto(Number(req.params.id));
+      sendSuccess(res, insumos);
     } catch (err) {
       next(err);
     }

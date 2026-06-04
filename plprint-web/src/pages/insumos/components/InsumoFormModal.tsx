@@ -1,0 +1,235 @@
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2, Boxes } from 'lucide-react';
+
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+
+import { insumosApi } from '@/api/insumos.api';
+import { Insumo } from '@/types/insumo.types';
+
+const formSchema = z.object({
+  nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres.'),
+  codigo: z.string().optional(),
+  unidadMedida: z.string().default('unidad'),
+  precioCompra: z.preprocess((val) => val ? Number(val) : undefined, z.number().positive().optional()),
+  descripcion: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+interface InsumoFormModalProps {
+  open: boolean;
+  insumo: Insumo | null;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormModalProps) {
+  const isEditing = !!insumo;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      nombre: '',
+      codigo: '',
+      unidadMedida: 'unidad',
+      precioCompra: undefined,
+      descripcion: '',
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      if (insumo) {
+        form.reset({
+          nombre: insumo.nombre,
+          codigo: insumo.codigo || '',
+          unidadMedida: insumo.unidad_medida,
+          precioCompra: insumo.precio_compra ? parseFloat(insumo.precio_compra) : undefined,
+          descripcion: insumo.descripcion || '',
+        });
+      } else {
+        form.reset({
+          nombre: '',
+          codigo: '',
+          unidadMedida: 'unidad',
+          precioCompra: undefined,
+          descripcion: '',
+        });
+      }
+    }
+  }, [open, insumo, form]);
+
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    try {
+      if (isEditing && insumo) {
+        await insumosApi.update(insumo.id, data);
+      } else {
+        await insumosApi.create(data);
+      }
+      onSaved();
+    } catch (error) {
+      console.error('Error al guardar insumo:', error);
+      alert('No se pudo guardar el insumo.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="bg-card border-border max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold tracking-tight text-[#2e9e9b] flex items-center gap-2">
+            <Boxes size={24} />
+            {isEditing ? 'Editar insumo' : 'Nuevo insumo'}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Actualiza la información del insumo.' : 'Completa la información para registrar un nuevo insumo.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-2">
+            <FormField
+              control={form.control}
+              name="nombre"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white/80">Nombre *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ej: Papel bond"
+                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="codigo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white/80">Código</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="INS-001"
+                        className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="unidadMedida"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white/80">Unidad de medida *</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="unidad, kg, litro"
+                        className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="precioCompra"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white/80">Precio de compra</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="descripcion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white/80">Descripción</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Descripción opcional del insumo..."
+                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground resize-none"
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="border-border"
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
+              >
+                {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                {isEditing ? 'Guardar cambios' : 'Crear insumo'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

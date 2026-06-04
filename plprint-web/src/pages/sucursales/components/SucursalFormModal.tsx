@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, PackageSearch, CheckCircle2 } from 'lucide-react';
+import { Loader2, PackageSearch, Boxes, CheckCircle2 } from 'lucide-react';
 
 import { sucursalesApi, Sucursal, SucursalDTO } from '@/api/sucursales.api';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
   const [telefono, setTelefono] = useState('');
   const [activa, setActiva] = useState(true);
   const [copiarProductos, setCopiarProductos] = useState(false);
+  const [copiarInsumos, setCopiarInsumos] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
   const [error, setError] = useState('');
@@ -38,6 +39,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
       setTelefono(sucursal?.telefono ?? '');
       setActiva(sucursal?.activa ?? true);
       setCopiarProductos(false);
+      setCopiarInsumos(false);
       setCopyDone(false);
       setError('');
     }
@@ -54,14 +56,14 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
         direccion: direccion.trim() || undefined,
         telefono: telefono.trim() || undefined,
         activa,
-        ...(matrizSucursal ? { copiarProductos } : {}),
+        ...(matrizSucursal ? { copiarProductos, copiarInsumos } : {}),
       };
       if (isEdit) {
         await sucursalesApi.update(sucursal!.id, dto);
       } else {
         await sucursalesApi.create(dto);
       }
-      if (copiarProductos) {
+      if (copiarProductos || copiarInsumos) {
         setCopyDone(true);
         await new Promise((r) => setTimeout(r, 1200));
       }
@@ -143,36 +145,62 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
 
           {/* Catálogo de productos (creación y edición si hay sucursal de referencia) */}
           {matrizSucursal && (
-            <div className={`flex items-center justify-between rounded-lg border px-4 py-3 transition-colors ${
-              copiarProductos ? 'border-[#99ff3d]/40 bg-[#99ff3d]/5' : 'border-border bg-white/5'
-            }`}>
-              <div className="flex items-start gap-2.5">
-                <PackageSearch size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarProductos ? 'text-[#99ff3d]' : 'text-muted-foreground'}`} />
-                <div>
-                  <p className="text-sm text-white/80 font-medium">
-                    {isEdit ? 'Sincronizar catálogo de productos' : 'Heredar catálogo de productos'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {isEdit
-                      ? <>Agrega los productos de <span className="text-white/60 font-medium">{matrizSucursal.nombre}</span> que aún no tenga esta sucursal (stock en 0)</>
-                      : <>Copia los productos de <span className="text-white/60 font-medium">{matrizSucursal.nombre}</span> a esta sucursal con stock en 0</>
-                    }
-                  </p>
+            <>
+              <div className={`flex items-center justify-between rounded-lg border px-4 py-3 transition-colors ${
+                copiarProductos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
+              }`}>
+                <div className="flex items-start gap-2.5">
+                  <PackageSearch size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarProductos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-sm text-white/80 font-medium">
+                      {isEdit ? 'Sincronizar catálogo de productos' : 'Heredar catálogo de productos'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isEdit
+                        ? <>Agrega los productos de <span className="text-white/60 font-medium">{matrizSucursal.nombre}</span> que aún no tenga esta sucursal (stock en 0)</>
+                        : <>Copia los productos de <span className="text-white/60 font-medium">{matrizSucursal.nombre}</span> a esta sucursal con stock en 0</>
+                      }
+                    </p>
+                  </div>
                 </div>
+                <Switch checked={copiarProductos} onCheckedChange={setCopiarProductos} disabled={isSaving} />
               </div>
-              <Switch checked={copiarProductos} onCheckedChange={setCopiarProductos} disabled={isSaving} />
-            </div>
+
+              {/* Catálogo de insumos */}
+              <div className={`flex items-center justify-between rounded-lg border px-4 py-3 transition-colors ${
+                copiarInsumos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
+              }`}>
+                <div className="flex items-start gap-2.5">
+                  <Boxes size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarInsumos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-sm text-white/80 font-medium">
+                      {isEdit ? 'Sincronizar catálogo de insumos' : 'Heredar catálogo de insumos'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isEdit
+                        ? <>Agrega los insumos de <span className="text-white/60 font-medium">{matrizSucursal.nombre}</span> que aún no tenga esta sucursal (stock en 0)</>
+                        : <>Copia los insumos de <span className="text-white/60 font-medium">{matrizSucursal.nombre}</span> a esta sucursal con stock en 0</>
+                      }
+                    </p>
+                  </div>
+                </div>
+                <Switch checked={copiarInsumos} onCheckedChange={setCopiarInsumos} disabled={isSaving} />
+              </div>
+            </>
           )}
 
-          {/* Overlay de progreso al copiar productos */}
-          {isSaving && copiarProductos && (
-            <div className="flex items-center gap-3 rounded-lg border border-[#99ff3d]/30 bg-[#99ff3d]/5 px-4 py-3">
+          {/* Overlay de progreso al copiar productos o insumos */}
+          {isSaving && (copiarProductos || copiarInsumos) && (
+            <div className="flex items-center gap-3 rounded-lg border border-[#2e9e9b]/30 bg-[#2e9e9b]/5 px-4 py-3">
               {copyDone
-                ? <CheckCircle2 size={15} className="text-[#99ff3d] shrink-0" />
-                : <Loader2 size={15} className="animate-spin text-[#99ff3d] shrink-0" />
+                ? <CheckCircle2 size={15} className="text-[#2e9e9b] shrink-0" />
+                : <Loader2 size={15} className="animate-spin text-[#2e9e9b] shrink-0" />
               }
-              <p className="text-xs text-[#99ff3d]">
-                {copyDone ? 'Catálogo copiado correctamente' : 'Copiando catálogo de productos...'}
+              <p className="text-xs text-[#2e9e9b]">
+                {copyDone 
+                  ? 'Catálogo copiado correctamente' 
+                  : `Copiando catálogo de ${copiarProductos && copiarInsumos ? 'productos e insumos' : copiarProductos ? 'productos' : 'insumos'}...`
+                }
               </p>
             </div>
           )}
@@ -190,11 +218,11 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
             <Button
               type="submit"
               disabled={isSaving}
-              className="bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold gap-2"
+              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
             >
               {isSaving && <Loader2 size={14} className="animate-spin" />}
               {isSaving
-                ? (copiarProductos ? 'Procesando...' : 'Guardando...')
+                ? ((copiarProductos || copiarInsumos) ? 'Procesando...' : 'Guardando...')
                 : (isEdit ? 'Guardar cambios' : 'Crear sucursal')
               }
             </Button>

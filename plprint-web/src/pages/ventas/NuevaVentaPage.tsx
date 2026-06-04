@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Loader2, Plus, Minus, Trash2, ShoppingCart,
-  ArrowLeft, CreditCard, Banknote, Landmark, Check, Package, Printer, QrCode,
+  ArrowLeft, Check, Package, Printer, QrCode,
 } from 'lucide-react';
 
 import { productosApi } from '@/api/productos.api';
@@ -11,6 +11,10 @@ import { clientesApi } from '@/api/clientes.api';
 import { ventasApi } from '@/api/ventas.api';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
+import { useIva } from '@/hooks/useIva';
+import { useMoney } from '@/hooks/useMoney';
+import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
+import { useMetodosPago } from '@/hooks/useMetodosPago';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TicketImpresion, TicketData, buildTicketHtml } from './components/TicketImpresion';
@@ -39,12 +43,6 @@ interface Cliente {
   telefono?: string;
 }
 
-const METODOS = [
-  { value: 'efectivo', label: 'Efectivo', icon: Banknote },
-  { value: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
-  { value: 'transferencia', label: 'Transferencia', icon: Landmark },
-];
-
 export default function NuevaVentaPage() {
   const navigate = useNavigate();
   const { sucursalActiva } = useSucursalStore() as any;
@@ -68,7 +66,7 @@ export default function NuevaVentaPage() {
   const [showClientes, setShowClientes] = useState(false);
 
   // Pago
-  const [metodoPago, setMetodoPago] = useState('efectivo');
+  const [metodoPago, setMetodoPago] = useState<string>('efectivo');
   const [notas, setNotas] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successId, setSuccessId] = useState<number | null>(null);
@@ -135,13 +133,47 @@ export default function NuevaVentaPage() {
   const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.productoId !== id));
 
   const subtotal = cart.reduce((acc, i) => acc + i.precioUnitario * i.cantidad - i.descuento, 0);
-  const total = Math.max(0, subtotal - descuentoGlobal);
+  const subtotalConDescuento = Math.max(0, subtotal - descuentoGlobal);
+  const { activo: ivaActivo, porcentaje: ivaPorcentaje, calcular: calcularIva } = useIva();
+  const { format: money, simbolo: monedaSimbolo, decimales: monedaDecimales } = useMoney();
+  const { src: logoSrc } = useEmpresaLogo();
+  const { activos: metodosPagoActivos, getLabel: getMetodoLabel, getIcon: getMetodoIcon } = useMetodosPago();
+  const desgloseIva = calcularIva(subtotalConDescuento);
+  const total = desgloseIva.total;
+
+  useEffect(() => {
+    if (metodosPagoActivos.length === 0) return;
+    if (!metodosPagoActivos.some((m) => m.nombre.toLowerCase() === metodoPago.toLowerCase())) {
+      setMetodoPago(metodosPagoActivos[0].nombre.toLowerCase());
+    }
+  }, [metodosPagoActivos, metodoPago]);
 
   const handleSubmit = async () => {
     if (!cart.length) return;
     if (!sucursalEfectiva) { alert('No hay sucursal activa.'); return; }
     setIsSubmitting(true);
     try {
+      // Validar stock de insumos antes de crear la venta
+      const validacion = await ventasApi.validarInsumos({
+        sucursalId: sucursalEfectiva.id,
+        items: cart.map((i) => ({
+          productoId: i.productoId,
+          cantidad: i.cantidad,
+        })),
+      });
+
+      const validacionData = validacion.data?.data;
+      if (validacionData && !validacionData.suficiente && validacionData.faltantes.length > 0) {
+        const mensaje = `Stock insuficiente de insumos:\n${validacionData.faltantes.map((f: any) => 
+          `- ${f.insumo}: requiere ${f.requerido}, disponible ${f.disponible}`
+        ).join('\n')}\n\n¿Desea continuar de todos modos?`;
+        
+        if (!window.confirm(mensaje)) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const res = await ventasApi.create({
         sucursalId: sucursalEfectiva.id,
         clienteId: clienteSeleccionado?.id,
@@ -165,6 +197,7 @@ export default function NuevaVentaPage() {
         cajero: usuario?.nombre ?? 'Cajero',
         cliente: clienteSeleccionado?.nombre ?? 'Público General',
         metodoPago,
+        metodoPagoLabel: getMetodoLabel(metodoPago),
         items: cart.map((i) => ({
           nombre: i.nombre,
           cantidad: i.cantidad,
@@ -173,6 +206,12 @@ export default function NuevaVentaPage() {
         })),
         subtotal,
         descuentoGlobal,
+        monedaSimbolo,
+        monedaDecimales,
+        base: desgloseIva.base,
+        iva: desgloseIva.iva,
+        ivaPorcentaje,
+        ivaActivo,
         total,
         notas: notas || undefined,
       });
@@ -187,7 +226,7 @@ export default function NuevaVentaPage() {
   if (successId) {
     const handlePrint = () => {
       if (!ticketData) return;
-      const html = buildTicketHtml(ticketData);
+      const html = buildTicketHtml(ticketData, logoSrc);
       const printWin = window.open('', '_blank', 'width=420,height=700,scrollbars=yes');
       if (!printWin) { alert('Permite las ventanas emergentes para imprimir.'); return; }
       printWin.document.open();
@@ -206,13 +245,13 @@ export default function NuevaVentaPage() {
           animate={{ scale: 1, opacity: 1 }}
           className="flex flex-col items-center gap-4 text-center"
         >
-          <div className="w-20 h-20 rounded-full bg-[#99ff3d]/10 border border-[#99ff3d]/30 flex items-center justify-center">
-            <Check size={40} className="text-[#99ff3d]" />
+          <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
+            <Check size={40} className="text-[#2e9e9b]" />
           </div>
           <h2 className="text-2xl font-bold text-white">¡Venta registrada!</h2>
           <p className="text-muted-foreground">Venta #{successId} completada correctamente.</p>
-          <p className="text-3xl font-bold text-[#99ff3d]">
-            ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          <p className="text-3xl font-bold text-[#2e9e9b]">
+            {money(total)}
           </p>
           <div className="flex gap-3 mt-2 flex-wrap justify-center">
             <Button
@@ -240,7 +279,7 @@ export default function NuevaVentaPage() {
             </Button>
             <Button
               onClick={() => navigate('/ventas')}
-              className="bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold"
+              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
               Ver historial
             </Button>
@@ -262,7 +301,7 @@ export default function NuevaVentaPage() {
         </Button>
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <ShoppingCart className="text-[#99ff3d]" size={24} />
+            <ShoppingCart className="text-[#2e9e9b]" size={24} />
             Nueva Venta
           </h2>
           <p className="text-xs text-muted-foreground">{sucursalEfectiva?.nombre ?? 'Sin sucursal'}</p>
@@ -275,11 +314,11 @@ export default function NuevaVentaPage() {
         <div className="flex flex-col gap-3 flex-1 min-w-0">
           <div className="relative">
             {isSearching
-              ? <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-[#99ff3d] animate-spin" />
+              ? <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
               : <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />}
             <Input
               placeholder="Buscar producto por nombre o código..."
-              className="pl-9 bg-card border-border focus-visible:ring-[#99ff3d]"
+              className="pl-9 bg-card border-border focus-visible:ring-[#2e9e9b]"
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
             />
@@ -294,7 +333,7 @@ export default function NuevaVentaPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.03 }}
                   onClick={() => addToCart(p)}
-                  className="group relative flex flex-col rounded-xl border border-border bg-card/60 hover:border-[#99ff3d]/50 hover:bg-card transition-all text-left overflow-hidden"
+                  className="group relative flex flex-col rounded-xl border border-border bg-card/60 hover:border-[#2e9e9b]/50 hover:bg-card transition-all text-left overflow-hidden"
                 >
                   <div className="aspect-square bg-background/50 overflow-hidden">
                     {p.imagen_url ? (
@@ -307,11 +346,11 @@ export default function NuevaVentaPage() {
                   </div>
                   <div className="p-2">
                     <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">{p.nombre}</p>
-                    <p className="text-sm font-bold text-[#99ff3d] mt-0.5">
-                      ${Number(p.precio_venta).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    <p className="text-sm font-bold text-[#2e9e9b] mt-0.5">
+                      {money(Number(p.precio_venta))}
                     </p>
                   </div>
-                  <div className="absolute top-2 right-2 bg-[#99ff3d] text-black rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(153,255,61,0.5)]">
+                  <div className="absolute top-2 right-2 bg-[#2e9e9b] text-black rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(153,255,61,0.5)]">
                     <Plus size={14} />
                   </div>
                 </motion.button>
@@ -332,7 +371,7 @@ export default function NuevaVentaPage() {
           <div className="rounded-xl border border-border bg-card/50 flex flex-col">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-sm font-semibold text-white flex items-center gap-2">
-                <ShoppingCart size={14} className="text-[#99ff3d]" />
+                <ShoppingCart size={14} className="text-[#2e9e9b]" />
                 Carrito
               </span>
               <span className="text-xs text-muted-foreground">{cart.length} ítem(s)</span>
@@ -355,7 +394,7 @@ export default function NuevaVentaPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm truncate text-foreground">{item.nombre}</p>
                       <p className="text-xs text-muted-foreground font-mono">
-                        ${item.precioUnitario.toFixed(2)} c/u
+                        {money(item.precioUnitario)} c/u
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
@@ -367,8 +406,8 @@ export default function NuevaVentaPage() {
                         <Plus size={10} />
                       </button>
                     </div>
-                    <span className="text-sm font-bold text-[#99ff3d] w-16 text-right font-mono">
-                      ${(item.precioUnitario * item.cantidad).toFixed(2)}
+                    <span className="text-sm font-bold text-[#2e9e9b] w-20 text-right font-mono">
+                      {money(item.precioUnitario * item.cantidad)}
                     </span>
                     <button onClick={() => removeItem(item.productoId)} className="text-muted-foreground/50 hover:text-red-400 transition-colors">
                       <Trash2 size={14} />
@@ -396,7 +435,7 @@ export default function NuevaVentaPage() {
               <div className="relative">
                 <Input
                   placeholder="Público General (buscar cliente...)"
-                  className="bg-background border-border text-sm focus-visible:ring-[#99ff3d]"
+                  className="bg-background border-border text-sm focus-visible:ring-[#2e9e9b]"
                   value={clienteSearch}
                   onChange={(e) => { setClienteSearch(e.target.value); setShowClientes(true); }}
                   onFocus={() => setShowClientes(true)}
@@ -422,22 +461,34 @@ export default function NuevaVentaPage() {
           {/* Método de pago */}
           <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-2">
             <p className="text-xs text-muted-foreground uppercase tracking-widest">Método de pago</p>
-            <div className="grid grid-cols-3 gap-2">
-              {METODOS.map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  onClick={() => setMetodoPago(value)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-all ${
-                    metodoPago === value
-                      ? 'border-[#99ff3d] bg-[#99ff3d]/10 text-[#99ff3d]'
-                      : 'border-border text-muted-foreground hover:border-border/80 hover:bg-white/5'
-                  }`}
-                >
-                  <Icon size={16} />
-                  {label}
-                </button>
-              ))}
-            </div>
+            {metodosPagoActivos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Cargando métodos de pago…</p>
+            ) : (
+              <div
+                className="grid gap-2"
+                style={{ gridTemplateColumns: `repeat(${Math.min(metodosPagoActivos.length, 3)}, minmax(0, 1fr))` }}
+              >
+                {metodosPagoActivos.map((m) => {
+                  const value = m.nombre.toLowerCase();
+                  const Icon = getMetodoIcon(value);
+                  const isActive = metodoPago === value;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setMetodoPago(value)}
+                      className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-all ${
+                        isActive
+                          ? 'border-[#2e9e9b] bg-[#2e9e9b]/10 text-[#2e9e9b]'
+                          : 'border-border text-muted-foreground hover:border-border/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span className="line-clamp-1 text-center">{m.nombre}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Descuento + Notas + Total */}
@@ -451,12 +502,12 @@ export default function NuevaVentaPage() {
                   value={descuentoGlobal || ''}
                   onChange={(e) => setDescuentoGlobal(Number(e.target.value))}
                   placeholder="0.00"
-                  className="bg-background border-border text-sm font-mono focus-visible:ring-[#99ff3d]"
+                  className="bg-background border-border text-sm font-mono focus-visible:ring-[#2e9e9b]"
                 />
               </div>
               <div className="flex flex-col items-end text-right">
                 <span className="text-xs text-muted-foreground">Subtotal</span>
-                <span className="text-sm font-mono text-muted-foreground">${subtotal.toFixed(2)}</span>
+                <span className="text-sm font-mono text-muted-foreground">{money(subtotal)}</span>
               </div>
             </div>
 
@@ -464,20 +515,33 @@ export default function NuevaVentaPage() {
               placeholder="Notas (opcional)"
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
-              className="bg-background border-border text-sm focus-visible:ring-[#99ff3d]"
+              className="bg-background border-border text-sm focus-visible:ring-[#2e9e9b]"
             />
+
+            {ivaActivo && ivaPorcentaje > 0 && (
+              <div className="flex flex-col gap-0.5 text-xs text-muted-foreground pt-1 border-t border-border/40">
+                <div className="flex justify-between">
+                  <span>Base</span>
+                  <span className="font-mono">{money(desgloseIva.base)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>IVA ({ivaPorcentaje}%)</span>
+                  <span className="font-mono">{money(desgloseIva.iva)}</span>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
               <span className="text-sm text-muted-foreground">Total</span>
-              <span className="text-3xl font-bold text-[#99ff3d]">
-                ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <span className="text-3xl font-bold text-[#2e9e9b]">
+                {money(total)}
               </span>
             </div>
 
             <Button
               disabled={cart.length === 0 || isSubmitting}
               onClick={handleSubmit}
-              className="w-full h-12 text-base bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-bold shadow-[0_0_20px_rgba(153,255,61,0.25)] disabled:opacity-40"
+              className="w-full h-12 text-base bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-bold shadow-[0_0_20px_rgba(153,255,61,0.25)] disabled:opacity-40"
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : (
                 <>

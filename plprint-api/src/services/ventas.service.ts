@@ -148,6 +148,26 @@ export class VentasService {
             usuario_id: dto.usuarioId,
           },
         });
+
+        // Descontar insumos automáticamente (BOM)
+        const productoInsumos = await tx.producto_insumos.findMany({
+          where: { producto_id: item.productoId },
+        });
+
+        for (const pi of productoInsumos) {
+          const cantidadDescontar = Number(pi.cantidad_requerida) * item.cantidad;
+
+          // Descontar del inventario de insumos
+          await tx.insumos_inventario.update({
+            where: {
+              insumo_id_sucursal_id: {
+                insumo_id: pi.insumo_id,
+                sucursal_id: dto.sucursalId,
+              },
+            },
+            data: { cantidad: { decrement: cantidadDescontar } },
+          });
+        }
       }
 
       return venta;
@@ -193,5 +213,50 @@ export class VentasService {
 
       return updated;
     });
+  }
+
+  async validarInsumos(sucursalId: number, items: Array<{ productoId: number; cantidad: number }>) {
+    const faltantes: Array<{
+      insumo: string;
+      requerido: number;
+      disponible: number;
+      deficit: number;
+    }> = [];
+
+    for (const item of items) {
+      const productoInsumos = await prisma.producto_insumos.findMany({
+        where: { producto_id: item.productoId },
+        include: { insumos: { select: { nombre: true } } },
+      });
+
+      for (const pi of productoInsumos) {
+        const cantidadRequerida = Number(pi.cantidad_requerida) * item.cantidad;
+
+        const inventario = await prisma.insumos_inventario.findUnique({
+          where: {
+            insumo_id_sucursal_id: {
+              insumo_id: pi.insumo_id,
+              sucursal_id: sucursalId,
+            },
+          },
+        });
+
+        const disponible = inventario ? Number(inventario.cantidad) : 0;
+
+        if (disponible < cantidadRequerida) {
+          faltantes.push({
+            insumo: pi.insumos.nombre,
+            requerido: cantidadRequerida,
+            disponible,
+            deficit: cantidadRequerida - disponible,
+          });
+        }
+      }
+    }
+
+    return {
+      suficiente: faltantes.length === 0,
+      faltantes,
+    };
   }
 }

@@ -4,6 +4,7 @@ import { Tag, Plus, Pencil, Trash2, Loader2, Check, X } from 'lucide-react';
 
 import { categoriasApi, Categoria } from '@/api/categorias.api';
 import { Button } from '@/components/ui/button';
+import { RequirePermission } from '@/components/RequirePermission';
 import { Input } from '@/components/ui/input';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -93,7 +94,7 @@ export default function CategoriasPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Tag className="text-[#99ff3d]" size={32} />
+            <Tag className="text-[#2e9e9b]" size={32} />
             Categorías
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -102,13 +103,15 @@ export default function CategoriasPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Button
-            onClick={abrirCrear}
-            className="h-10 px-4 bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva Categoría
-          </Button>
+          <RequirePermission modulo="categorias" accion="crear">
+            <Button
+              onClick={abrirCrear}
+              className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Categoría
+            </Button>
+          </RequirePermission>
         </motion.div>
       </div>
 
@@ -133,7 +136,7 @@ export default function CategoriasPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#99ff3d]" />
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando categorías...</p>
                   </td>
                 </tr>
@@ -157,26 +160,30 @@ export default function CategoriasPage() {
                       <td className="px-6 py-4 text-muted-foreground text-xs font-mono">{cat.id}</td>
                       <td className="px-6 py-4 font-medium text-foreground">{cat.nombre}</td>
                       <td className="px-6 py-4 text-center">
-                        <span className="text-sm font-mono text-[#99ff3d]">
+                        <span className="text-sm font-mono text-[#2e9e9b]">
                           {cat._count?.productos ?? 0}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => abrirEditar(cat)}
-                            title="Editar"
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-[#99ff3d] hover:bg-[#99ff3d]/10 transition-colors"
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            onClick={() => setEliminarItem(cat)}
-                            title="Eliminar"
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <RequirePermission modulo="categorias" accion="editar">
+                            <button
+                              onClick={() => abrirEditar(cat)}
+                              title="Editar"
+                              className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                          </RequirePermission>
+                          <RequirePermission modulo="categorias" accion="eliminar">
+                            <button
+                              onClick={() => setEliminarItem(cat)}
+                              title="Eliminar"
+                              className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </RequirePermission>
                         </div>
                       </td>
                     </motion.tr>
@@ -192,7 +199,7 @@ export default function CategoriasPage() {
       <Dialog open={modalOpen} onOpenChange={(v) => { if (!v) setModalOpen(false); }}>
         <DialogContent className="max-w-sm bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-[#99ff3d] text-xl font-bold">
+            <DialogTitle className="text-[#2e9e9b] text-xl font-bold">
               {editando ? 'Editar categoría' : 'Nueva categoría'}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
@@ -220,7 +227,7 @@ export default function CategoriasPage() {
             <Button
               onClick={handleGuardar}
               disabled={isSaving}
-              className="bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold"
+              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
               {isSaving
                 ? <Loader2 size={14} className="mr-1 animate-spin" />

@@ -11,6 +11,7 @@ export interface Producto {
   categoria_id?: number;
   proveedor_id?: number;
   categorias?: { nombre: string };
+  inventario?: Array<{ cantidad: number }>;
 }
 
 export interface CreateProductoPayload {

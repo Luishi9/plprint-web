@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, X, Package } from 'lucide-react';
+import { Loader2, Upload, X, Package, Boxes, Plus, Trash2 } from 'lucide-react';
 
 import { 
   Dialog, 
@@ -32,9 +32,11 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { productosApi } from '@/api/productos.api';
 import { inventarioApi } from '@/api/inventario.api';
+import { insumosApi } from '@/api/insumos.api';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { Producto } from '@/types/producto.types';
+import { Insumo } from '@/types/insumo.types';
 import { categoriasApi, Categoria } from '@/api/categorias.api';
 import { getImageUrl } from '@/utils/format';
 
@@ -70,12 +72,34 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [tieneExistencias, setTieneExistencias] = useState(false);
+  const [insumosDisponibles, setInsumosDisponibles] = useState<Insumo[]>([]);
+  const [insumosSeleccionados, setInsumosSeleccionados] = useState<Array<{ insumoId: number; cantidadRequerida: number; insumo: Insumo }>>([]);
+  const [insumoBusqueda, setInsumoBusqueda] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar categorías al montar
   useEffect(() => {
     categoriasApi.getAll().then((res) => setCategorias(res.data?.data || [])).catch(() => {});
+    insumosApi.getAll({ limit: 1000 }).then((res) => setInsumosDisponibles(res.data?.data || [])).catch(() => {});
   }, []);
+
+  // Cargar insumos del producto cuando se edita
+  useEffect(() => {
+    if (open && producto) {
+      productosApi.getInsumos(producto.id).then((res) => {
+        const insumosData = res.data?.data || [];
+        setInsumosSeleccionados(
+          insumosData.map((pi: any) => ({
+            insumoId: pi.insumo_id,
+            cantidadRequerida: parseFloat(pi.cantidad_requerida),
+            insumo: pi.insumos,
+          }))
+        );
+      }).catch(() => {});
+    } else if (open && !producto) {
+      setInsumosSeleccionados([]);
+    }
+  }, [open, producto]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -142,6 +166,30 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
     }
   };
 
+  const agregarInsumo = (insumoId: number) => {
+    const insumo = insumosDisponibles.find(i => i.id === insumoId);
+    if (!insumo) return;
+    if (insumosSeleccionados.some(i => i.insumoId === insumoId)) return;
+    
+    setInsumosSeleccionados([
+      ...insumosSeleccionados,
+      { insumoId, cantidadRequerida: 1, insumo }
+    ]);
+    setInsumoBusqueda('');
+  };
+
+  const quitarInsumo = (insumoId: number) => {
+    setInsumosSeleccionados(insumosSeleccionados.filter(i => i.insumoId !== insumoId));
+  };
+
+  const cambiarCantidadInsumo = (insumoId: number, cantidad: number) => {
+    setInsumosSeleccionados(
+      insumosSeleccionados.map(i => 
+        i.insumoId === insumoId ? { ...i, cantidadRequerida: cantidad } : i
+      )
+    );
+  };
+
   const onSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
@@ -179,6 +227,16 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         formData.append('imagen', selectedFile);
       }
 
+      // Agregar insumos si hay
+      if (insumosSeleccionados.length > 0) {
+        formData.append('insumos', JSON.stringify(
+          insumosSeleccionados.map(i => ({
+            insumoId: i.insumoId,
+            cantidadRequerida: i.cantidadRequerida,
+          }))
+        ));
+      }
+
       if (isEditing && producto) {
         await productosApi.update(producto.id, formData as any);
       } else {
@@ -202,7 +260,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold tracking-tight text-[#99ff3d]">
+          <DialogTitle className="text-2xl font-bold tracking-tight text-[#2e9e9b]">
             {isEditing ? 'Editar Producto' : 'Registrar Producto'}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -351,10 +409,10 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                           form.setValue('stockMinimo', undefined);
                         }
                       }}
-                      className="w-4 h-4 accent-[#99ff3d] cursor-pointer"
+                      className="w-4 h-4 accent-[#2e9e9b] cursor-pointer"
                     />
                     <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                      <Package size={14} className="text-[#99ff3d]" />
+                      <Package size={14} className="text-[#2e9e9b]" />
                       {isEditing ? 'Registrar movimiento de stock' : 'Este producto tiene existencias (inventario)'}
                     </span>
                   </label>
@@ -374,7 +432,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                                 placeholder="0"
                                 {...field}
                                 value={field.value ?? ''}
-                                className="bg-background font-mono border-[#99ff3d]/50 focus-visible:ring-[#99ff3d]"
+                                className="bg-background font-mono border-[#2e9e9b]/50 focus-visible:ring-[#2e9e9b]"
                               />
                             </FormControl>
                             <FormMessage />
@@ -403,6 +461,92 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                       />
                     </div>
                   )}
+                </div>
+
+                {/* ── Insumos requeridos ── */}
+                <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+                  <div className="flex items-center gap-2">
+                    <Boxes size={14} className="text-[#2e9e9b]" />
+                    <span className="text-sm font-medium text-foreground">
+                      Insumos requeridos
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Insumos que se descuentan automáticamente al vender este producto
+                  </p>
+
+                  {/* Lista de insumos seleccionados */}
+                  {insumosSeleccionados.length > 0 && (
+                    <div className="space-y-2">
+                      {insumosSeleccionados.map(({ insumoId, cantidadRequerida, insumo }) => (
+                        <div
+                          key={insumoId}
+                          className="flex items-center gap-2 bg-background rounded-md p-2 border border-border"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {insumo.nombre}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {insumo.codigo || 'Sin código'} • {insumo.unidad_medida}
+                            </p>
+                          </div>
+                          <Input
+                            type="number"
+                            step="0.001"
+                            min="0.001"
+                            value={cantidadRequerida}
+                            onChange={(e) => cambiarCantidadInsumo(insumoId, parseFloat(e.target.value) || 0)}
+                            className="w-20 bg-background font-mono text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground w-12">
+                            {insumo.unidad_medida}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => quitarInsumo(insumoId)}
+                            className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Selector de insumos */}
+                  <Select
+                    value={insumoBusqueda}
+                    onValueChange={(val) => {
+                      if (val) {
+                        agregarInsumo(Number(val));
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Agregar insumo..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border text-foreground z-[200]">
+                      {insumosDisponibles
+                        .filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id))
+                        .map((insumo) => (
+                          <SelectItem key={insumo.id} value={String(insumo.id)}>
+                            <div className="flex items-center gap-2">
+                              <Plus size={12} />
+                              <span>{insumo.nombre}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({insumo.codigo || 'Sin código'})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      {insumosDisponibles.filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id)).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          No hay insumos disponibles
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -462,7 +606,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
             {/* Mensaje de Info Stock */}
             {tieneExistencias && form.watch('cantidadInicial') ? (
-              <div className="bg-[#99ff3d]/10 border border-[#99ff3d]/20 rounded-lg p-3 text-sm text-[#99ff3d]">
+              <div className="bg-[#2e9e9b]/10 border border-[#2e9e9b]/20 rounded-lg p-3 text-sm text-[#2e9e9b]">
                 <p>
                   {isEditing
                     ? <>Se registrará una <strong>Entrada de {form.watch('cantidadInicial')}</strong> unidades en la sucursal <strong>{sucursalEfectiva?.nombre || 'actual'}</strong>.</>
@@ -476,7 +620,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]">
+              <Button type="submit" disabled={isSubmitting} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

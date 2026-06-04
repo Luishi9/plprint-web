@@ -13,8 +13,13 @@ USE plprint;
 -- Roles de usuarios
 -- ------------------------------------------------------------
 CREATE TABLE roles (
-  id     INT          AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(50)  UNIQUE NOT NULL  -- admin, vendedor, operador
+  id          INT          AUTO_INCREMENT PRIMARY KEY,
+  nombre      VARCHAR(50)  UNIQUE NOT NULL,  -- admin, vendedor, operador
+  descripcion VARCHAR(200),
+  activo      BOOLEAN      DEFAULT TRUE,
+  es_sistema  BOOLEAN      DEFAULT FALSE,
+  created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB;
 
 -- ------------------------------------------------------------
@@ -138,21 +143,23 @@ CREATE TABLE clientes (
 -- Ventas
 -- ------------------------------------------------------------
 CREATE TABLE ventas (
-  id          INT           AUTO_INCREMENT PRIMARY KEY,
-  sucursal_id INT,
-  cliente_id  INT,
-  usuario_id  INT,
-  total       DECIMAL(10,2) NOT NULL CHECK (total    >= 0),
-  descuento   DECIMAL(10,2) DEFAULT 0 CHECK (descuento >= 0),
-  metodo_pago VARCHAR(30)   DEFAULT 'efectivo'
-                CHECK (metodo_pago IN ('efectivo','tarjeta','transferencia','otro')),
-  estado      VARCHAR(20)   DEFAULT 'completada'
-                CHECK (estado IN ('completada','cancelada','devuelta','pendiente')),
-  notas       TEXT,
-  created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_venta_sucursal FOREIGN KEY (sucursal_id) REFERENCES sucursales(id),
-  CONSTRAINT fk_venta_cliente  FOREIGN KEY (cliente_id)  REFERENCES clientes(id),
-  CONSTRAINT fk_venta_usuario  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)
+  id             INT           AUTO_INCREMENT PRIMARY KEY,
+  sucursal_id    INT,
+  cliente_id     INT,
+  usuario_id     INT,
+  total          DECIMAL(10,2) NOT NULL CHECK (total    >= 0),
+  descuento      DECIMAL(10,2) DEFAULT 0 CHECK (descuento >= 0),
+  metodo_pago    VARCHAR(30)   DEFAULT 'efectivo'
+                  CHECK (metodo_pago IN ('efectivo','tarjeta','transferencia','otro')),
+  metodo_pago_id INT,
+  estado         VARCHAR(20)   DEFAULT 'completada'
+                  CHECK (estado IN ('completada','cancelada','devuelta','pendiente')),
+  notas          TEXT,
+  created_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_venta_sucursal     FOREIGN KEY (sucursal_id)    REFERENCES sucursales(id),
+  CONSTRAINT fk_venta_cliente      FOREIGN KEY (cliente_id)     REFERENCES clientes(id),
+  CONSTRAINT fk_venta_usuario      FOREIGN KEY (usuario_id)     REFERENCES usuarios(id),
+  CONSTRAINT fk_venta_metodo_pago  FOREIGN KEY (metodo_pago_id) REFERENCES metodos_pago(id)
 ) ENGINE = InnoDB;
 
 -- ------------------------------------------------------------
@@ -222,3 +229,164 @@ CREATE INDEX idx_productos_activo
 
 CREATE INDEX idx_productos_codigo
   ON productos(codigo);
+
+-- ============================================================
+-- INSUMOS — SISTEMA BOM (BILL OF MATERIALS)
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- Insumos (materias primas)
+-- ------------------------------------------------------------
+CREATE TABLE insumos (
+  id            INT           AUTO_INCREMENT PRIMARY KEY,
+  codigo        VARCHAR(50)   UNIQUE,
+  nombre        VARCHAR(150)  NOT NULL,
+  descripcion   TEXT,
+  unidad_medida VARCHAR(20)   DEFAULT 'unidad',
+  precio_compra DECIMAL(10,2),
+  proveedor_id  INT,
+  activo        BOOLEAN       DEFAULT TRUE,
+  created_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_insumo_proveedor FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
+  INDEX idx_insumos_activo (activo)
+) ENGINE = InnoDB;
+
+-- ------------------------------------------------------------
+-- Inventario de insumos por sucursal
+-- ------------------------------------------------------------
+CREATE TABLE insumos_inventario (
+  id           INT          AUTO_INCREMENT PRIMARY KEY,
+  insumo_id    INT          NOT NULL,
+  sucursal_id  INT          NOT NULL,
+  cantidad     DECIMAL(12,3) DEFAULT 0,
+  stock_minimo DECIMAL(12,3) DEFAULT 0,
+  updated_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_insumos_inv_insumo   FOREIGN KEY (insumo_id)   REFERENCES insumos(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_insumos_inv_sucursal FOREIGN KEY (sucursal_id) REFERENCES sucursales(id) ON DELETE CASCADE,
+  UNIQUE KEY uk_insumo_sucursal (insumo_id, sucursal_id),
+  INDEX idx_insumos_inv_insumo_sucursal (insumo_id, sucursal_id)
+) ENGINE = InnoDB;
+
+-- ------------------------------------------------------------
+-- Producto-Insumos (receta/BOM)
+-- ------------------------------------------------------------
+CREATE TABLE producto_insumos (
+  id                 INT          AUTO_INCREMENT PRIMARY KEY,
+  producto_id        INT          NOT NULL,
+  insumo_id          INT          NOT NULL,
+  cantidad_requerida DECIMAL(12,3) NOT NULL,
+  CONSTRAINT fk_prod_ins_producto FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE,
+  CONSTRAINT fk_prod_ins_insumo   FOREIGN KEY (insumo_id)   REFERENCES insumos(id)   ON DELETE CASCADE,
+  UNIQUE KEY uk_producto_insumo (producto_id, insumo_id),
+  INDEX idx_prod_ins_producto (producto_id),
+  INDEX idx_prod_ins_insumo (insumo_id)
+) ENGINE = InnoDB;
+
+-- ============================================================
+-- CONFIGURACION DEL SISTEMA (key-value store)
+-- Almacena ajustes generales: empresa, IVA, moneda, ticket, etc.
+-- ============================================================
+
+CREATE TABLE configuracion (
+  id         INT          AUTO_INCREMENT PRIMARY KEY,
+  clave      VARCHAR(100) NOT NULL UNIQUE,
+  valor      TEXT,
+  tipo       VARCHAR(20)  DEFAULT 'string',
+  grupo      VARCHAR(50),
+  created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_grupo (grupo)
+) ENGINE = InnoDB;
+
+-- ============================================================
+-- RBAC DINAMICO — Permisos por rol
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- Catalogo de permisos (modulo + accion)
+-- ------------------------------------------------------------
+CREATE TABLE permisos (
+  id          INT          AUTO_INCREMENT PRIMARY KEY,
+  modulo      VARCHAR(50)  NOT NULL,
+  accion      VARCHAR(50)  NOT NULL,
+  descripcion VARCHAR(200),
+  created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_modulo_accion (modulo, accion),
+  INDEX idx_modulo (modulo)
+) ENGINE = InnoDB;
+
+-- ------------------------------------------------------------
+-- Relacion rol <-> permisos (muchos a muchos)
+-- ------------------------------------------------------------
+CREATE TABLE rol_permisos (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  rol_id     INT NOT NULL,
+  permiso_id INT NOT NULL,
+  CONSTRAINT fk_rol_permiso_rol     FOREIGN KEY (rol_id)     REFERENCES roles(id)     ON DELETE CASCADE,
+  CONSTRAINT fk_rol_permiso_permiso FOREIGN KEY (permiso_id) REFERENCES permisos(id)   ON DELETE CASCADE,
+  UNIQUE KEY uk_rol_permiso (rol_id, permiso_id),
+  INDEX idx_rol_permiso_rol (rol_id),
+  INDEX idx_rol_permiso_permiso (permiso_id)
+) ENGINE = InnoDB;
+
+-- ============================================================
+-- METODOS DE PAGO CONFIGURABLES
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- Catalogo de metodos de pago
+-- ------------------------------------------------------------
+CREATE TABLE metodos_pago (
+  id         INT          AUTO_INCREMENT PRIMARY KEY,
+  nombre     VARCHAR(50)  NOT NULL UNIQUE,
+  icono      VARCHAR(30),
+  activo     BOOLEAN      DEFAULT TRUE,
+  es_sistema BOOLEAN      DEFAULT FALSE,
+  created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_metodos_pago_activo (activo)
+) ENGINE = InnoDB;
+
+-- Datos iniciales del sistema
+INSERT INTO metodos_pago (nombre, icono, es_sistema) VALUES
+  ('Efectivo', 'Banknote', TRUE),
+  ('Tarjeta', 'CreditCard', TRUE),
+  ('Transferencia', 'Landmark', TRUE);
+
+-- ============================================================
+-- AUDIT LOG — Bitacora de acciones
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- Registro de acciones de usuarios
+-- ------------------------------------------------------------
+CREATE TABLE audit_log (
+  id         INT          AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT,
+  accion     VARCHAR(50)  NOT NULL,  -- crear, editar, eliminar, login, logout, etc.
+  modulo     VARCHAR(50)  NOT NULL,  -- productos, ventas, configuracion, etc.
+  detalle    TEXT,                   -- JSON con informacion adicional
+  ip         VARCHAR(45),            -- IPv4 o IPv6
+  created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_audit_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+  INDEX idx_audit_usuario (usuario_id),
+  INDEX idx_audit_modulo (modulo),
+  INDEX idx_audit_created_at (created_at)
+) ENGINE = InnoDB;
+
+-- ============================================================
+-- NOTIFICACIONES — Configuracion de alertas
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- Configuracion de tipos de notificacion
+-- ------------------------------------------------------------
+CREATE TABLE notificaciones_config (
+  id         INT          AUTO_INCREMENT PRIMARY KEY,
+  tipo       VARCHAR(50)  NOT NULL UNIQUE,  -- stock_bajo, insumos_bajos, ventas_dia, etc.
+  activo     BOOLEAN      DEFAULT TRUE,
+  umbral     DECIMAL(12,3),                  -- umbral configurable (stock minimo, etc.)
+  created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE = InnoDB;

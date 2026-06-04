@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi } from '@/api/auth.api';
 import { useSucursalStore } from './sucursalStore';
+import { useConfigStore } from './configStore';
 
 interface Sucursal {
   id: number;
@@ -15,6 +16,7 @@ interface Usuario {
   rol?: string;
   sucursales: number[];
   sucursalesDetalle: Sucursal[];
+  permisos: string[];
 }
 
 interface AuthState {
@@ -50,6 +52,8 @@ export const useAuthStore = create<AuthState>()(
         if (usuario.sucursalesDetalle?.length > 0) {
           useSucursalStore.getState().setSucursal(usuario.sucursalesDetalle[0]);
         }
+        // Cargar configuración del sistema (IVA, moneda, empresa, etc.)
+        useConfigStore.getState().fetch();
       },
 
       refresh: async () => {
@@ -89,6 +93,12 @@ export const useAuthStore = create<AuthState>()(
         usuario: state.usuario,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Al restaurar sesión, cargar config si hay usuario
+        if (state?.isAuthenticated) {
+          useConfigStore.getState().fetch();
+        }
+      },
     },
   ),
 );

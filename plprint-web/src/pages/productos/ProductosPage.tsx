@@ -7,6 +7,7 @@ import { Producto } from '@/types/producto.types';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RequirePermission } from '@/components/RequirePermission';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
 
 import { ProductoFormModal } from './components/ProductoFormModal';
 import { getImageUrl } from '@/utils/format';
+import { useMoney } from '@/hooks/useMoney';
 
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -29,6 +31,7 @@ export default function ProductosPage() {
   const [productoAEliminar, setProductoAEliminar] = useState<Producto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const { format: money } = useMoney();
 
   const fetchProductos = async (query: string, isInitial = false) => {
     // Cancelar request anterior si sigue en vuelo
@@ -94,7 +97,7 @@ export default function ProductosPage() {
           className="flex flex-col"
         >
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Package className="text-[#99ff3d]" size={32} />
+            <Package className="text-[#2e9e9b]" size={32} />
             Catálogo Estelar
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -110,25 +113,27 @@ export default function ProductosPage() {
         >
           <div className="relative w-full sm:w-64">
             {isSearching
-              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#99ff3d] animate-spin" />
+              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
               : <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             }
             <Input
               type="text"
               placeholder="Buscar producto..."
-              className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#99ff3d]"
+              className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#2e9e9b]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="h-10 px-4 bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Producto
-          </Button>
+          <RequirePermission modulo="productos" accion="crear">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Producto
+            </Button>
+          </RequirePermission>
         </motion.div>
       </div>
 
@@ -165,6 +170,9 @@ export default function ProductosPage() {
                 <th scope="col" className="px-6 py-4 font-semibold text-right">
                   Precio Compra
                 </th>
+                <th scope="col" className="px-6 py-4 font-semibold text-right">
+                  Stock
+                </th>
                 <th scope="col" className="px-6 py-4 font-semibold text-center">
                   Estado
                 </th>
@@ -176,14 +184,14 @@ export default function ProductosPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#99ff3d]" />
+                  <td colSpan={8} className="px-6 py-8 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando catálogo...</p>
                   </td>
                 </tr>
               ) : productos.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
                     No se encontraron productos.
                   </td>
                 </tr>
@@ -219,33 +227,46 @@ export default function ProductosPage() {
                       <td className="px-6 py-4 text-muted-foreground text-xs font-mono">
                         {producto.codigo || '—'}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-right text-[#99ff3d] tracking-wide">
-                        ${Number(producto.precio_venta).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      <td className="px-6 py-4 font-semibold text-right text-[#2e9e9b] tracking-wide">
+                        {money(Number(producto.precio_venta))}
                       </td>
                       <td className="px-6 py-4 text-right text-muted-foreground font-mono text-sm">
-                        {producto.precio_compra ? `$${Number(producto.precio_compra).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}
+                        {producto.precio_compra ? money(Number(producto.precio_compra)) : '—'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {producto.inventario && producto.inventario.length > 0 ? (
+                          <span className="font-mono text-sm font-semibold text-[#2e9e9b]">
+                            {producto.inventario.reduce((sum, inv) => sum + inv.cantidad, 0)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${producto.activo ? 'bg-[#99ff3d]/10 text-[#99ff3d] border border-[#99ff3d]/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${producto.activo ? 'bg-[#2e9e9b]/10 text-[#2e9e9b] border border-[#2e9e9b]/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}`}>
                           {producto.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => handleEditar(producto)}
-                            title="Editar"
-                            className="p-2 rounded-md text-muted-foreground hover:text-[#99ff3d] hover:bg-[#99ff3d]/10 transition-colors"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            onClick={() => setProductoAEliminar(producto)}
-                            title="Eliminar"
-                            className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <RequirePermission modulo="productos" accion="editar">
+                            <button
+                              onClick={() => handleEditar(producto)}
+                              title="Editar"
+                              className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          </RequirePermission>
+                          <RequirePermission modulo="productos" accion="eliminar">
+                            <button
+                              onClick={() => setProductoAEliminar(producto)}
+                              title="Eliminar"
+                              className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </RequirePermission>
                         </div>
                       </td>
                     </motion.tr>

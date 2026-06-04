@@ -26,9 +26,22 @@ const createVentaSchema = z.object({
     .min(1),
 });
 
+const validarInsumosSchema = z.object({
+  sucursalId: z.number().int().positive(),
+  items: z
+    .array(
+      z.object({
+        productoId: z.number().int().positive(),
+        cantidad: z.number().int().positive(),
+      }),
+    )
+    .min(1),
+});
+
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
 router.post('/', validate(createVentaSchema), authorizeSucursal, controller.create);
+router.post('/validar-insumos', validate(validarInsumosSchema), controller.validarInsumos);
 router.patch('/:id/cancelar', controller.cancel);
 
 export default router;

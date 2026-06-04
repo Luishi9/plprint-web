@@ -2,6 +2,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 
 export const Header = () => {
@@ -25,6 +26,7 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <span className="text-sm font-medium text-foreground hidden sm:inline"> Usuario: {usuario?.nombre}</span> {/* Oculta el nombre en desktop, solo muestra el nombre en móvil */}
         <span className="text-xs text-muted-foreground sm:hidden"> Usuario: {usuario?.nombre}</span> {/* Solo muestra el nombre en móvil */}
       </div>

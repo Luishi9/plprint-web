@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { AjusteModal } from './components/AjusteModal';
 import { KardexModal } from './components/KardexModal';
 import { getImageUrl } from '@/utils/format';
+import { useMoney } from '@/hooks/useMoney';
 
 interface InventarioItem {
   id: number;
@@ -35,7 +36,7 @@ interface InventarioItem {
 const getStockBadge = (cantidad: number, minimo: number) => {
   if (cantidad === 0) return { label: 'Sin stock', cls: 'bg-red-500/15 text-red-400 border-red-500/30' };
   if (cantidad <= minimo) return { label: 'Stock bajo', cls: 'bg-yellow-400/15 text-yellow-400 border-yellow-400/30' };
-  return { label: 'En stock', cls: 'bg-[#99ff3d]/10 text-[#99ff3d] border-[#99ff3d]/30' };
+  return { label: 'En stock', cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30' };
 };
 
 export default function InventarioPage() {
@@ -48,6 +49,7 @@ export default function InventarioPage() {
 
   const { sucursalActiva } = useSucursalStore();
   const { usuario } = useAuthStore();
+  const { format: money } = useMoney();
   const sucursalEfectiva = sucursalActiva ?? usuario?.sucursalesDetalle?.[0] ?? null;
 
   // Ajuste modal
@@ -97,7 +99,7 @@ export default function InventarioPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Boxes className="text-[#99ff3d]" size={32} />
+            <Boxes className="text-[#2e9e9b]" size={32} />
             Inventario
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -113,11 +115,11 @@ export default function InventarioPage() {
         >
           <div className="relative w-full sm:w-64">
             {isSearching
-              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#99ff3d] animate-spin" />
+              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
               : <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />}
             <Input
               placeholder="Buscar producto..."
-              className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#99ff3d]"
+              className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#2e9e9b]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -194,7 +196,7 @@ export default function InventarioPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#99ff3d]" />
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando inventario...</p>
                   </td>
                 </tr>
@@ -267,8 +269,8 @@ export default function InventarioPage() {
                         </td>
 
                         {/* Precio */}
-                        <td className="px-6 py-4 text-right font-mono text-sm text-[#99ff3d]">
-                          ${Number(item.productos.precio_venta).toFixed(2)}
+                        <td className="px-6 py-4 text-right font-mono text-sm text-[#2e9e9b]">
+                          {money(Number(item.productos.precio_venta))}
                         </td>
 
                         {/* Estado */}
@@ -284,7 +286,7 @@ export default function InventarioPage() {
                             <button
                               onClick={() => { setAjusteItem(item); setAjusteOpen(true); }}
                               title="Ajustar stock"
-                              className="p-2 rounded-md text-muted-foreground hover:text-[#99ff3d] hover:bg-[#99ff3d]/10 transition-colors"
+                              className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                             >
                               <SlidersHorizontal size={16} />
                             </button>

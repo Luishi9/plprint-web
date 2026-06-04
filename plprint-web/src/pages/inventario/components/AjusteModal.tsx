@@ -21,7 +21,7 @@ interface AjusteModalProps {
 }
 
 const TIPOS = [
-  { value: 'entrada', label: 'Entrada', icon: TrendingUp, cls: 'border-[#99ff3d] bg-[#99ff3d]/10 text-[#99ff3d]' },
+  { value: 'entrada', label: 'Entrada', icon: TrendingUp, cls: 'border-[#2e9e9b] bg-[#2e9e9b]/10 text-[#2e9e9b]' },
   { value: 'salida', label: 'Salida', icon: TrendingDown, cls: 'border-red-500 bg-red-500/10 text-red-400' },
   { value: 'ajuste', label: 'Ajuste directo', icon: SlidersHorizontal, cls: 'border-yellow-400 bg-yellow-400/10 text-yellow-400' },
 ] as const;
@@ -71,7 +71,7 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#99ff3d]">Ajuste de Inventario</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-[#2e9e9b]">Ajuste de Inventario</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {item?.productos.nombre}
             {item?.productos.codigo && <span className="ml-2 font-mono text-xs">({item.productos.codigo})</span>}
@@ -115,7 +115,7 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               placeholder="0"
-              className="bg-background border-border font-mono text-lg focus-visible:ring-[#99ff3d]"
+              className="bg-background border-border font-mono text-lg focus-visible:ring-[#2e9e9b]"
             />
           </div>
 
@@ -123,7 +123,7 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
           {cantidad && Number(cantidad) > 0 && (
             <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-4 py-3">
               <span className="text-sm text-muted-foreground">Stock resultante</span>
-              <span className="text-2xl font-bold text-[#99ff3d]">{stockResultado()}</span>
+              <span className="text-2xl font-bold text-[#2e9e9b]">{stockResultado()}</span>
             </div>
           )}
 
@@ -134,7 +134,7 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Razón del ajuste..."
-              className="bg-background border-border focus-visible:ring-[#99ff3d]"
+              className="bg-background border-border focus-visible:ring-[#2e9e9b]"
             />
           </div>
 
@@ -143,7 +143,7 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
           <Button
             disabled={!cantidad || Number(cantidad) <= 0 || isSubmitting}
             onClick={handleSubmit}
-            className="w-full bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-bold disabled:opacity-40"
+            className="w-full bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-bold disabled:opacity-40"
           >
             {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar ajuste'}
           </Button>

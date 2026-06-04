@@ -72,7 +72,7 @@ export default function SucursalesPage() {
       >
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Building2 className="text-[#99ff3d]" size={24} />
+            <Building2 className="text-[#2e9e9b]" size={24} />
             Sucursales
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -81,7 +81,7 @@ export default function SucursalesPage() {
         </div>
         <Button
           onClick={() => { setEditando(null); setModalOpen(true); }}
-          className="h-9 px-4 bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap self-start sm:self-auto"
+          className="h-9 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap self-start sm:self-auto"
         >
           <Plus className="mr-1.5 h-4 w-4" />
           Nueva sucursal
@@ -92,7 +92,7 @@ export default function SucursalesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
           { label: 'Total', value: sucursales.length, cls: 'text-white' },
-          { label: 'Activas', value: activas, cls: 'text-[#99ff3d]' },
+          { label: 'Activas', value: activas, cls: 'text-[#2e9e9b]' },
           { label: 'Inactivas', value: sucursales.length - activas, cls: 'text-red-400' },
         ].map((stat, i) => (
           <motion.div
@@ -113,11 +113,11 @@ export default function SucursalesPage() {
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#99ff3d]/30 bg-[#99ff3d]/5"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#2e9e9b]/30 bg-[#2e9e9b]/5"
         >
-          <Building2 size={15} className="text-[#99ff3d] shrink-0" />
+          <Building2 size={15} className="text-[#2e9e9b] shrink-0" />
           <span className="text-sm text-muted-foreground">
-            Sucursal activa: <strong className="text-[#99ff3d]">{sucursalActiva.nombre}</strong>
+            Sucursal activa: <strong className="text-[#2e9e9b]">{sucursalActiva.nombre}</strong>
           </span>
         </motion.div>
       )}
@@ -125,7 +125,7 @@ export default function SucursalesPage() {
       {/* CARDS GRID */}
       {isLoading ? (
         <div className="flex items-center justify-center h-48">
-          <Loader2 className="h-6 w-6 animate-spin text-[#99ff3d]" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
         </div>
       ) : sucursales.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-3">
@@ -145,14 +145,14 @@ export default function SucursalesPage() {
                   transition={{ delay: i * 0.05 }}
                   className={`relative rounded-2xl border bg-card/50 backdrop-blur-sm p-5 flex flex-col gap-3 transition-all duration-200 ${
                     isActiva
-                      ? 'border-[#99ff3d]/50 shadow-[0_0_20px_rgba(153,255,61,0.10)]'
+                      ? 'border-[#2e9e9b]/50 shadow-[0_0_20px_rgba(153,255,61,0.10)]'
                       : 'border-border hover:border-border/60'
                   } ${!s.activa ? 'opacity-60' : ''}`}
                 >
                   {/* Status badge */}
                   <div className="absolute top-4 right-4">
                     {s.activa ? (
-                      <Badge className="bg-[#99ff3d]/10 text-[#99ff3d] border-[#99ff3d]/30 text-[10px] gap-1 border">
+                      <Badge className="bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30 text-[10px] gap-1 border">
                         <CheckCircle2 size={9} /> Activa
                       </Badge>
                     ) : (
@@ -166,10 +166,10 @@ export default function SucursalesPage() {
                   <div className="flex items-center gap-3 pr-20">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                       isActiva
-                        ? 'bg-[#99ff3d]/15 border border-[#99ff3d]/30'
+                        ? 'bg-[#2e9e9b]/15 border border-[#2e9e9b]/30'
                         : 'bg-white/5 border border-border'
                     }`}>
-                      <Building2 size={18} className={isActiva ? 'text-[#99ff3d]' : 'text-muted-foreground'} />
+                      <Building2 size={18} className={isActiva ? 'text-[#2e9e9b]' : 'text-muted-foreground'} />
                     </div>
                     <div>
                       <p className="font-bold text-white text-sm leading-tight">{s.nombre}</p>
@@ -205,7 +205,7 @@ export default function SucursalesPage() {
                       onClick={() => setSucursal({ id: s.id, nombre: s.nombre })}
                       className={`flex-1 h-7 text-xs ${
                         isActiva
-                          ? 'bg-[#99ff3d] hover:bg-[#7fe62e] text-black font-bold'
+                          ? 'bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-bold'
                           : 'border-border text-muted-foreground hover:text-white'
                       }`}
                     >
@@ -213,7 +213,7 @@ export default function SucursalesPage() {
                     </Button>
                     <button
                       onClick={() => { setEditando(s); setModalOpen(true); }}
-                      className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#99ff3d] transition-colors"
+                      className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                       title="Editar"
                     >
                       <Pencil size={13} />

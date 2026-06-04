@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Loader2, History, Receipt, ChevronDown, ChevronUp, BadgeCheck, XCircle, Clock } from 'lucide-react';
 import { clientesApi } from '@/api/clientes.api';
+import { useMetodosPago } from '@/hooks/useMetodosPago';
+import { useMoney } from '@/hooks/useMoney';
 import { Cliente } from '../ClientesPage';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -8,18 +10,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Fragment } from 'react';
 
-const METODO_LABEL: Record<string, string> = {
-    efectivo: 'Efectivo',
-    tarjeta: 'Tarjeta',
-    transferencia: 'Transferencia',
-    otro: 'Otro',
-};
-
 const ESTADO_CONFIG: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
     completada: {
         label: 'Completada',
         icon: <BadgeCheck size={11} />,
-        cls: 'bg-[#99ff3d]/10 text-[#99ff3d] border-[#99ff3d]/30',
+        cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30',
     },
     cancelada: {
         label: 'Cancelada',
@@ -59,6 +54,8 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
     const [ventas, setVentas] = useState<VentaHistorial[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [expandedId, setExpandedId] = useState<number | null>(null);
+    const { getLabel: getMetodoLabel } = useMetodosPago();
+    const { format: money } = useMoney();
 
     useEffect(() => {
         if (!cliente) return;
@@ -91,8 +88,8 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
                         <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-border text-muted-foreground">
                             <span className="text-white font-bold">{ventas.length}</span> compras
                         </div>
-                        <div className="px-3 py-1.5 rounded-lg bg-[#99ff3d]/5 border border-[#99ff3d]/20 text-muted-foreground">
-                            Total gastado: <span className="text-[#99ff3d] font-bold">${totalGastado.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                        <div className="px-3 py-1.5 rounded-lg bg-[#2e9e9b]/5 border border-[#2e9e9b]/20 text-muted-foreground">
+                            Total gastado: <span className="text-[#2e9e9b] font-bold">{money(totalGastado)}</span>
                         </div>
                     </div>
                 )}
@@ -100,7 +97,7 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
                 <div className="flex-1 overflow-y-auto pr-1 min-h-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-40">
-                            <Loader2 className="h-6 w-6 animate-spin text-[#99ff3d]" />
+                            <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
                         </div>
                     ) : ventas.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
@@ -135,12 +132,12 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-3 shrink-0">
-                                                    <span className="text-xs text-muted-foreground">{METODO_LABEL[v.metodo_pago] ?? v.metodo_pago}</span>
+                                                    <span className="text-xs text-muted-foreground">{getMetodoLabel(v.metodo_pago)}</span>
                                                     <Badge className={`flex items-center gap-1 text-[10px] border ${estado.cls}`}>
                                                         {estado.icon} {estado.label}
                                                     </Badge>
-                                                    <span className="font-bold text-[#99ff3d] font-mono text-sm">
-                                                        ${Number(v.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                                    <span className="font-bold text-[#2e9e9b] font-mono text-sm">
+                                                        {money(Number(v.total))}
                                                     </span>
                                                     {isExpanded
                                                         ? <ChevronUp size={13} className="text-muted-foreground" />
@@ -165,10 +162,10 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
                                                                     <td className="py-1.5 text-foreground/80">{d.productos?.nombre ?? `#${d.id}`}</td>
                                                                     <td className="py-1.5 text-right text-muted-foreground">{d.cantidad}</td>
                                                                     <td className="py-1.5 text-right font-mono text-muted-foreground">
-                                                                        ${Number(d.precio_unitario).toFixed(2)}
+                                                                        {money(Number(d.precio_unitario))}
                                                                     </td>
-                                                                    <td className="py-1.5 text-right font-mono text-[#99ff3d]">
-                                                                        ${Number(d.subtotal).toFixed(2)}
+                                                                    <td className="py-1.5 text-right font-mono text-[#2e9e9b]">
+                                                                        {money(Number(d.subtotal))}
                                                                     </td>
                                                                 </tr>
                                                             ))}

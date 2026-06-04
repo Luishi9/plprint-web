@@ -23,7 +23,7 @@ interface KardexModalProps {
 }
 
 const TIPO_CONFIG: Record<string, { icon: React.ReactNode; cls: string; label: string }> = {
-  entrada: { icon: <TrendingUp size={12} />, cls: 'text-[#99ff3d] bg-[#99ff3d]/10', label: 'Entrada' },
+  entrada: { icon: <TrendingUp size={12} />, cls: 'text-[#2e9e9b] bg-[#2e9e9b]/10', label: 'Entrada' },
   salida:  { icon: <TrendingDown size={12} />, cls: 'text-red-400 bg-red-400/10', label: 'Salida' },
   ajuste:  { icon: <SlidersHorizontal size={12} />, cls: 'text-yellow-400 bg-yellow-400/10', label: 'Ajuste' },
 };
@@ -45,7 +45,7 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#99ff3d] flex items-center gap-2">
+          <DialogTitle className="text-xl font-bold text-[#2e9e9b] flex items-center gap-2">
             <History size={18} />
             Kardex — {nombreProducto}
           </DialogTitle>
@@ -57,7 +57,7 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
         <div className="flex-1 overflow-y-auto mt-2 min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <Loader2 className="animate-spin text-[#99ff3d]" size={24} />
+              <Loader2 className="animate-spin text-[#2e9e9b]" size={24} />
             </div>
           ) : movimientos.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
@@ -84,7 +84,7 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
 
                       {/* Cantidad */}
                       <span className={`font-mono font-bold text-lg w-16 text-right ${
-                        m.tipo === 'entrada' ? 'text-[#99ff3d]' : m.tipo === 'salida' ? 'text-red-400' : 'text-yellow-400'
+                        m.tipo === 'entrada' ? 'text-[#2e9e9b]' : m.tipo === 'salida' ? 'text-red-400' : 'text-yellow-400'
                       }`}>
                         {m.tipo === 'salida' ? '-' : '+'}{m.cantidad}
                       </span>
