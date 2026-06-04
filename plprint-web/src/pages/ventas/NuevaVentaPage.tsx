@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Loader2, Plus, Minus, Trash2, ShoppingCart,
-  ArrowLeft, Check, Package, Printer, QrCode, FileText, FileSignature, X,
+  ArrowLeft, Check, Package, Printer, QrCode, FileText, FileSignature, X, Download,
 } from 'lucide-react';
 
 import { productosApi } from '@/api/productos.api';
@@ -22,6 +22,7 @@ import { RequirePermission } from '@/components/RequirePermission';
 import { TicketImpresion, TicketData, buildTicketHtml } from './components/TicketImpresion';
 import QRTicketModal from './components/QRTicketModal';
 import CotizacionSelectorModal from '@/components/forms/CotizacionSelectorModal';
+import { useCotizacionPdfBuilder } from '@/components/forms/CotizacionPdf';
 import { getImageUrl } from '@/utils/format';
 
 interface ProductoCatalogo {
@@ -146,6 +147,7 @@ export default function NuevaVentaPage() {
   const { format: money, simbolo: monedaSimbolo, decimales: monedaDecimales } = useMoney();
   const { src: logoSrc } = useEmpresaLogo();
   const { activos: metodosPagoActivos, getLabel: getMetodoLabel, getIcon: getMetodoIcon } = useMetodosPago();
+  const cotizacionPdf = useCotizacionPdfBuilder();
   const desgloseIva = calcularIva(subtotalConDescuento);
   const total = desgloseIva.total;
 
@@ -298,17 +300,8 @@ export default function NuevaVentaPage() {
           descuento: i.descuento,
         })),
       });
-      const folio = (res.data as { data: { folio: string } }).data?.folio || 'N/A';
-      setCotizacionFolio(folio);
-      setTimeout(() => {
-        setCart([]);
-        setClienteSeleccionado(null);
-        setDescuentoGlobal(0);
-        setDescuentoMotivo('');
-        setNotas('');
-        setCotizacionFolio(null);
-        navigate('/cotizaciones');
-      }, 1500);
+      const data = (res.data as { data: { id: number; folio: string } }).data;
+      setCotizacionFolio(data.folio);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       alert(e.response?.data?.message || 'Error al guardar cotización');
@@ -346,6 +339,28 @@ export default function NuevaVentaPage() {
   };
 
   if (cotizacionFolio) {
+    const handleDescargarPdf = () => {
+      cotizacionPdf.descargarPdf({
+        folio: cotizacionFolio,
+        fecha: new Date(),
+        cliente: clienteSeleccionado?.nombre || 'Público General',
+        vendedor: usuario?.nombre || '—',
+        sucursal: sucursalEfectiva?.nombre || '—',
+        items: cart.map((i) => ({
+          nombre: i.nombre,
+          cantidad: i.cantidad,
+          precioUnitario: i.precioUnitario,
+          descuento: i.descuento,
+        })),
+        subtotal,
+        descuento: descuentoGlobal,
+        descuentoMotivo: descuentoMotivo || undefined,
+        total,
+        notas: notas || undefined,
+        logoUrl: logoSrc,
+      });
+    };
+
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <motion.div
@@ -358,7 +373,42 @@ export default function NuevaVentaPage() {
           </div>
           <h2 className="text-2xl font-bold text-white">¡Cotización guardada!</h2>
           <p className="text-muted-foreground">Folio: <span className="text-[#2e9e9b] font-mono font-bold">{cotizacionFolio}</span></p>
-          <p className="text-xs text-muted-foreground">Redirigiendo a cotizaciones...</p>
+          <p className="text-3xl font-bold text-[#2e9e9b]">
+            {money(total)}
+          </p>
+          <div className="flex gap-3 mt-2 flex-wrap justify-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCart([]);
+                setClienteSeleccionado(null);
+                setDescuentoGlobal(0);
+                setDescuentoMotivo('');
+                setNotas('');
+                setCotizacionFolio(null);
+              }}
+              className="border-border"
+            >
+              Nueva cotización
+            </Button>
+            <Button
+              onClick={handleDescargarPdf}
+              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
+            >
+              <Download size={16} />
+              Descargar PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCotizacionFolio(null);
+                navigate('/cotizaciones');
+              }}
+              className="border-border"
+            >
+              Ver cotizaciones
+            </Button>
+          </div>
         </motion.div>
       </div>
     );

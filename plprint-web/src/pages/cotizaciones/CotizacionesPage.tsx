@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  FileText, Plus, Search, Loader2, Filter, Send, X, Check, Ban, Pencil, ArrowRight,
+  FileText, Plus, Search, Loader2, Filter, Send, X, Check, Ban, Pencil, ArrowRight, Download,
 } from 'lucide-react';
 
 import { cotizacionesApi, Cotizacion } from '@/api/cotizaciones.api';
@@ -10,6 +10,8 @@ import { clientesApi } from '@/api/clientes.api';
 import { productosApi } from '@/api/productos.api';
 import { useMoney } from '@/hooks/useMoney';
 import { useSucursalStore } from '@/store/sucursalStore';
+import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
+import { useCotizacionPdfBuilder } from '@/components/forms/CotizacionPdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +39,8 @@ interface ItemForm {
 export default function CotizacionesPage() {
   const { simbolo } = useMoney();
   const sucursalActual = useSucursalStore((s) => s.sucursalActiva);
+  const { src: logoSrc } = useEmpresaLogo();
+  const cotizacionPdf = useCotizacionPdfBuilder();
   const navigate = useNavigate();
 
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
@@ -209,6 +213,41 @@ export default function CotizacionesPage() {
     } finally { setIsCanceling(false); }
   };
 
+  const handleDescargarPdf = async (c: Cotizacion) => {
+    try {
+      let detalle = c.cotizacion_detalle;
+      if (!detalle || detalle.length === 0) {
+        const res = await cotizacionesApi.getById(c.id);
+        detalle = (res.data as { data: { cotizacion_detalle: typeof detalle } }).data.cotizacion_detalle;
+      }
+      const items = (detalle || []).map((d) => ({
+        nombre: d.productos?.nombre || `Producto #${d.producto_id}`,
+        cantidad: d.cantidad,
+        precioUnitario: Number(d.precio_unitario),
+        descuento: Number(d.descuento || 0),
+      }));
+      const subtotal = items.reduce((acc, i) => acc + i.precioUnitario * i.cantidad, 0);
+      const descuento = Number(c.descuento);
+      cotizacionPdf.descargarPdf({
+        folio: c.folio,
+        fecha: new Date(c.created_at),
+        cliente: c.clientes?.nombre || 'Público General',
+        vendedor: c.usuarios?.nombre || '—',
+        sucursal: c.sucursales?.nombre || '—',
+        items,
+        subtotal,
+        descuento,
+        descuentoMotivo: c.descuento_motivo || undefined,
+        total: Number(c.total),
+        notas: c.notas || undefined,
+        logoUrl: logoSrc,
+      });
+    } catch (e) {
+      console.error(e);
+      alert('Error al generar PDF');
+    }
+  };
+
   return (
     <div className="w-full h-full flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -317,6 +356,15 @@ export default function CotizacionesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-1">
+                        <RequirePermission modulo="cotizaciones" accion="exportar_pdf">
+                          <button
+                            onClick={() => handleDescargarPdf(c)}
+                            title="Descargar PDF"
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
+                          >
+                            <Download size={14} />
+                          </button>
+                        </RequirePermission>
                         {c.estado === 'pendiente' && (
                           <>
                             <RequirePermission modulo="cotizaciones" accion="editar">
