@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
-  Boxes, UserCog, Building2, LogOut, PanelLeftClose, Tag, Settings,
+  Boxes, UserCog, Building2, LogOut, PanelLeftClose, Tag, Settings, Truck, Ruler, Receipt, FolderTree,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -25,12 +25,16 @@ const navItems = [
   { to: '/insumos',    label: 'Insumos',     icon: Boxes,           modulo: 'insumos' },
   { to: '/ventas',     label: 'Ventas',      icon: ShoppingCart,    modulo: 'ventas' },
   { to: '/clientes',   label: 'Clientes',    icon: Users,           modulo: 'clientes' },
+  { to: '/gastos',     label: 'Gastos',      icon: Receipt,         modulo: 'gastos' },
 ];
 
 const adminItems = [
-  { to: '/usuarios',   label: 'Usuarios',    icon: UserCog,         modulo: 'usuarios' },
-  { to: '/categorias', label: 'Categorías',  icon: Tag,             modulo: 'categorias' },
-  { to: '/sucursales', label: 'Sucursales',  icon: Building2,       modulo: 'sucursales' },
+  { to: '/usuarios',             label: 'Usuarios',              icon: UserCog,    modulo: 'usuarios' },
+  { to: '/categorias',           label: 'Categorías',            icon: Tag,        modulo: 'categorias' },
+  { to: '/categorias-gastos',    label: 'Cat. de Gastos',        icon: FolderTree, modulo: 'gastos' },
+  { to: '/proveedores',          label: 'Proveedores',           icon: Truck,      modulo: 'proveedores' },
+  { to: '/unidades-medida',      label: 'Unidades de Medida',    icon: Ruler,      modulo: 'unidades_medida' },
+  { to: '/sucursales',           label: 'Sucursales',            icon: Building2,  modulo: 'sucursales' },
 ];
 
 export function AppSidebar() {

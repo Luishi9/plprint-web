@@ -32,6 +32,8 @@ model sucursales {
   usuarios_sucursales  usuarios_sucursales[]
   ventas               ventas[]
   insumos_inventario   insumos_inventario[]
+  gastos               gastos[]
+  compras_insumos      compras_insumos[]
 }
 
 model usuarios {
@@ -49,6 +51,9 @@ model usuarios {
   usuarios_sucursales usuarios_sucursales[]
   ventas              ventas[]
   audit_log           audit_log[]
+  gastos              gastos[]
+  gastos_autorizados  gastos[]              @relation("autorizado_gastos")
+  compras_insumos     compras_insumos[]
 
   @@index([rol_id])
 }
@@ -66,10 +71,14 @@ model usuarios_sucursales {
 model categorias {
   id         Int        @id @default(autoincrement())
   nombre     String     @db.VarChar(100)
+  descripcion String?   @db.VarChar(255)
+  tipo       String     @default("venta") @db.VarChar(20) // 'venta' | 'produccion'
   activo     Boolean    @default(true)
   created_at DateTime   @default(now())
   updated_at DateTime   @default(now()) @updatedAt
   productos  productos[]
+
+  @@index([tipo])
 }
 
 model proveedores {
@@ -78,12 +87,17 @@ model proveedores {
   contacto   String?     @db.VarChar(100)
   telefono   String?     @db.VarChar(20)
   email      String?     @db.VarChar(150)
+  rfc        String?     @db.VarChar(20)
   direccion  String?     @db.Text
+  notas      String?     @db.Text
   activo     Boolean     @default(true)
   created_at DateTime    @default(now())
   updated_at DateTime    @default(now()) @updatedAt
   productos  productos[]
   insumos    insumos[]
+  compras_insumos compras_insumos[]
+
+  @@index([activo])
 }
 
 model productos {
@@ -145,6 +159,7 @@ model ventas {
   usuario_id         Int?
   total              Decimal              @db.Decimal(10, 2)
   descuento          Decimal              @default(0) @db.Decimal(10, 2)
+  descuento_motivo   String?              @db.VarChar(255)
   metodo_pago        String               @default("efectivo") @db.VarChar(30)
   metodo_pago_id     Int?
   estado             String               @default("completada") @db.VarChar(20)
@@ -209,8 +224,74 @@ model insumos {
   proveedores      proveedores?         @relation(fields: [proveedor_id], references: [id])
   inventario       insumos_inventario[]
   producto_insumos producto_insumos[]
+  compras_insumos  compras_insumos[]
 
   @@index([activo])
+}
+
+model compras_insumos {
+  id              Int          @id @default(autoincrement())
+  sucursal_id     Int?
+  proveedor_id    Int?
+  usuario_id      Int?
+  insumo_id       Int
+  cantidad        Decimal      @db.Decimal(12, 3)
+  precio_unitario Decimal      @db.Decimal(10, 2)
+  total           Decimal      @db.Decimal(12, 2)
+  notas           String?      @db.Text
+  fecha           DateTime     @default(now())
+  created_at      DateTime     @default(now())
+  proveedores     proveedores? @relation(fields: [proveedor_id], references: [id])
+  insumos         insumos      @relation(fields: [insumo_id], references: [id])
+  sucursales      sucursales?  @relation(fields: [sucursal_id], references: [id])
+  usuarios        usuarios?    @relation(fields: [usuario_id], references: [id])
+
+  @@index([fecha])
+  @@index([proveedor_id])
+  @@index([insumo_id])
+}
+
+model unidades_medida {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique @db.VarChar(50)
+  abreviatura String   @db.VarChar(10)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+}
+
+model gastos_categorias {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique @db.VarChar(100)
+  descripcion String?   @db.VarChar(255)
+  activo      Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
+  gastos      gastos[]
+}
+
+model gastos {
+  id              Int       @id @default(autoincrement())
+  sucursal_id     Int?
+  usuario_id      Int?
+  categoria_id    Int
+  concepto        String    @db.VarChar(200)
+  monto           Decimal   @db.Decimal(12, 2)
+  tipo            String    @default("gasto") @db.VarChar(20) // 'gasto' | 'ingreso' | 'retiro'
+  autorizado_por  Int?
+  comprobante_url String?   @db.VarChar(500)
+  notas           String?   @db.Text
+  fecha           DateTime  @default(now())
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  categoria       gastos_categorias @relation(fields: [categoria_id], references: [id])
+  sucursales      sucursales? @relation(fields: [sucursal_id], references: [id])
+  usuarios        usuarios?  @relation(fields: [usuario_id], references: [id])
+  autorizado      usuarios?  @relation("autorizado_gastos", fields: [autorizado_por], references: [id])
+
+  @@index([fecha])
+  @@index([categoria_id])
+  @@index([tipo])
+  @@index([sucursal_id])
 }
 
 model insumos_inventario {

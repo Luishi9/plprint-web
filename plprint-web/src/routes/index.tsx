@@ -13,6 +13,10 @@ const InsumosPage    = lazy(() => import('@/pages/insumos/InsumosPage'));
 const UsuariosPage   = lazy(() => import('@/pages/usuarios/UsuariosPage'));
 const CategoriasPage   = lazy(() => import('@/pages/categorias/CategoriasPage'));
 const SucursalesPage   = lazy(() => import('@/pages/sucursales/SucursalesPage'));
+const ProveedoresPage  = lazy(() => import('@/pages/proveedores/ProveedoresPage'));
+const UnidadesMedidaPage = lazy(() => import('@/pages/unidades-medida/UnidadesMedidaPage'));
+const GastosPage = lazy(() => import('@/pages/gastos/GastosPage'));
+const CategoriasGastosPage = lazy(() => import('@/pages/gastos/CategoriasGastosPage'));
 const TicketPublicoPage = lazy(() => import('@/pages/ventas/TicketPublicoPage'));
 const ConfiguracionPage = lazy(() => import('@/pages/configuracion/ConfiguracionPage'));
 
@@ -58,6 +62,31 @@ export const AppRoutes = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <SucursalesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/proveedores"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ProveedoresPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/unidades-medida"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UnidadesMedidaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/gastos" element={<GastosPage />} />
+          <Route
+            path="/categorias-gastos"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CategoriasGastosPage />
               </ProtectedRoute>
             }
           />

@@ -284,13 +284,13 @@ function RolFormModal({ open, onOpenChange, rol, permisosPorModulo, onSaved }: R
               onChange={(e) => setSearch(e.target.value)}
               className="mb-2"
             />
-            <div className="flex-1 overflow-y-auto border border-border rounded-lg p-2 space-y-2">
+            <div className="flex-1 overflow-y-auto border border-border rounded-lg p-2 space-y-2 bg-card/50">
               {modulosFiltrados.map(([modulo, perms]) => {
                 const ids = perms.map((p) => p.id);
                 const todos = ids.every((id) => seleccionados.has(id));
                 const algunos = ids.some((id) => seleccionados.has(id)) && !todos;
                 return (
-                  <div key={modulo} className="border border-border/50 rounded-md p-2">
+                  <div key={modulo} className="border border-border/50 rounded-md p-2 bg-muted/30">
                     <button
                       type="button"
                       onClick={() => toggleModulo(modulo)}

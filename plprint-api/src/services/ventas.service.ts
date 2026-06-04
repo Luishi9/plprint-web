@@ -14,6 +14,7 @@ interface CreateVentaDTO {
   usuarioId: number;
   metodoPago: string;
   descuento?: number;
+  descuento_motivo?: string;
   notas?: string;
   items: VentaItem[];
 }
@@ -111,6 +112,7 @@ export class VentasService {
           usuario_id: dto.usuarioId,
           total,
           descuento: dto.descuento ?? 0,
+          descuento_motivo: dto.descuento && dto.descuento > 0 ? (dto.descuento_motivo ?? null) : null,
           metodo_pago: dto.metodoPago,
           notas: dto.notas,
           venta_detalle: {

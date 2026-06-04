@@ -58,6 +58,7 @@ export default function NuevaVentaPage() {
   // Carrito
   const [cart, setCart] = useState<CartItem[]>([]);
   const [descuentoGlobal, setDescuentoGlobal] = useState(0);
+  const [descuentoMotivo, setDescuentoMotivo] = useState('');
 
   // Cliente
   const [clienteSearch, setClienteSearch] = useState('');
@@ -151,6 +152,10 @@ export default function NuevaVentaPage() {
   const handleSubmit = async () => {
     if (!cart.length) return;
     if (!sucursalEfectiva) { alert('No hay sucursal activa.'); return; }
+    if (descuentoGlobal > 0 && descuentoMotivo.trim().length < 3) {
+      alert('Debes indicar el motivo del descuento (mínimo 3 caracteres).');
+      return;
+    }
     setIsSubmitting(true);
     try {
       // Validar stock de insumos antes de crear la venta
@@ -179,6 +184,7 @@ export default function NuevaVentaPage() {
         clienteId: clienteSeleccionado?.id,
         metodoPago,
         descuento: descuentoGlobal,
+        descuento_motivo: descuentoGlobal > 0 ? descuentoMotivo.trim() : undefined,
         notas: notas || undefined,
         items: cart.map((i) => ({
           productoId: i.productoId,
@@ -256,7 +262,7 @@ export default function NuevaVentaPage() {
           <div className="flex gap-3 mt-2 flex-wrap justify-center">
             <Button
               variant="outline"
-              onClick={() => { setCart([]); setSuccessId(null); setClienteSeleccionado(null); setDescuentoGlobal(0); setNotas(''); setTicketData(null); }}
+              onClick={() => { setCart([]); setSuccessId(null); setClienteSeleccionado(null); setDescuentoGlobal(0); setDescuentoMotivo(''); setNotas(''); setTicketData(null); }}
               className="border-border"
             >
               Nueva venta
@@ -500,7 +506,11 @@ export default function NuevaVentaPage() {
                   type="number"
                   min={0}
                   value={descuentoGlobal || ''}
-                  onChange={(e) => setDescuentoGlobal(Number(e.target.value))}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setDescuentoGlobal(v);
+                    if (v === 0) setDescuentoMotivo('');
+                  }}
                   placeholder="0.00"
                   className="bg-background border-border text-sm font-mono focus-visible:ring-[#2e9e9b]"
                 />
@@ -510,6 +520,23 @@ export default function NuevaVentaPage() {
                 <span className="text-sm font-mono text-muted-foreground">{money(subtotal)}</span>
               </div>
             </div>
+
+            {descuentoGlobal > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">
+                  Motivo del descuento <span className="text-red-500">*</span>
+                </p>
+                <Input
+                  required
+                  minLength={3}
+                  maxLength={255}
+                  value={descuentoMotivo}
+                  onChange={(e) => setDescuentoMotivo(e.target.value)}
+                  placeholder="Ej. Cliente frecuente, promoción, daño..."
+                  className="bg-background border-border text-sm focus-visible:ring-[#2e9e9b]"
+                />
+              </div>
+            )}
 
             <Input
               placeholder="Notas (opcional)"

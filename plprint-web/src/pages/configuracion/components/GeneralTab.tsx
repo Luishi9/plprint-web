@@ -17,28 +17,34 @@ type MetaGrupo = {
   label: string;
   icon: React.ReactNode;
   desc: string;
+  grupo: string;
   campos: string[];
 };
 
 const GRUPOS_META: MetaGrupo[] = [
   {
     label: 'Empresa', icon: <Building2 size={16} />, desc: 'Datos de la empresa que aparecen en tickets y reportes',
+    grupo: 'empresa',
     campos: ['empresa_nombre', 'empresa_rfc', 'empresa_telefono', 'empresa_email', 'empresa_direccion'],
   },
   {
     label: 'Impuestos', icon: <Receipt size={16} />, desc: 'Configuración de IVA y facturación',
+    grupo: 'impuestos',
     campos: ['iva_porcentaje', 'iva_activo'],
   },
   {
     label: 'Moneda', icon: <Banknote size={16} />, desc: 'Formato y símbolo de la moneda',
+    grupo: 'moneda',
     campos: ['moneda_simbolo', 'moneda_codigo', 'moneda_decimales', 'moneda_separador_decimal', 'moneda_separador_miles'],
   },
   {
     label: 'Reportes', icon: <FileText size={16} />, desc: 'Formato de los reportes generados',
+    grupo: 'reportes',
     campos: ['reportes_formato', 'reportes_incluir_logo'],
   },
   {
     label: 'Ticket', icon: <Receipt size={16} />, desc: 'Personalización del ticket de venta',
+    grupo: 'ticket',
     campos: ['ticket_encabezado', 'ticket_subtitulo', 'ticket_mensaje_pie', 'ticket_mostrar_logo', 'ticket_mostrar_direccion', 'ticket_mostrar_telefono', 'ticket_mostrar_rfc', 'ticket_formato_fecha', 'ticket_formato_hora'],
   },
 ];
@@ -88,8 +94,12 @@ export default function GeneralTab() {
 
   const getValue = (clave: string): ConfigValue => {
     if (pending[clave] !== undefined) return pending[clave];
-    const grupo = clave.split('_')[0];
-    return original[grupo]?.[clave] ?? '';
+    for (const g of GRUPOS_META) {
+      if (g.campos.includes(clave)) {
+        return original[g.grupo]?.[clave] ?? '';
+      }
+    }
+    return '';
   };
 
   const handleChange = (clave: string, valor: ConfigValue) => {
@@ -307,8 +317,7 @@ export default function GeneralTab() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
             {g.campos.map((c) => {
-              const grupo = c.split('_')[0];
-              if (!(c in (config[grupo] ?? {}))) return null;
+              if (!(c in (config[g.grupo] ?? {}))) return null;
               return renderCampo(c);
             })}
           </CardContent>

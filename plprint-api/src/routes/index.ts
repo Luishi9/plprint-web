@@ -15,6 +15,10 @@ import auditLogRoutes from './auditLog.routes';
 import respaldoRoutes from './respaldo.routes';
 import notificacionesRoutes from './notificaciones.routes';
 import reportesRoutes from './reportes.routes';
+import proveedoresRoutes from './proveedores.routes';
+import unidadesMedidaRoutes from './unidadesMedida.routes';
+import gastosRoutes from './gastos.routes';
+import comprasRoutes from './compras.routes';
 import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -39,5 +43,9 @@ router.use('/audit-log', auditLogRoutes);
 router.use('/respaldo', respaldoRoutes);
 router.use('/notificaciones', notificacionesRoutes);
 router.use('/reportes', reportesRoutes);
+router.use('/proveedores', proveedoresRoutes);
+router.use('/unidades-medida', unidadesMedidaRoutes);
+router.use('/gastos', gastosRoutes);
+router.use('/compras', comprasRoutes);
 
 export default router;

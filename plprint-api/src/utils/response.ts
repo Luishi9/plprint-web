@@ -12,6 +12,9 @@ export interface PaginationMeta {
   limit: number;
   total: number;
   totalPages: number;
+  totalMonto?: number;
+  totalInvertido?: number;
+  totalCantidad?: number;
 }
 
 export const sendSuccess = <T>(

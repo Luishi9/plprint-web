@@ -1,27 +1,29 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Tag, Plus, Pencil, Trash2, Loader2, Check, X } from 'lucide-react';
+import { Tag, Plus, Pencil, Trash2, Loader2, Check, X, Factory, ShoppingBag } from 'lucide-react';
 
 import { categoriasApi, Categoria } from '@/api/categorias.api';
 import { Button } from '@/components/ui/button';
 import { RequirePermission } from '@/components/RequirePermission';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 
+const emptyForm = { nombre: '', tipo: 'venta' as 'venta' | 'produccion', descripcion: '' };
+
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filtroTipo, setFiltroTipo] = useState<'todas' | 'venta' | 'produccion'>('todas');
 
-  // Modal crear/editar
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<Categoria | null>(null);
-  const [nombre, setNombre] = useState('');
+  const [form, setForm] = useState(emptyForm);
   const [isSaving, setIsSaving] = useState(false);
-  const [nombreError, setNombreError] = useState('');
+  const [formError, setFormError] = useState('');
 
-  // Confirmar eliminar
   const [eliminarItem, setEliminarItem] = useState<Categoria | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -39,34 +41,43 @@ export default function CategoriasPage() {
 
   useEffect(() => { fetchCategorias(); }, []);
 
+  const categoriasFiltradas = filtroTipo === 'todas'
+    ? categorias
+    : categorias.filter((c) => c.tipo === filtroTipo);
+
   const abrirCrear = () => {
     setEditando(null);
-    setNombre('');
-    setNombreError('');
+    setForm(emptyForm);
+    setFormError('');
     setModalOpen(true);
   };
 
   const abrirEditar = (cat: Categoria) => {
     setEditando(cat);
-    setNombre(cat.nombre);
-    setNombreError('');
+    setForm({ nombre: cat.nombre, tipo: cat.tipo, descripcion: cat.descripcion || '' });
+    setFormError('');
     setModalOpen(true);
   };
 
   const handleGuardar = async () => {
-    if (!nombre.trim()) { setNombreError('El nombre es requerido.'); return; }
+    if (!form.nombre.trim()) { setFormError('El nombre es requerido.'); return; }
     try {
       setIsSaving(true);
+      const payload = {
+        nombre: form.nombre.trim(),
+        tipo: form.tipo,
+        descripcion: form.descripcion.trim() || undefined,
+      };
       if (editando) {
-        await categoriasApi.update(editando.id, { nombre: nombre.trim() });
+        await categoriasApi.update(editando.id, payload);
       } else {
-        await categoriasApi.create({ nombre: nombre.trim() });
+        await categoriasApi.create(payload);
       }
       setModalOpen(false);
       fetchCategorias();
-    } catch (e) {
-      console.error(e);
-      alert('Error al guardar la categoría.');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      setFormError(err.response?.data?.message || 'Error al guardar la categoría.');
     } finally {
       setIsSaving(false);
     }
@@ -89,8 +100,6 @@ export default function CategoriasPage() {
 
   return (
     <div className="w-full h-full flex flex-col gap-6">
-
-      {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
@@ -98,24 +107,45 @@ export default function CategoriasPage() {
             Categorías
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Organiza tus productos por categoría.
+            Organiza tus productos por categoría de venta o producción.
           </p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <RequirePermission modulo="categorias" accion="crear">
-            <Button
-              onClick={abrirCrear}
-              className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Categoría
-            </Button>
-          </RequirePermission>
-        </motion.div>
+        <RequirePermission modulo="categorias" accion="crear">
+          <Button
+            onClick={abrirCrear}
+            className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva Categoría
+          </Button>
+        </RequirePermission>
       </div>
 
-      {/* TABLA */}
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground text-xs">Tipo:</span>
+        {[
+          { v: 'todas' as const,      label: 'Todas',     icon: Tag },
+          { v: 'venta' as const,      label: 'Venta',     icon: ShoppingBag },
+          { v: 'produccion' as const, label: 'Producción', icon: Factory },
+        ].map((opt) => {
+          const Icon = opt.icon;
+          return (
+            <button
+              key={opt.v}
+              onClick={() => setFiltroTipo(opt.v)}
+              className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                filtroTipo === opt.v
+                  ? 'bg-[#2e9e9b] text-black'
+                  : 'bg-background border border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Icon size={12} /> {opt.label}
+            </button>
+          );
+        })}
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -128,6 +158,8 @@ export default function CategoriasPage() {
               <tr>
                 <th scope="col" className="px-6 py-4 font-semibold">#</th>
                 <th scope="col" className="px-6 py-4 font-semibold">Nombre</th>
+                <th scope="col" className="px-6 py-4 font-semibold">Tipo</th>
+                <th scope="col" className="px-6 py-4 font-semibold">Descripción</th>
                 <th scope="col" className="px-6 py-4 font-semibold text-center">Productos</th>
                 <th scope="col" className="px-6 py-4 font-semibold text-center">Acciones</th>
               </tr>
@@ -135,59 +167,75 @@ export default function CategoriasPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center">
+                  <td colSpan={6} className="px-6 py-8 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando categorías...</p>
                   </td>
                 </tr>
-              ) : categorias.length === 0 ? (
+              ) : categoriasFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
                     <Tag size={32} className="mx-auto mb-2 opacity-20" />
-                    <p>No hay categorías aún. ¡Crea la primera!</p>
+                    <p>{filtroTipo === 'todas' ? 'No hay categorías aún. ¡Crea la primera!' : 'No hay categorías de este tipo.'}</p>
                   </td>
                 </tr>
               ) : (
                 <AnimatePresence>
-                  {categorias.map((cat, i) => (
-                    <motion.tr
-                      key={cat.id}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
-                    >
-                      <td className="px-6 py-4 text-muted-foreground text-xs font-mono">{cat.id}</td>
-                      <td className="px-6 py-4 font-medium text-foreground">{cat.nombre}</td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="text-sm font-mono text-[#2e9e9b]">
-                          {cat._count?.productos ?? 0}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-1">
-                          <RequirePermission modulo="categorias" accion="editar">
-                            <button
-                              onClick={() => abrirEditar(cat)}
-                              title="Editar"
-                              className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
-                            >
-                              <Pencil size={14} />
-                            </button>
-                          </RequirePermission>
-                          <RequirePermission modulo="categorias" accion="eliminar">
-                            <button
-                              onClick={() => setEliminarItem(cat)}
-                              title="Eliminar"
-                              className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </RequirePermission>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
+                  {categoriasFiltradas.map((cat, i) => {
+                    const isProduccion = cat.tipo === 'produccion';
+                    return (
+                      <motion.tr
+                        key={cat.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-muted-foreground text-xs font-mono">{cat.id}</td>
+                        <td className="px-6 py-4 font-medium text-foreground">{cat.nombre}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                            isProduccion
+                              ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                              : 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30'
+                          }`}>
+                            {isProduccion ? <Factory size={11} /> : <ShoppingBag size={11} />}
+                            {isProduccion ? 'Producción' : 'Venta'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-muted-foreground text-sm">
+                          {cat.descripcion || <span className="text-xs">—</span>}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-sm font-mono text-[#2e9e9b]">
+                            {cat._count?.productos ?? 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-1">
+                            <RequirePermission modulo="categorias" accion="editar">
+                              <button
+                                onClick={() => abrirEditar(cat)}
+                                title="Editar"
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                            </RequirePermission>
+                            <RequirePermission modulo="categorias" accion="eliminar">
+                              <button
+                                onClick={() => setEliminarItem(cat)}
+                                title="Eliminar"
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </RequirePermission>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
                 </AnimatePresence>
               )}
             </tbody>
@@ -195,7 +243,6 @@ export default function CategoriasPage() {
         </div>
       </motion.div>
 
-      {/* MODAL CREAR / EDITAR */}
       <Dialog open={modalOpen} onOpenChange={(v) => { if (!v) setModalOpen(false); }}>
         <DialogContent className="max-w-sm bg-card border-border">
           <DialogHeader>
@@ -203,21 +250,59 @@ export default function CategoriasPage() {
               {editando ? 'Editar categoría' : 'Nueva categoría'}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              {editando ? 'Modifica el nombre de la categoría.' : 'Ingresa el nombre de la nueva categoría.'}
+              {editando ? 'Modifica los datos de la categoría.' : 'Ingresa los datos de la nueva categoría.'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-2">
-            <label className="text-sm font-medium text-foreground block mb-1.5">Nombre *</label>
-            <Input
-              autoFocus
-              placeholder="Ej. Electrónica, Ropa, Alimentos..."
-              value={nombre}
-              onChange={(e) => { setNombre(e.target.value); setNombreError(''); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleGuardar(); }}
-              className="bg-background"
-            />
-            {nombreError && <p className="text-red-400 text-xs mt-1">{nombreError}</p>}
+          <div className="py-2 flex flex-col gap-3">
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-1.5">Nombre *</label>
+              <Input
+                autoFocus
+                placeholder="Ej. Electrónica, Ropa, Impresos..."
+                value={form.nombre}
+                onChange={(e) => { setForm({ ...form, nombre: e.target.value }); setFormError(''); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleGuardar(); }}
+                className="bg-background"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-1.5">Tipo</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, tipo: 'venta' })}
+                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                    form.tipo === 'venta'
+                      ? 'bg-[#2e9e9b]/20 text-[#2e9e9b] border border-[#2e9e9b]/50'
+                      : 'bg-background border border-border text-muted-foreground'
+                  }`}
+                >
+                  <ShoppingBag size={14} /> Venta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, tipo: 'produccion' })}
+                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                    form.tipo === 'produccion'
+                      ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+                      : 'bg-background border border-border text-muted-foreground'
+                  }`}
+                >
+                  <Factory size={14} /> Producción
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-1.5">Descripción</label>
+              <Textarea
+                placeholder="Descripción opcional..."
+                value={form.descripcion}
+                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                className="bg-background min-h-[50px]"
+              />
+            </div>
+            {formError && <p className="text-red-400 text-xs">{formError}</p>}
           </div>
 
           <DialogFooter className="gap-2 flex justify-end">
@@ -238,7 +323,6 @@ export default function CategoriasPage() {
         </DialogContent>
       </Dialog>
 
-      {/* MODAL CONFIRMAR ELIMINAR */}
       <Dialog open={!!eliminarItem} onOpenChange={(v) => { if (!v) setEliminarItem(null); }}>
         <DialogContent className="max-w-sm bg-card border-border">
           <DialogHeader>

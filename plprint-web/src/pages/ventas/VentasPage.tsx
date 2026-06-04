@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   ShoppingCart, Plus, Search, Loader2, Receipt,
-  ChevronDown, ChevronUp, BadgeCheck, XCircle, Clock, Printer, QrCode,
+  ChevronDown, ChevronUp, BadgeCheck, XCircle, Clock, Printer, QrCode, Ban, Check,
 } from 'lucide-react';
 import { buildTicketHtml, TicketData } from './components/TicketImpresion';
 import QRTicketModal from './components/QRTicketModal';
@@ -17,6 +17,9 @@ import { useMoney } from '@/hooks/useMoney';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 
 const ESTADO_CONFIG: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
   completada: {
@@ -43,6 +46,9 @@ export default function VentasPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [qrData, setQrData] = useState<TicketData | null>(null);
+  const [filtroEstado, setFiltroEstado] = useState<'todas' | 'completada' | 'cancelada'>('completada');
+  const [ventaACancelar, setVentaACancelar] = useState<Venta | null>(null);
+  const [isCanceling, setIsCanceling] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const { sucursalActiva } = useSucursalStore();
   const { src: logoSrc } = useEmpresaLogo();
@@ -74,6 +80,26 @@ export default function VentasPage() {
       0,
     );
     setQrData(buildTicketData(venta, subtotal));
+  }
+
+  async function handleCancelarVenta(venta: Venta, e: React.MouseEvent) {
+    e.stopPropagation();
+    setVentaACancelar(venta);
+  }
+
+  async function confirmarCancelacion() {
+    if (!ventaACancelar) return;
+    try {
+      setIsCanceling(true);
+      await ventasApi.cancel(ventaACancelar.id);
+      setVentaACancelar(null);
+      fetchVentas(true);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      alert(e.response?.data?.message || 'No se pudo cancelar la venta.');
+    } finally {
+      setIsCanceling(false);
+    }
   }
 
   function buildTicketData(venta: Venta, subtotal: number): TicketData {
@@ -119,6 +145,9 @@ export default function VentasPage() {
             v.clientes?.nombre?.toLowerCase().includes(q) ||
             v.usuarios?.nombre?.toLowerCase().includes(q),
         );
+      }
+      if (filtroEstado !== 'todas') {
+        data = data.filter((v) => v.estado === filtroEstado);
       }
       setVentas(data);
     } catch (err: any) {
@@ -187,14 +216,36 @@ export default function VentasPage() {
         </motion.div>
       </div>
 
+      {/* FILTRO ESTADO */}
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground text-xs">Mostrar:</span>
+        {[
+          { v: 'completada' as const, label: 'Completadas', color: 'bg-[#2e9e9b]' },
+          { v: 'cancelada' as const,  label: 'Canceladas',  color: 'bg-red-500' },
+          { v: 'todas' as const,      label: 'Todas',      color: 'bg-zinc-500' },
+        ].map((opt) => (
+          <button
+            key={opt.v}
+            onClick={() => setFiltroEstado(opt.v)}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              filtroEstado === opt.v
+                ? `${opt.color} text-black`
+                : 'bg-background border border-border text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           { label: 'Total ventas', value: totales.count, prefix: '' },
           { label: 'Ingresos', value: money(totales.monto) },
           {
-            label: 'Completadas',
-            value: ventas.filter((v) => v.estado === 'completada').length,
+            label: filtroEstado === 'cancelada' ? 'Canceladas' : 'Completadas',
+            value: ventas.filter((v) => v.estado === filtroEstado).length,
             prefix: '',
           },
         ].map((stat, i) => (
@@ -297,6 +348,17 @@ export default function VentasPage() {
                               >
                                 <QrCode size={16} />
                               </button>
+                              {venta.estado === 'completada' && (
+                                <RequirePermission modulo="ventas" accion="cancelar">
+                                  <button
+                                    onClick={(e) => handleCancelarVenta(venta, e)}
+                                    className="p-2 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
+                                    title="Cancelar venta"
+                                  >
+                                    <Ban size={16} />
+                                  </button>
+                                </RequirePermission>
+                              )}
                               {isExpanded
                                 ? <ChevronUp size={16} className="text-muted-foreground" />
                                 : <ChevronDown size={16} className="text-muted-foreground" />}
@@ -351,6 +413,36 @@ export default function VentasPage() {
       </motion.div>
 
       <QRTicketModal data={qrData} open={!!qrData} onClose={() => setQrData(null)} />
+
+      {/* MODAL CONFIRMAR CANCELACIÓN */}
+      <Dialog open={!!ventaACancelar} onOpenChange={(v) => { if (!v) setVentaACancelar(null); }}>
+        <DialogContent className="max-w-sm bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Ban className="text-red-400" size={20} /> ¿Cancelar venta?
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Se cancelará la venta <span className="text-white font-semibold">#{ventaACancelar?.id}</span> de{' '}
+              <span className="text-white font-semibold">{ventaACancelar?.clientes?.nombre || 'Público General'}</span>{' '}
+              por <span className="text-[#2e9e9b] font-mono">{ventaACancelar ? money(Number(ventaACancelar.total)) : ''}</span>.
+              Esta acción se registrará en la bitácora.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 flex justify-end pt-2">
+            <Button variant="outline" onClick={() => setVentaACancelar(null)} disabled={isCanceling}>
+              Volver
+            </Button>
+            <Button
+              onClick={confirmarCancelacion}
+              disabled={isCanceling}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold"
+            >
+              {isCanceling ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+              Sí, cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

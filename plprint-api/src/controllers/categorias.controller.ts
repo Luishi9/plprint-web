@@ -5,9 +5,10 @@ import { sendSuccess, sendCreated, sendNoContent } from '../utils/response';
 export class CategoriasController {
   constructor(private categoriasService: CategoriasService) {}
 
-  getAll = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const categorias = await this.categoriasService.findAll();
+      const tipo = req.query.tipo as string | undefined;
+      const categorias = await this.categoriasService.findAll(tipo);
       sendSuccess(res, categorias);
     } catch (err) {
       next(err);

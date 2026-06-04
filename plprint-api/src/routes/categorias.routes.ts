@@ -10,6 +10,8 @@ const controller = new CategoriasController(new CategoriasService());
 
 const categoriaSchema = z.object({
   nombre: z.string().min(1).max(100),
+  tipo: z.enum(['venta', 'produccion']).default('venta'),
+  descripcion: z.string().max(255).optional(),
 });
 
 router.get('/', controller.getAll);

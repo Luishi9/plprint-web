@@ -167,15 +167,15 @@ Quiero que generes:
 
 Además, sugiere funcionalidades adicionales para hacer el sistema más completo, como:
 
-[] Ventana de ajustes del sistema, donde se agregaran funciones como:
+[x] Ventana de ajustes del sistema, donde se agregaran funciones como:
   - cambiar logo de la empresa
   - aplicar algun tipo de iva al costo de los productos
   - check para aplicar siempre ese iva o no
   - modificar informacion de los tickets, logo que saldra en los tickets, mensaje, formato de fecha y hora
-[] Control de permisos basado en roles (RBAC)
+[x] Control de permisos basado en roles (RBAC)
   - ventana para crear o modificar roles existentes
   - asignar permisos y modulos a los que tendra ese rol
-[] Control de acceso a los modulos del sistema:
+[x] Control de acceso a los modulos del sistema:
   - dependiendo del rol asignar que modulos del sistema tendra acceso
 
 Para el IVA, como quieres manejarlo?
@@ -184,20 +184,6 @@ Para el RBAC, que nivel de granularidad quieres?
 quiero el control de acceso a modulos completos con acciones basicas, pero esto solo para usuarios admin y a usuarios a los que se les asigne esta opcion
 Que otras opciones te gustaria incluir en configuracion?
 Datos de la empresa, Formato de moneda, Tipos de pago personalizados, Reportes y exportacion, Respaldo de datos, Notificaciones, Bitacora/Audit log
-
-
-
-
-[] Ventas con pendiente de pago y abonos
-[] Reportes de ventas (diarios, mensuales)
-[] Exportación a Excel/PDF
-[] Dashboard con métricas
-[] Control de proveedores
-[] Compras a proveedores
-[] Devoluciones
-[] Descuentos y promociones
-[] Auditoría de acciones (logs de usuarios)
-
 
 ---
 
@@ -289,3 +275,60 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 - Debe evitar duplicidad de datos
 - Debe optimizar consultas por sucursal (uso de índices)
 
+[x] Reportes de ventas (diarios, mensuales)
+[x] Exportación a Excel/PDF
+[x] Dashboard con métricas
+[x] Descuentos y promociones
+
+
+
+## MEJORAS
+
+[] Quiero agregar los siguientes modulos:
+
+  1. categoria de gastos, seccion para dar de alta lista de gastos y registrar estos, restandolos a los ingresos totales del dia en caso de tener gastos ese mismo dia
+  2. Control de proveedores, seccion para dar de alta lista de proveedoress
+  3. unidades de medida
+
+  4. cotizaciones: este modulo permitira que cuando se este realizando una venta se pueda guardar esta como
+      una cotizacion en caso de que no se quiera realizar la compra por parte del cliente, permitiendo 
+      guardarla y exportarla como PDF, al guardarla se visualizara en la seccion de cotizaciones, 
+      dentro de la vista de ventas en la parte superior derecha se moestrar aun boton "Venta desde Cotizacion"
+      al dar click mostrara una lista de las cotizaciones donde se podra seleccionar una y automaticamente se pondran los productos listos para la venta (la busqueda de cotizaciones tiene filtros de busqueda, por nombre del cliente, por fecha, por usuario vendedor que ralizo la cotizacion "eso solo lo ve el admin", y por folio de cotizacion o ticket)
+  5. boton mermas con dos subopciones "mermas productos", "mermas insumos", donde cada una tendra la vista donde estara una tabla donde se visualizara la lista de todas las mermas dadas de alta, con botones de "agregar" agregar merma, "exportar" exportar excel del listado de las mermas echas, y filtro de fechas inicio - fin este sirve para buscar mermas en ese radio de fechas y para exportar los datos en el excel
+  6. Maquinas, poder agregar mi maquina de impresion, donde se dara de alta el nombre de la impresora, y tener un contador de las impresiones realizadas del dia a dia con esa impresora o impresoras. dame una sugerencia de como podriamos enlazar los procutos con categoria "Impresion" a la impresora y poder hacer el conteo de las impresiones.
+
+  tambien tener en cuenta las mermas, cuando se registre una venta poder dar de alta mermas desde ahi ya que puede que por alguna razon salgan mal las impresiones, obvio se tendria que aun asi registrar esa impresion al contador de la impresora
+
+  7. reportes, donde se podra obtener los reportes de: ventas vs ingresos, cuentas por cobrar, gastos
+
+  8. produccion, donde se podran tener el proceso de creacion de un producto, como productos que tienen un proceso de maquila o productos que tienen varios pasos de ralizacion. tendra las opciones de pasos:
+  pendientes, en diseño, en produccion, acabados, terminados y entregados. 
+  Los productos que entran a esta seccion son los que tengan la categoria de produccion.
+  entre cada paso se pueden agregar indicaciones, una indicacion para cada paso.
+  cuando entra un producto a produccion, entra como estado pendiente, despues de revisarlo el usuario podra agregar los comentarios y despues cuando vea correcto pasarlo a estado de diseño, despues de eso el usuario checaria el diseño o indicaciones sobre el diseño o indicaciones que tenga el producto lo puede pasar a estado Produccion, despues de checar el usuario que el producto salio y esta correcto al salir del produccion lo pasa a estado de Acabados, al finalizar el usuario los acabados podra pasarlo a estado Terminado, y para finalizar pasarlo a estado Entregado cuando se le entregue al cliente.
+
+  9. boton con subopciones de: 
+  1. Caja: dentro de caja, se tendra todo lo de poder hacer un corte de caja, visualizar el historial de ventas realizadas durante todo el dia con fecha, usuario que realizo la venta, si fue ingreso o descuento de ingresos, total pagado, metodo de pago con el que se realizo, sucursal donde se realizo esta venta o gasto.
+  Opciones de botones que abra en esta vista:
+  - registrar gasto
+  - Registrar ingreso
+  - Registrar retiro (ejemplo para cuando se hace un pequeño corte de caja a medio dia)
+  - Realizar corte
+  - Reimprimir corte
+  - Filtro de fecha, sucursal, usuario que realizo venta
+
+  2. Ingresos/Gastos, donde podremos ver un historico o informacion de tallada de estos
+  3. Ventas/Utilidades, donde podremos ver nuestras utilidades respecto a las ventas, y mas informacion que creas conveniente que sea importante en esta seccion
+  
+
+[] agregar la opcion de cancelar ventas desde la vista de ventas, asi como un check para mostrar unicamente el listado de las ventas canceladas
+
+[] Ventas con pendiente de pago y abonos, agregar el check de mostrar ventas con pendiente de pago en la vista de ventas
+
+[] en donde entraria esos modulos, en la seccion de navegacion o administracion del sidebar?
+
+[] cuando se de alta de insumo o aumentar cantidad de insumos, registrarlo como una compra, 
+    con opcion de registrar el proveedor
+[] Devoluciones
+[] Auditoría de acciones (logs de usuarios)

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Loader2, Boxes, Pencil, Trash2, SlidersHorizontal } from 'lucide-react';
+import { Plus, Search, Loader2, Boxes, Pencil, Trash2, SlidersHorizontal, ShoppingCart } from 'lucide-react';
 
 import { insumosApi } from '@/api/insumos.api';
 import { Insumo } from '@/types/insumo.types';
@@ -18,6 +18,7 @@ import {
 
 import { InsumoFormModal } from './components/InsumoFormModal';
 import { AjusteInsumoModal } from './components/AjusteInsumoModal';
+import CompraInsumoModal from '@/components/forms/CompraInsumoModal';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { useMoney } from '@/hooks/useMoney';
@@ -32,6 +33,7 @@ export default function InsumosPage() {
   const [insumoAEditar, setInsumoAEditar] = useState<Insumo | null>(null);
   const [insumoAEliminar, setInsumoAEliminar] = useState<Insumo | null>(null);
   const [insumoAAjustar, setInsumoAAjustar] = useState<Insumo | null>(null);
+  const [insumoACompra, setInsumoACompra] = useState<Insumo | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -223,6 +225,13 @@ export default function InsumosPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-1">
                           <button
+                            onClick={() => setInsumoACompra(insumo)}
+                            className="p-2 rounded-md text-muted-foreground hover:text-green-400 hover:bg-green-500/10 transition-colors"
+                            title="Registrar compra"
+                          >
+                            <ShoppingCart size={16} />
+                          </button>
+                          <button
                             onClick={() => setInsumoAAjustar(insumo)}
                             className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                             title="Ajustar stock"
@@ -274,6 +283,21 @@ export default function InsumosPage() {
         onSaved={() => {
           setInsumoAAjustar(null);
           fetchInventario();
+        }}
+      />
+
+      <CompraInsumoModal
+        open={!!insumoACompra}
+        insumoPreseleccionado={insumoACompra ? {
+          id: insumoACompra.id,
+          nombre: insumoACompra.nombre,
+          precio_compra: insumoACompra.precio_compra,
+        } : undefined}
+        onOpenChange={(v) => { if (!v) setInsumoACompra(null); }}
+        onSuccess={() => {
+          setInsumoACompra(null);
+          fetchInventario();
+          fetchInsumos(searchQuery);
         }}
       />
 

@@ -13,6 +13,7 @@ const createVentaSchema = z.object({
   clienteId: z.number().int().positive().optional(),
   metodoPago: z.enum(['efectivo', 'tarjeta', 'transferencia', 'otro']).default('efectivo'),
   descuento: z.number().min(0).default(0),
+  descuento_motivo: z.string().max(255).optional(),
   notas: z.string().optional(),
   items: z
     .array(
@@ -24,7 +25,13 @@ const createVentaSchema = z.object({
       }),
     )
     .min(1),
-});
+}).refine(
+  (data) => data.descuento === 0 || (data.descuento_motivo && data.descuento_motivo.trim().length >= 3),
+  {
+    message: 'El motivo del descuento es obligatorio (mínimo 3 caracteres) cuando se aplica un descuento',
+    path: ['descuento_motivo'],
+  },
+);
 
 const validarInsumosSchema = z.object({
   sucursalId: z.number().int().positive(),
