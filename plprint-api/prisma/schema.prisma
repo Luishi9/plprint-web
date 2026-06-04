@@ -31,9 +31,11 @@ model sucursales {
   kardex_movimientos   kardex_movimientos[]
   usuarios_sucursales  usuarios_sucursales[]
   ventas               ventas[]
+  mermas               mermas[]
   insumos_inventario   insumos_inventario[]
   gastos               gastos[]
   compras_insumos      compras_insumos[]
+  cotizaciones         cotizaciones[]
 }
 
 model usuarios {
@@ -54,6 +56,9 @@ model usuarios {
   gastos              gastos[]
   gastos_autorizados  gastos[]              @relation("autorizado_gastos")
   compras_insumos     compras_insumos[]
+  cotizaciones        cotizaciones[]
+  ventas_abonos       ventas_abonos[]
+  mermas              mermas[]
 
   @@index([rol_id])
 }
@@ -120,6 +125,8 @@ model productos {
   kardex_movimientos kardex_movimientos[]
   venta_detalle      venta_detalle[]
   producto_insumos   producto_insumos[]
+  cotizacion_detalle cotizacion_detalle[]
+  mermas             mermas[]
 
   @@index([categoria_id])
   @@index([activo])
@@ -150,6 +157,7 @@ model clientes {
   created_at DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
   ventas     ventas[]
+  cotizaciones cotizaciones[]
 }
 
 model ventas {
@@ -163,19 +171,27 @@ model ventas {
   metodo_pago        String               @default("efectivo") @db.VarChar(30)
   metodo_pago_id     Int?
   estado             String               @default("completada") @db.VarChar(20)
+  estado_pago        String               @default("pagada") @db.VarChar(20)
+  saldo_pendiente    Decimal              @default(0) @db.Decimal(10, 2)
+  fecha_limite_pago  DateTime?
+  cotizacion_id      Int?                 @unique
   notas              String?              @db.Text
   created_at         DateTime             @default(now())
   sucursales         sucursales?          @relation(fields: [sucursal_id], references: [id])
   clientes           clientes?            @relation(fields: [cliente_id], references: [id])
   usuarios           usuarios?            @relation(fields: [usuario_id], references: [id])
   metodos_pago       metodos_pago?        @relation(fields: [metodo_pago_id], references: [id])
+  cotizaciones       cotizaciones?
   venta_detalle      venta_detalle[]
   kardex_movimientos kardex_movimientos[]
+  ventas_abonos      ventas_abonos[]
+  mermas             mermas[]
 
   @@index([sucursal_id])
   @@index([cliente_id])
   @@index([created_at])
   @@index([metodo_pago_id])
+  @@index([estado_pago])
 }
 
 model venta_detalle {
@@ -188,6 +204,32 @@ model venta_detalle {
   subtotal        Decimal   @db.Decimal(10, 2)
   ventas          ventas    @relation(fields: [venta_id], references: [id], onDelete: Cascade)
   productos       productos? @relation(fields: [producto_id], references: [id])
+}
+
+model mermas {
+  id             Int       @id @default(autoincrement())
+  tipo           String    @db.VarChar(20) // 'producto' | 'insumo'
+  producto_id    Int?
+  insumo_id      Int?
+  sucursal_id    Int?
+  usuario_id     Int?
+  venta_id       Int?
+  cantidad       Decimal   @db.Decimal(12, 3)
+  motivo         String    @db.VarChar(255)
+  costo_estimado Decimal?  @db.Decimal(12, 2)
+  fecha          DateTime  @default(now())
+  created_at     DateTime  @default(now())
+  sucursales     sucursales? @relation(fields: [sucursal_id], references: [id])
+  usuarios       usuarios?   @relation(fields: [usuario_id], references: [id])
+  ventas         ventas?     @relation(fields: [venta_id], references: [id], onDelete: SetNull)
+  productos      productos?  @relation(fields: [producto_id], references: [id])
+  insumos        insumos?    @relation(fields: [insumo_id], references: [id])
+
+  @@index([tipo])
+  @@index([fecha])
+  @@index([venta_id])
+  @@index([producto_id])
+  @@index([insumo_id])
 }
 
 model kardex_movimientos {
@@ -225,6 +267,7 @@ model insumos {
   inventario       insumos_inventario[]
   producto_insumos producto_insumos[]
   compras_insumos  compras_insumos[]
+  mermas           mermas[]
 
   @@index([activo])
 }
@@ -331,6 +374,57 @@ model configuracion {
   updated_at DateTime @default(now()) @updatedAt
 
   @@index([grupo])
+}
+
+model cotizaciones {
+  id                Int                  @id @default(autoincrement())
+  folio             String               @unique @db.VarChar(20)
+  sucursal_id       Int?
+  cliente_id        Int?
+  usuario_id        Int?
+  total             Decimal              @db.Decimal(10, 2)
+  descuento         Decimal              @default(0) @db.Decimal(10, 2)
+  descuento_motivo  String?              @db.VarChar(255)
+  notas             String?              @db.Text
+  estado            String               @default("pendiente") @db.VarChar(20)
+  venta_id          Int?                 @unique
+  created_at        DateTime             @default(now())
+  updated_at        DateTime             @default(now()) @updatedAt
+  clientes          clientes?            @relation(fields: [cliente_id], references: [id])
+  usuarios          usuarios?            @relation(fields: [usuario_id], references: [id])
+  sucursales        sucursales?          @relation(fields: [sucursal_id], references: [id])
+  ventas            ventas?              @relation(fields: [venta_id], references: [id])
+  cotizacion_detalle cotizacion_detalle[]
+
+  @@index([cliente_id])
+  @@index([estado])
+  @@index([created_at])
+}
+
+model cotizacion_detalle {
+  id              Int          @id @default(autoincrement())
+  cotizacion_id   Int
+  producto_id     Int
+  cantidad        Int
+  precio_unitario Decimal      @db.Decimal(10, 2)
+  descuento       Decimal      @default(0) @db.Decimal(10, 2)
+  subtotal        Decimal      @db.Decimal(10, 2)
+  cotizaciones    cotizaciones @relation(fields: [cotizacion_id], references: [id], onDelete: Cascade)
+  productos       productos    @relation(fields: [producto_id], references: [id])
+}
+
+model ventas_abonos {
+  id         Int       @id @default(autoincrement())
+  venta_id   Int
+  usuario_id Int?
+  monto      Decimal   @db.Decimal(10, 2)
+  metodo_pago String   @db.VarChar(30)
+  notas      String?   @db.VarChar(255)
+  fecha      DateTime  @default(now())
+  ventas     ventas    @relation(fields: [venta_id], references: [id], onDelete: Cascade)
+  usuarios   usuarios? @relation(fields: [usuario_id], references: [id])
+
+  @@index([venta_id])
 }
 
 model permisos {

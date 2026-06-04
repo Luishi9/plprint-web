@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   ShoppingCart, Plus, Search, Loader2, Receipt,
-  ChevronDown, ChevronUp, BadgeCheck, XCircle, Clock, Printer, QrCode, Ban, Check,
+  ChevronDown, ChevronUp, BadgeCheck, XCircle, Clock, Printer, QrCode, Ban, Check, DollarSign,
 } from 'lucide-react';
 import { buildTicketHtml, TicketData } from './components/TicketImpresion';
 import QRTicketModal from './components/QRTicketModal';
@@ -20,6 +20,7 @@ import { RequirePermission } from '@/components/RequirePermission';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import AbonosModal from '@/components/forms/AbonosModal';
 
 const ESTADO_CONFIG: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
   completada: {
@@ -49,6 +50,7 @@ export default function VentasPage() {
   const [filtroEstado, setFiltroEstado] = useState<'todas' | 'completada' | 'cancelada'>('completada');
   const [ventaACancelar, setVentaACancelar] = useState<Venta | null>(null);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [ventaAbonos, setVentaAbonos] = useState<Venta | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { sucursalActiva } = useSucursalStore();
   const { src: logoSrc } = useEmpresaLogo();
@@ -359,6 +361,18 @@ export default function VentasPage() {
                                   </button>
                                 </RequirePermission>
                               )}
+                              {(venta as Venta & { estado_pago?: string; saldo_pendiente?: string | number }).estado_pago &&
+                               (venta as Venta & { estado_pago?: string }).estado_pago !== 'pagada' && (
+                                <RequirePermission modulo="abonos" accion="ver">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setVentaAbonos(venta); }}
+                                    className="p-2 rounded hover:bg-[#2e9e9b]/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
+                                    title="Gestionar abonos"
+                                  >
+                                    <DollarSign size={16} />
+                                  </button>
+                                </RequirePermission>
+                              )}
                               {isExpanded
                                 ? <ChevronUp size={16} className="text-muted-foreground" />
                                 : <ChevronDown size={16} className="text-muted-foreground" />}
@@ -413,6 +427,15 @@ export default function VentasPage() {
       </motion.div>
 
       <QRTicketModal data={qrData} open={!!qrData} onClose={() => setQrData(null)} />
+
+      <AbonosModal
+        open={!!ventaAbonos}
+        onOpenChange={(v) => { if (!v) setVentaAbonos(null); }}
+        ventaId={ventaAbonos?.id || 0}
+        ventaFolio={`#${ventaAbonos?.id || ''}`}
+        ventaTotal={Number(ventaAbonos?.total || 0)}
+        onAbonoRegistrado={() => fetchVentas(true)}
+      />
 
       {/* MODAL CONFIRMAR CANCELACIÓN */}
       <Dialog open={!!ventaACancelar} onOpenChange={(v) => { if (!v) setVentaACancelar(null); }}>

@@ -19,6 +19,9 @@ import proveedoresRoutes from './proveedores.routes';
 import unidadesMedidaRoutes from './unidadesMedida.routes';
 import gastosRoutes from './gastos.routes';
 import comprasRoutes from './compras.routes';
+import cotizacionesRoutes from './cotizaciones.routes';
+import mermasRoutes from './mermas.routes';
+import abonosRoutes from './abonos.routes';
 import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -47,5 +50,8 @@ router.use('/proveedores', proveedoresRoutes);
 router.use('/unidades-medida', unidadesMedidaRoutes);
 router.use('/gastos', gastosRoutes);
 router.use('/compras', comprasRoutes);
+router.use('/cotizaciones', cotizacionesRoutes);
+router.use('/mermas', mermasRoutes);
+router.use('/abonos', abonosRoutes);
 
 export default router;

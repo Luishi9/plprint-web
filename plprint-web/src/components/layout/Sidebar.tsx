@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
-  Boxes, UserCog, Building2, LogOut, PanelLeftClose, Tag, Settings, Truck, Ruler, Receipt, FolderTree,
+  Boxes, UserCog, Building2, LogOut, PanelLeftClose, Tag, Settings, Truck, Ruler, Receipt, FolderTree, FileText, Trash2,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -25,6 +25,8 @@ const navItems = [
   { to: '/insumos',    label: 'Insumos',     icon: Boxes,           modulo: 'insumos' },
   { to: '/ventas',     label: 'Ventas',      icon: ShoppingCart,    modulo: 'ventas' },
   { to: '/clientes',   label: 'Clientes',    icon: Users,           modulo: 'clientes' },
+  { to: '/cotizaciones', label: 'Cotizaciones', icon: FileText,        modulo: 'cotizaciones' },
+  { to: '/mermas',     label: 'Mermas',      icon: Trash2,          modulo: 'mermas' },
   { to: '/gastos',     label: 'Gastos',      icon: Receipt,         modulo: 'gastos' },
 ];
 

@@ -16,6 +16,8 @@ interface CreateVentaDTO {
   descuento?: number;
   descuento_motivo?: string;
   notas?: string;
+  estadoPago?: 'pagada' | 'pendiente' | 'parcial';
+  saldoInicial?: number;
   items: VentaItem[];
 }
 
@@ -105,6 +107,9 @@ export class VentasService {
     const total = subtotales.reduce((acc, i) => acc + i.subtotal, 0) - (dto.descuento ?? 0);
 
     return prisma.$transaction(async (tx) => {
+      const estadoPago = dto.estadoPago || 'pagada';
+      const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
+
       const venta = await tx.ventas.create({
         data: {
           sucursal_id: dto.sucursalId,
@@ -115,6 +120,8 @@ export class VentasService {
           descuento_motivo: dto.descuento && dto.descuento > 0 ? (dto.descuento_motivo ?? null) : null,
           metodo_pago: dto.metodoPago,
           notas: dto.notas,
+          estado_pago: estadoPago,
+          saldo_pendiente: saldo,
           venta_detalle: {
             create: subtotales.map((i) => ({
               producto_id: i.productoId,

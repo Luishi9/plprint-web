@@ -15,6 +15,7 @@ export interface PaginationMeta {
   totalMonto?: number;
   totalInvertido?: number;
   totalCantidad?: number;
+  totalCosto?: number;
 }
 
 export const sendSuccess = <T>(

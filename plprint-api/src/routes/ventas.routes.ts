@@ -15,6 +15,8 @@ const createVentaSchema = z.object({
   descuento: z.number().min(0).default(0),
   descuento_motivo: z.string().max(255).optional(),
   notas: z.string().optional(),
+  estadoPago: z.enum(['pagada', 'pendiente', 'parcial']).default('pagada'),
+  saldoInicial: z.number().min(0).optional(),
   items: z
     .array(
       z.object({
