@@ -25,7 +25,7 @@ export interface UpdateUsuarioDTO {
 }
 
 export const usuariosApi = {
-  getAll: () => apiClient.get<{ data: Usuario[] }>('/usuarios'),
+  getAll: (params?: Record<string, string | number | undefined>) => apiClient.get('/usuarios', { params }),
   getById: (id: number) => apiClient.get<{ data: Usuario }>(`/usuarios/${id}`),
   create: (data: CreateUsuarioDTO) => apiClient.post('/usuarios', data),
   update: (id: number, data: UpdateUsuarioDTO) => apiClient.put(`/usuarios/${id}`, data),

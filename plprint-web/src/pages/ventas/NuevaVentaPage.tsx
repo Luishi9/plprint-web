@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Loader2, Plus, Minus, Trash2, ShoppingCart,
-  ArrowLeft, Check, Package, Printer, QrCode,
+  ArrowLeft, Check, Package, Printer, QrCode, FileText, FileSignature, X,
 } from 'lucide-react';
 
 import { productosApi } from '@/api/productos.api';
 import { clientesApi } from '@/api/clientes.api';
 import { ventasApi } from '@/api/ventas.api';
+import { cotizacionesApi, Cotizacion } from '@/api/cotizaciones.api';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { useIva } from '@/hooks/useIva';
@@ -17,8 +18,10 @@ import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
 import { useMetodosPago } from '@/hooks/useMetodosPago';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RequirePermission } from '@/components/RequirePermission';
 import { TicketImpresion, TicketData, buildTicketHtml } from './components/TicketImpresion';
 import QRTicketModal from './components/QRTicketModal';
+import CotizacionSelectorModal from '@/components/forms/CotizacionSelectorModal';
 import { getImageUrl } from '@/utils/format';
 
 interface ProductoCatalogo {
@@ -70,9 +73,13 @@ export default function NuevaVentaPage() {
   const [metodoPago, setMetodoPago] = useState<string>('efectivo');
   const [notas, setNotas] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingCotizacion, setIsSavingCotizacion] = useState(false);
   const [successId, setSuccessId] = useState<number | null>(null);
+  const [cotizacionFolio, setCotizacionFolio] = useState<string | null>(null);
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [showQR, setShowQR] = useState(false);
+  const [cotizacionOrigenId, setCotizacionOrigenId] = useState<number | null>(null);
+  const [showCotizacionesModal, setShowCotizacionesModal] = useState(false);
   const ticketRef = useRef<HTMLDivElement>(null);
 
   // Buscar productos con debounce
@@ -158,6 +165,46 @@ export default function NuevaVentaPage() {
     }
     setIsSubmitting(true);
     try {
+      // Si viene de cotización, convertirla directamente
+      if (cotizacionOrigenId) {
+        const res = await cotizacionesApi.convertirAVenta(cotizacionOrigenId, {
+          descuento: descuentoGlobal,
+          descuento_motivo: descuentoGlobal > 0 ? descuentoMotivo.trim() : undefined,
+          sucursal_id: sucursalEfectiva.id,
+          metodo_pago: metodoPago,
+          notas: notas || undefined,
+        });
+        const ventaId = (res.data as { data: { id: number } }).data.id;
+        setSuccessId(ventaId);
+        setCotizacionOrigenId(null);
+        setTicketData({
+          ventaId,
+          fecha: new Date(),
+          sucursal: sucursalEfectiva?.nombre ?? 'Sucursal',
+          cajero: usuario?.nombre ?? 'Cajero',
+          cliente: clienteSeleccionado?.nombre ?? 'Público General',
+          metodoPago,
+          metodoPagoLabel: getMetodoLabel(metodoPago),
+          items: cart.map((i) => ({
+            nombre: i.nombre,
+            cantidad: i.cantidad,
+            precioUnitario: i.precioUnitario,
+            descuento: i.descuento,
+          })),
+          subtotal,
+          descuentoGlobal,
+          monedaSimbolo,
+          monedaDecimales,
+          base: desgloseIva.base,
+          iva: desgloseIva.iva,
+          ivaPorcentaje,
+          ivaActivo,
+          total,
+          notas: notas || undefined,
+        });
+        return;
+      }
+
       // Validar stock de insumos antes de crear la venta
       const validacion = await ventasApi.validarInsumos({
         sucursalId: sucursalEfectiva.id,
@@ -228,6 +275,94 @@ export default function NuevaVentaPage() {
       setIsSubmitting(false);
     }
   };
+
+  const handleGuardarComoCotizacion = async () => {
+    if (!cart.length) return;
+    if (!sucursalEfectiva) { alert('No hay sucursal activa.'); return; }
+    if (descuentoGlobal > 0 && descuentoMotivo.trim().length < 3) {
+      alert('Debes indicar el motivo del descuento (mínimo 3 caracteres).');
+      return;
+    }
+    setIsSavingCotizacion(true);
+    try {
+      const res = await cotizacionesApi.create({
+        cliente_id: clienteSeleccionado?.id,
+        sucursal_id: sucursalEfectiva.id,
+        descuento: descuentoGlobal,
+        descuento_motivo: descuentoGlobal > 0 ? descuentoMotivo.trim() : undefined,
+        notas: notas || undefined,
+        items: cart.map((i) => ({
+          producto_id: i.productoId,
+          cantidad: i.cantidad,
+          precio_unitario: i.precioUnitario,
+          descuento: i.descuento,
+        })),
+      });
+      const folio = (res.data as { data: { folio: string } }).data?.folio || 'N/A';
+      setCotizacionFolio(folio);
+      setTimeout(() => {
+        setCart([]);
+        setClienteSeleccionado(null);
+        setDescuentoGlobal(0);
+        setDescuentoMotivo('');
+        setNotas('');
+        setCotizacionFolio(null);
+        navigate('/cotizaciones');
+      }, 1500);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      alert(e.response?.data?.message || 'Error al guardar cotización');
+    } finally {
+      setIsSavingCotizacion(false);
+    }
+  };
+
+  const cargarCotizacion = async (cot: Cotizacion) => {
+    try {
+      let detalle = cot.cotizacion_detalle;
+      if (!detalle || detalle.length === 0) {
+        const res = await cotizacionesApi.getById(cot.id);
+        detalle = (res.data as { data: { cotizacion_detalle: typeof detalle } }).data.cotizacion_detalle;
+      }
+      if (!detalle) return;
+      setCart(detalle.map((d) => ({
+        productoId: d.producto_id,
+        nombre: d.productos?.nombre || `Producto #${d.producto_id}`,
+        precioUnitario: Number(d.precio_unitario),
+        cantidad: d.cantidad,
+        descuento: Number(d.descuento || 0),
+      })));
+      if (cot.cliente_id && cot.clientes) {
+        setClienteSeleccionado({ id: cot.clientes.id, nombre: cot.clientes.nombre });
+      }
+      setDescuentoGlobal(Number(cot.descuento));
+      setDescuentoMotivo(cot.descuento_motivo || '');
+      setNotas(cot.notas || '');
+      setCotizacionOrigenId(cot.id);
+    } catch (e) {
+      console.error(e);
+      alert('Error al cargar la cotización');
+    }
+  };
+
+  if (cotizacionFolio) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex flex-col items-center gap-4 text-center"
+        >
+          <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
+            <FileSignature size={40} className="text-[#2e9e9b]" />
+          </div>
+          <h2 className="text-2xl font-bold text-white">¡Cotización guardada!</h2>
+          <p className="text-muted-foreground">Folio: <span className="text-[#2e9e9b] font-mono font-bold">{cotizacionFolio}</span></p>
+          <p className="text-xs text-muted-foreground">Redirigiendo a cotizaciones...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (successId) {
     const handlePrint = () => {
@@ -301,18 +436,48 @@ export default function NuevaVentaPage() {
   return (
     <div className="w-full h-full flex flex-col gap-4">
       {/* HEADER */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/ventas')} className="text-muted-foreground hover:text-white">
-          <ArrowLeft size={18} />
-        </Button>
-        <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <ShoppingCart className="text-[#2e9e9b]" size={24} />
-            Nueva Venta
-          </h2>
-          <p className="text-xs text-muted-foreground">{sucursalEfectiva?.nombre ?? 'Sin sucursal'}</p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/ventas')} className="text-muted-foreground hover:text-white">
+            <ArrowLeft size={18} />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+              <ShoppingCart className="text-[#2e9e9b]" size={24} />
+              Nueva Venta
+            </h2>
+            <p className="text-xs text-muted-foreground">{sucursalEfectiva?.nombre ?? 'Sin sucursal'}</p>
+          </div>
         </div>
+        <RequirePermission modulo="cotizaciones" accion="ver">
+          <Button
+            variant="outline"
+            onClick={() => setShowCotizacionesModal(true)}
+            className="border-[#2e9e9b]/40 text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
+          >
+            <FileText size={16} className="mr-2" /> Ver cotizaciones
+          </Button>
+        </RequirePermission>
       </div>
+
+      {cotizacionOrigenId && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 rounded-md px-3 py-2 text-xs text-[#2e9e9b] flex items-center justify-between"
+        >
+          <span>
+            <FileSignature size={12} className="inline mr-1" />
+            Productos cargados desde cotización #{cotizacionOrigenId}. Al confirmar se generará la venta automáticamente.
+          </span>
+          <button
+            onClick={() => setCotizacionOrigenId(null)}
+            className="text-muted-foreground hover:text-white"
+          >
+            <X size={14} />
+          </button>
+        </motion.div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
 
@@ -566,7 +731,7 @@ export default function NuevaVentaPage() {
             </div>
 
             <Button
-              disabled={cart.length === 0 || isSubmitting}
+              disabled={cart.length === 0 || isSubmitting || isSavingCotizacion || cotizacionOrigenId !== null}
               onClick={handleSubmit}
               className="w-full h-12 text-base bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-bold shadow-[0_0_20px_rgba(153,255,61,0.25)] disabled:opacity-40"
             >
@@ -577,9 +742,35 @@ export default function NuevaVentaPage() {
                 </>
               )}
             </Button>
+
+            <RequirePermission modulo="cotizaciones" accion="crear">
+              <Button
+                disabled={cart.length === 0 || isSubmitting || isSavingCotizacion || cotizacionOrigenId !== null}
+                onClick={handleGuardarComoCotizacion}
+                variant="outline"
+                className="w-full h-11 text-sm border-[#2e9e9b]/40 text-[#2e9e9b] hover:bg-[#2e9e9b]/10 disabled:opacity-40"
+              >
+                {isSavingCotizacion ? <Loader2 size={16} className="mr-2 animate-spin" /> : (
+                  <FileSignature size={16} className="mr-2" />
+                )}
+                Guardar como Cotización
+              </Button>
+            </RequirePermission>
+
+            {cotizacionOrigenId && (
+              <p className="text-[10px] text-center text-muted-foreground">
+                Venta desde cotización: al confirmar se convierte y descuenta inventario.
+              </p>
+            )}
           </div>
         </div>
       </div>
+
+      <CotizacionSelectorModal
+        open={showCotizacionesModal}
+        onOpenChange={setShowCotizacionesModal}
+        onSeleccionar={cargarCotizacion}
+      />
     </div>
   );
 }
