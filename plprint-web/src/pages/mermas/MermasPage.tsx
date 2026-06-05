@@ -24,7 +24,7 @@ const emptyForm = {
 };
 
 export default function MermasPage() {
-  const { simbolo } = useMoney();
+  const { simbolo, format: money } = useMoney();
   const sucursalActual = useSucursalStore((s) => s.sucursalActiva);
   const [mermas, setMermas] = useState<Merma[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -200,7 +200,7 @@ export default function MermasPage() {
         </div>
         <div className="ml-auto font-mono text-sm">
           <span className="text-muted-foreground">Costo total: </span>
-          <span className="font-bold text-red-400">{simbolo}{Number(totalCosto).toFixed(2)}</span>
+          <span className="font-bold text-red-400">{money(Number(totalCosto))}</span>
         </div>
       </div>
 
@@ -262,7 +262,7 @@ export default function MermasPage() {
                     <td className="px-6 py-4 text-center font-mono text-red-400">{Number(m.cantidad).toFixed(2)}</td>
                     <td className="px-6 py-4 text-muted-foreground text-sm">{m.motivo}</td>
                     <td className="px-6 py-4 text-right font-mono">
-                      {m.costo_estimado ? `${simbolo}${Number(m.costo_estimado).toFixed(2)}` : '—'}
+                      {m.costo_estimado ? money(Number(m.costo_estimado)) : '—'}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground text-xs">{m.sucursales?.nombre || '—'}</td>
                     <td className="px-6 py-4">

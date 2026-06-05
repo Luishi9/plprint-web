@@ -62,10 +62,11 @@ export default function InsumosPage() {
     }
   };
 
-  const fetchInventario = async () => {
-    if (!sucursalEfectiva) return;
+  const fetchInventario = async (sucursalId?: number) => {
+    const id = sucursalId ?? sucursalEfectiva?.id;
+    if (!id) return;
     try {
-      const res = await insumosApi.getInventarioBySucursal(sucursalEfectiva.id);
+      const res = await insumosApi.getInventarioBySucursal(id);
       const map: Record<number, number> = {};
       (res.data?.data || []).forEach((inv: any) => {
         map[inv.insumo_id] = parseFloat(inv.cantidad);
@@ -81,8 +82,12 @@ export default function InsumosPage() {
   }, []);
 
   useEffect(() => {
-    fetchInventario();
-  }, [sucursalEfectiva]);
+    if (sucursalEfectiva) {
+      fetchInventario(sucursalEfectiva.id);
+    } else if (usuario?.sucursalesDetalle?.length) {
+      fetchInventario(usuario.sucursalesDetalle[0].id);
+    }
+  }, [sucursalEfectiva, usuario?.sucursalesDetalle]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

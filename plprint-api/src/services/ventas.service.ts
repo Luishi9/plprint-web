@@ -59,6 +59,7 @@ export class VentasService {
           usuarios: { select: { nombre: true } },
           sucursales: { select: { nombre: true } },
           venta_detalle: { include: { productos: { select: { nombre: true } } } },
+          ventas_abonos: { orderBy: { fecha: 'desc' } },
         },
       }),
       prisma.ventas.count({ where }),
@@ -76,6 +77,10 @@ export class VentasService {
         sucursales: { select: { nombre: true } },
         venta_detalle: {
           include: { productos: { select: { id: true, nombre: true, imagen_url: true } } },
+        },
+        ventas_abonos: {
+          orderBy: { fecha: 'desc' },
+          include: { usuarios: { select: { id: true, nombre: true } } },
         },
       },
     });
@@ -135,7 +140,7 @@ export class VentasService {
         include: { venta_detalle: true },
       });
 
-      // Descontar inventario y registrar kardex
+      // Descontar inventario, registrar kardex e impresiones
       for (const item of subtotales) {
         await tx.inventario.update({
           where: {
@@ -146,6 +151,27 @@ export class VentasService {
           },
           data: { cantidad: { decrement: item.cantidad } },
         });
+
+        // Crear impresión automática si el producto tiene máquina asignada
+        const producto = await tx.productos.findUnique({
+          where: { id: item.productoId },
+          select: { maquina_id: true },
+        });
+        if (producto?.maquina_id) {
+          await tx.impresiones.create({
+            data: {
+              maquina_id: producto.maquina_id,
+              producto_id: item.productoId,
+              venta_id: venta.id,
+              sucursal_id: dto.sucursalId,
+              ...(dto.usuarioId && { usuario_id: dto.usuarioId }),
+            },
+          });
+          await tx.maquinas.update({
+            where: { id: producto.maquina_id },
+            data: { contador_total: { increment: item.cantidad } },
+          });
+        }
 
         await tx.kardex_movimientos.create({
           data: {

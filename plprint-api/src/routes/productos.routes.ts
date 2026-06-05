@@ -31,6 +31,8 @@ const createSchema = z.object({
   precioVenta: z.coerce.number().positive(),
   precioCompra: z.coerce.number().positive().optional(),
   categoriaId: z.coerce.number().int().positive().optional(),
+  proveedorId: z.coerce.number().int().positive().optional(),
+  maquinaId: z.coerce.number().int().positive().nullable().optional(),
   descripcion: z.string().optional(),
   codigo: z.string().optional(),
   unidadMedida: z.string().optional(),

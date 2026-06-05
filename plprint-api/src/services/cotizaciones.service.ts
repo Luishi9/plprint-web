@@ -218,7 +218,7 @@ export class CotizacionesService {
         },
       });
 
-      // Descontar inventario
+      // Descontar inventario y registrar impresiones
       for (const item of itemsFinales) {
         const sucursalId = ajustes?.sucursal_id || cot.sucursal_id;
         if (sucursalId) {
@@ -242,6 +242,26 @@ export class CotizacionesService {
               ...(ajustes?.usuario_id && { usuario_id: ajustes.usuario_id }),
             },
           });
+          // Registrar impresión si producto tiene máquina
+          const producto = await tx.productos.findUnique({
+            where: { id: item.producto_id },
+            select: { maquina_id: true },
+          });
+          if (producto?.maquina_id) {
+            await tx.impresiones.create({
+              data: {
+                maquina_id: producto.maquina_id,
+                producto_id: item.producto_id,
+                venta_id: venta.id,
+                sucursal_id: sucursalId,
+                ...(ajustes?.usuario_id && { usuario_id: ajustes.usuario_id }),
+              },
+            });
+            await tx.maquinas.update({
+              where: { id: producto.maquina_id },
+              data: { contador_total: { increment: item.cantidad } },
+            });
+          }
         }
       }
 

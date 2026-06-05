@@ -119,6 +119,23 @@ export class MermasService {
               ...(dto.usuario_id && { usuario_id: dto.usuario_id }),
             },
           });
+          // Si el producto tiene máquina asignada, registrar impresión como merma
+          const producto = await tx.productos.findUnique({
+            where: { id: dto.producto_id },
+            select: { maquina_id: true },
+          });
+          if (producto?.maquina_id) {
+            await tx.impresiones.create({
+              data: {
+                maquina_id: producto.maquina_id,
+                producto_id: dto.producto_id,
+                merma_id: merma.id,
+                sucursal_id: dto.sucursal_id,
+                fue_merma: true,
+                ...(dto.usuario_id && { usuario_id: dto.usuario_id }),
+              },
+            });
+          }
         } else if (dto.tipo === 'insumo' && dto.insumo_id) {
           const inv = await tx.insumos_inventario.findUnique({
             where: { insumo_id_sucursal_id: { insumo_id: dto.insumo_id, sucursal_id: dto.sucursal_id } },

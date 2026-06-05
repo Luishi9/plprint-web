@@ -22,6 +22,8 @@ import comprasRoutes from './compras.routes';
 import cotizacionesRoutes from './cotizaciones.routes';
 import mermasRoutes from './mermas.routes';
 import abonosRoutes from './abonos.routes';
+import maquinasRoutes from './maquinas.routes';
+import ordenesProduccionRoutes from './ordenesProduccion.routes';
 import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -53,5 +55,7 @@ router.use('/compras', comprasRoutes);
 router.use('/cotizaciones', cotizacionesRoutes);
 router.use('/mermas', mermasRoutes);
 router.use('/abonos', abonosRoutes);
+router.use('/maquinas', maquinasRoutes);
+router.use('/ordenes-produccion', ordenesProduccionRoutes);
 
 export default router;

@@ -31,7 +31,7 @@ const emptyForm = {
 };
 
 export default function GastosPage() {
-  const { simbolo } = useMoney();
+  const { simbolo, format: money } = useMoney();
   const usuario = useAuthStore((s) => s.usuario);
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [categorias, setCategorias] = useState<CategoriaGasto[]>([]);
@@ -237,7 +237,7 @@ export default function GastosPage() {
         <div className="ml-auto font-mono text-sm">
           <span className="text-muted-foreground">Total: </span>
           <span className={`font-bold ${totalMonto > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
-            {simbolo}{Number(totalMonto).toFixed(2)}
+            {money(Number(totalMonto))}
           </span>
         </div>
       </div>
@@ -299,7 +299,7 @@ export default function GastosPage() {
                       <td className={`px-6 py-4 text-right font-mono font-semibold ${
                         g.tipo === 'ingreso' ? 'text-green-400' : g.tipo === 'retiro' ? 'text-orange-400' : 'text-red-400'
                       }`}>
-                        {g.tipo === 'ingreso' ? '+' : '-'}{simbolo}{Number(g.monto).toFixed(2)}
+                        {g.tipo === 'ingreso' ? '+' : '-'}{money(Number(g.monto))}
                       </td>
                       <td className="px-6 py-4 text-muted-foreground text-xs">{g.sucursales?.nombre || '—'}</td>
                       <td className="px-6 py-4">

@@ -37,7 +37,7 @@ interface ItemForm {
 }
 
 export default function CotizacionesPage() {
-  const { simbolo } = useMoney();
+  const { simbolo, format: money } = useMoney();
   const sucursalActual = useSucursalStore((s) => s.sucursalActiva);
   const { src: logoSrc } = useEmpresaLogo();
   const cotizacionPdf = useCotizacionPdfBuilder();
@@ -116,12 +116,21 @@ export default function CotizacionesPage() {
 
   const abrirEditar = async (c: Cotizacion) => {
     if (c.estado !== 'pendiente') return;
-    setEditando(c);
-    setClienteId(c.cliente_id);
-    setDescuento(String(c.descuento));
-    setDescuentoMotivo(c.descuento_motivo || '');
-    setNotas(c.notas || '');
-    setItems((c.cotizacion_detalle || []).map((d) => ({
+    let full = c;
+    if (!c.cotizacion_detalle || c.cotizacion_detalle.length === 0) {
+      try {
+        const res = await cotizacionesApi.getById(c.id);
+        full = (res.data as { data: Cotizacion }).data;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setEditando(full);
+    setClienteId(full.cliente_id);
+    setDescuento(String(full.descuento));
+    setDescuentoMotivo(full.descuento_motivo || '');
+    setNotas(full.notas || '');
+    setItems((full.cotizacion_detalle || []).map((d) => ({
       producto_id: d.producto_id,
       cantidad: d.cantidad,
       precio_unitario: Number(d.precio_unitario),
@@ -347,7 +356,7 @@ export default function CotizacionesPage() {
                     <td className="px-6 py-4">{c.clientes?.nombre || 'Público General'}</td>
                     <td className="px-6 py-4 text-center text-muted-foreground">{c._count?.cotizacion_detalle ?? c.cotizacion_detalle?.length ?? 0}</td>
                     <td className="px-6 py-4 text-right font-mono font-semibold text-foreground">
-                      {simbolo}{Number(c.total).toFixed(2)}
+                      {money(Number(c.total))}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${ESTADO_CLS[c.estado] || ''}`}>
@@ -502,7 +511,7 @@ export default function CotizacionesPage() {
                       className="w-28 bg-background"
                     />
                     <span className="font-mono text-sm text-[#2e9e9b] w-24 text-right">
-                      {simbolo}{(it.cantidad * it.precio_unitario - (it.descuento || 0)).toFixed(2)}
+                      {money((it.cantidad * it.precio_unitario - (it.descuento || 0)))}
                     </span>
                     <button
                       onClick={() => eliminarItem(idx)}
@@ -528,7 +537,7 @@ export default function CotizacionesPage() {
 
             <div className="bg-background/50 border border-border rounded-md p-3 flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total:</span>
-              <span className="text-2xl font-bold text-[#2e9e9b] font-mono">{simbolo}{totalCalc.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-[#2e9e9b] font-mono">{money(totalCalc)}</span>
             </div>
 
             {formError && <p className="text-red-400 text-xs">{formError}</p>}

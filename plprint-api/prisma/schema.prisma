@@ -36,6 +36,9 @@ model sucursales {
   gastos               gastos[]
   compras_insumos      compras_insumos[]
   cotizaciones         cotizaciones[]
+  maquinas             maquinas[]
+  impresiones         impresiones[]
+  ordenes_produccion   ordenes_produccion[]
 }
 
 model usuarios {
@@ -59,6 +62,10 @@ model usuarios {
   cotizaciones        cotizaciones[]
   ventas_abonos       ventas_abonos[]
   mermas              mermas[]
+  impresiones         impresiones[]
+  ordenes_creadas     ordenes_produccion[]      @relation("ordenes_creadas")
+  ordenes_asignadas   ordenes_produccion[]      @relation("ordenes_asignadas")
+  ordenes_historial   ordenes_produccion_historial[]
 
   @@index([rol_id])
 }
@@ -116,20 +123,70 @@ model productos {
   proveedor_id       Int?
   unidad_medida      String               @default("unidad") @db.VarChar(20)
   imagen_url         String?              @db.Text
+  maquina_id         Int?
   activo             Boolean              @default(true)
   created_at         DateTime             @default(now())
   updated_at         DateTime             @default(now()) @updatedAt
   categorias         categorias?          @relation(fields: [categoria_id], references: [id])
   proveedores        proveedores?         @relation(fields: [proveedor_id], references: [id])
+  maquinas           maquinas?            @relation(fields: [maquina_id], references: [id])
   inventario         inventario[]
   kardex_movimientos kardex_movimientos[]
   venta_detalle      venta_detalle[]
   producto_insumos   producto_insumos[]
   cotizacion_detalle cotizacion_detalle[]
   mermas             mermas[]
+  impresiones        impresiones[]
+  ordenes_produccion ordenes_produccion[]
 
   @@index([categoria_id])
   @@index([activo])
+  @@index([maquina_id])
+}
+
+model maquinas {
+  id                Int          @id @default(autoincrement())
+  sucursal_id       Int
+  nombre            String       @db.VarChar(100)
+  tipo              String       @db.VarChar(50)
+  marca             String?      @db.VarChar(50)
+  modelo            String?      @db.VarChar(50)
+  contador_total    Int          @default(0)
+  reset_diario      Boolean      @default(false)
+  activo            Boolean      @default(true)
+  fecha_instalacion DateTime?
+  created_at        DateTime     @default(now())
+  updated_at        DateTime     @default(now()) @updatedAt
+  sucursales        sucursales   @relation(fields: [sucursal_id], references: [id])
+  impresiones       impresiones[]
+  productos         productos[]
+  ordenes_produccion ordenes_produccion[]
+
+  @@index([sucursal_id])
+  @@index([activo])
+}
+
+model impresiones {
+  id               Int          @id @default(autoincrement())
+  maquina_id       Int
+  venta_detalle_id Int?
+  venta_id         Int?
+  producto_id      Int?
+  sucursal_id      Int
+  usuario_id       Int?
+  fue_merma        Boolean      @default(false)
+  merma_id         Int?
+  fecha            DateTime     @default(now())
+  maquinas         maquinas     @relation(fields: [maquina_id], references: [id])
+  ventas           ventas?      @relation(fields: [venta_id], references: [id], onDelete: SetNull)
+  productos        productos?   @relation(fields: [producto_id], references: [id])
+  sucursales       sucursales   @relation(fields: [sucursal_id], references: [id])
+  usuarios         usuarios?    @relation(fields: [usuario_id], references: [id])
+  mermas           mermas?      @relation(fields: [merma_id], references: [id])
+
+  @@index([maquina_id, fecha])
+  @@index([fecha])
+  @@index([producto_id])
 }
 
 model inventario {
@@ -186,6 +243,7 @@ model ventas {
   kardex_movimientos kardex_movimientos[]
   ventas_abonos      ventas_abonos[]
   mermas             mermas[]
+  impresiones        impresiones[]
 
   @@index([sucursal_id])
   @@index([cliente_id])
@@ -224,6 +282,7 @@ model mermas {
   ventas         ventas?     @relation(fields: [venta_id], references: [id], onDelete: SetNull)
   productos      productos?  @relation(fields: [producto_id], references: [id])
   insumos        insumos?    @relation(fields: [insumo_id], references: [id])
+  impresiones    impresiones[]
 
   @@index([tipo])
   @@index([fecha])
@@ -356,8 +415,8 @@ model producto_insumos {
   producto_id        Int
   insumo_id          Int
   cantidad_requerida Decimal   @db.Decimal(12, 3)
-  productos          productos @relation(fields: [producto_id], references: [id], onDelete: Cascade)
-  insumos            insumos   @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+  productos          productos @relation(fields: [producto_id], references: [id], onDelete: Cascade, map: "producto_insumos_producto_fkey")
+  insumos            insumos   @relation(fields: [insumo_id], references: [id], onDelete: Cascade, map: "producto_insumos_insumo_fkey")
 
   @@unique([producto_id, insumo_id])
   @@index([producto_id])
@@ -410,7 +469,7 @@ model cotizacion_detalle {
   descuento       Decimal      @default(0) @db.Decimal(10, 2)
   subtotal        Decimal      @db.Decimal(10, 2)
   cotizaciones    cotizaciones @relation(fields: [cotizacion_id], references: [id], onDelete: Cascade)
-  productos       productos    @relation(fields: [producto_id], references: [id])
+  productos       productos    @relation(fields: [producto_id], references: [id], map: "cotizacion_detalle_producto_fkey")
 }
 
 model ventas_abonos {
@@ -487,4 +546,54 @@ model notificaciones_config {
   umbral     Decimal? @db.Decimal(12, 3)
   created_at DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
+}
+
+model ordenes_produccion {
+  id                   Int      @id @default(autoincrement())
+  sucursal_id          Int
+  producto_id          Int
+  cantidad             Int
+  cantidad_producida   Int      @default(0)
+  estatus              String   @default("pendiente") @db.VarChar(20)
+  prioridad            String   @default("normal") @db.VarChar(15)
+  fecha_creacion       DateTime @default(now())
+  fecha_inicio         DateTime?
+  fecha_fin_estimada   DateTime?
+  fecha_fin_real       DateTime?
+  usuario_creador_id   Int?
+  usuario_asignado_id  Int?
+  maquina_id           Int?
+  notas                String?  @db.Text
+  motivo_cancelacion   String?  @db.Text
+  created_at           DateTime @default(now())
+  updated_at           DateTime @default(now()) @updatedAt
+
+  sucursales         sucursales  @relation(fields: [sucursal_id], references: [id], onDelete: Restrict)
+  productos          productos   @relation(fields: [producto_id], references: [id], onDelete: Restrict)
+  maquinas           maquinas?   @relation(fields: [maquina_id], references: [id], onDelete: SetNull)
+  usuario_creador    usuarios?   @relation("ordenes_creadas", fields: [usuario_creador_id], references: [id], onDelete: SetNull)
+  usuario_asignado   usuarios?   @relation("ordenes_asignadas", fields: [usuario_asignado_id], references: [id], onDelete: SetNull)
+  historial          ordenes_produccion_historial[]
+
+  @@index([estatus])
+  @@index([sucursal_id])
+  @@index([producto_id])
+  @@index([usuario_asignado_id])
+  @@index([fecha_creacion])
+}
+
+model ordenes_produccion_historial {
+  id                Int      @id @default(autoincrement())
+  orden_id          Int
+  estatus_anterior  String?  @db.VarChar(20)
+  estatus_nuevo     String   @db.VarChar(20)
+  usuario_id        Int?
+  notas             String?  @db.Text
+  created_at        DateTime @default(now())
+
+  orden             ordenes_produccion @relation(fields: [orden_id], references: [id], onDelete: Cascade)
+  usuario           usuarios?          @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+
+  @@index([orden_id])
+  @@index([created_at])
 }

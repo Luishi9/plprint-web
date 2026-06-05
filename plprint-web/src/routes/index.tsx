@@ -19,6 +19,7 @@ const GastosPage = lazy(() => import('@/pages/gastos/GastosPage'));
 const CategoriasGastosPage = lazy(() => import('@/pages/gastos/CategoriasGastosPage'));
 const CotizacionesPage = lazy(() => import('@/pages/cotizaciones/CotizacionesPage'));
 const MermasPage = lazy(() => import('@/pages/mermas/MermasPage'));
+const ProduccionPage = lazy(() => import('@/pages/produccion/ProduccionPage'));
 const TicketPublicoPage = lazy(() => import('@/pages/ventas/TicketPublicoPage'));
 const ConfiguracionPage = lazy(() => import('@/pages/configuracion/ConfiguracionPage'));
 
@@ -86,6 +87,7 @@ export const AppRoutes = () => (
           <Route path="/gastos" element={<GastosPage />} />
           <Route path="/cotizaciones" element={<CotizacionesPage />} />
           <Route path="/mermas" element={<MermasPage />} />
+          <Route path="/produccion" element={<ProduccionPage />} />
           <Route
             path="/categorias-gastos"
             element={

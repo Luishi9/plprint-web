@@ -23,6 +23,8 @@ import { TicketImpresion, TicketData, buildTicketHtml } from './components/Ticke
 import QRTicketModal from './components/QRTicketModal';
 import CotizacionSelectorModal from '@/components/forms/CotizacionSelectorModal';
 import { useCotizacionPdfBuilder } from '@/components/forms/CotizacionPdf';
+import MontoRecibidoInput from '@/components/forms/MontoRecibidoInput';
+import StockInsuficienteModal, { Faltante } from '@/components/forms/StockInsuficienteModal';
 import { getImageUrl } from '@/utils/format';
 
 interface ProductoCatalogo {
@@ -73,6 +75,7 @@ export default function NuevaVentaPage() {
   // Pago
   const [metodoPago, setMetodoPago] = useState<string>('efectivo');
   const [notas, setNotas] = useState('');
+  const [montoRecibido, setMontoRecibido] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingCotizacion, setIsSavingCotizacion] = useState(false);
   const [successId, setSuccessId] = useState<number | null>(null);
@@ -81,6 +84,13 @@ export default function NuevaVentaPage() {
   const [showQR, setShowQR] = useState(false);
   const [cotizacionOrigenId, setCotizacionOrigenId] = useState<number | null>(null);
   const [showCotizacionesModal, setShowCotizacionesModal] = useState(false);
+  const [stockAlert, setStockAlert] = useState<{
+    open: boolean;
+    productoNombre: string;
+    cantidadSolicitada: number;
+    faltantes: Faltante[];
+    pendingProduct: ProductoCatalogo | null;
+  } | null>(null);
   const ticketRef = useRef<HTMLDivElement>(null);
 
   // Buscar productos con debounce
@@ -113,10 +123,34 @@ export default function NuevaVentaPage() {
     return () => clearTimeout(timer);
   }, [clienteSearch]);
 
-  const addToCart = (p: ProductoCatalogo) => {
+  const addToCart = async (p: ProductoCatalogo) => {
+    if (!sucursalEfectiva) return;
+    // Calcular cantidad final tentativa
+    const existing = cart.find((i) => i.productoId === p.id);
+    const cantidadFinal = (existing?.cantidad || 0) + 1;
+    // Validar stock de insumos
+    try {
+      const res = await ventasApi.validarInsumos({
+        sucursalId: sucursalEfectiva.id,
+        items: [{ productoId: p.id, cantidad: cantidadFinal }],
+      });
+      const data = res.data?.data as { suficiente: boolean; faltantes: Array<{ insumo: string; requerido: number; disponible: number; deficit: number }> };
+      if (data && !data.suficiente && data.faltantes.length > 0) {
+        setStockAlert({
+          open: true,
+          productoNombre: p.nombre,
+          cantidadSolicitada: cantidadFinal,
+          faltantes: data.faltantes,
+          pendingProduct: p,
+        });
+        return;
+      }
+    } catch (e) {
+      console.error('Error validando stock:', e);
+    }
     setCart((prev) => {
-      const existing = prev.find((i) => i.productoId === p.id);
-      if (existing) {
+      const ex = prev.find((i) => i.productoId === p.id);
+      if (ex) {
         return prev.map((i) =>
           i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1 } : i,
         );
@@ -131,7 +165,32 @@ export default function NuevaVentaPage() {
     });
   };
 
-  const updateQty = (id: number, delta: number) => {
+  const updateQty = async (id: number, delta: number) => {
+    if (delta > 0 && sucursalEfectiva) {
+      const item = cart.find((i) => i.productoId === id);
+      if (item) {
+        const nuevaCantidad = item.cantidad + delta;
+        try {
+          const res = await ventasApi.validarInsumos({
+            sucursalId: sucursalEfectiva.id,
+            items: [{ productoId: id, cantidad: nuevaCantidad }],
+          });
+          const data = res.data?.data as { suficiente: boolean; faltantes: Faltante[] };
+          if (data && !data.suficiente && data.faltantes.length > 0) {
+            setStockAlert({
+              open: true,
+              productoNombre: item.nombre,
+              cantidadSolicitada: nuevaCantidad,
+              faltantes: data.faltantes,
+              pendingProduct: null,
+            });
+            return;
+          }
+        } catch (e) {
+          console.error('Error validando stock:', e);
+        }
+      }
+    }
     setCart((prev) =>
       prev
         .map((i) => i.productoId === id ? { ...i, cantidad: Math.max(1, i.cantidad + delta) } : i)
@@ -165,6 +224,8 @@ export default function NuevaVentaPage() {
       alert('Debes indicar el motivo del descuento (mínimo 3 caracteres).');
       return;
     }
+    const montoRecibidoNum = Number(montoRecibido) || 0;
+    if (montoRecibidoNum < 0) { alert('El monto recibido no puede ser negativo.'); return; }
     setIsSubmitting(true);
     try {
       // Si viene de cotización, convertirla directamente
@@ -179,6 +240,8 @@ export default function NuevaVentaPage() {
         const ventaId = (res.data as { data: { id: number } }).data.id;
         setSuccessId(ventaId);
         setCotizacionOrigenId(null);
+        const cambioCot = Math.max(0, montoRecibidoNum - total);
+        const saldoCot = Math.max(0, total - montoRecibidoNum);
         setTicketData({
           ventaId,
           fecha: new Date(),
@@ -202,13 +265,16 @@ export default function NuevaVentaPage() {
           ivaPorcentaje,
           ivaActivo,
           total,
+          montoRecibido: montoRecibidoNum > 0 ? montoRecibidoNum : undefined,
+          cambio: cambioCot > 0 ? cambioCot : undefined,
+          saldoPendiente: saldoCot > 0 ? saldoCot : undefined,
           notas: notas || undefined,
         });
         return;
       }
 
-      // Validar stock de insumos antes de crear la venta
-      const validacion = await ventasApi.validarInsumos({
+      // Validar stock de insumos antes de crear la venta (última barrera)
+      await ventasApi.validarInsumos({
         sucursalId: sucursalEfectiva.id,
         items: cart.map((i) => ({
           productoId: i.productoId,
@@ -216,17 +282,7 @@ export default function NuevaVentaPage() {
         })),
       });
 
-      const validacionData = validacion.data?.data;
-      if (validacionData && !validacionData.suficiente && validacionData.faltantes.length > 0) {
-        const mensaje = `Stock insuficiente de insumos:\n${validacionData.faltantes.map((f: any) => 
-          `- ${f.insumo}: requiere ${f.requerido}, disponible ${f.disponible}`
-        ).join('\n')}\n\n¿Desea continuar de todos modos?`;
-        
-        if (!window.confirm(mensaje)) {
-          setIsSubmitting(false);
-          return;
-        }
-      }
+      const estadoPago = montoRecibidoNum >= total ? 'pagada' : (montoRecibidoNum > 0 ? 'parcial' : 'pendiente');
 
       const res = await ventasApi.create({
         sucursalId: sucursalEfectiva.id,
@@ -235,6 +291,8 @@ export default function NuevaVentaPage() {
         descuento: descuentoGlobal,
         descuento_motivo: descuentoGlobal > 0 ? descuentoMotivo.trim() : undefined,
         notas: notas || undefined,
+        estadoPago,
+        saldoInicial: estadoPago === 'pagada' ? 0 : (total - montoRecibidoNum),
         items: cart.map((i) => ({
           productoId: i.productoId,
           cantidad: i.cantidad,
@@ -244,7 +302,8 @@ export default function NuevaVentaPage() {
       });
       const ventaId = res.data?.data?.id ?? res.data?.id ?? 1;
       setSuccessId(ventaId);
-      // Guardar datos del ticket para impresión
+      const cambio = Math.max(0, montoRecibidoNum - total);
+      const saldoPendiente = Math.max(0, total - montoRecibidoNum);
       setTicketData({
         ventaId,
         fecha: new Date(),
@@ -268,6 +327,9 @@ export default function NuevaVentaPage() {
         ivaPorcentaje,
         ivaActivo,
         total,
+        montoRecibido: montoRecibidoNum > 0 ? montoRecibidoNum : undefined,
+        cambio: cambio > 0 ? cambio : undefined,
+        saldoPendiente: saldoPendiente > 0 ? saldoPendiente : undefined,
         notas: notas || undefined,
       });
     } catch (err: any) {
@@ -287,7 +349,7 @@ export default function NuevaVentaPage() {
     }
     setIsSavingCotizacion(true);
     try {
-      const res = await cotizacionesApi.create({
+      const payload = {
         cliente_id: clienteSeleccionado?.id,
         sucursal_id: sucursalEfectiva.id,
         descuento: descuentoGlobal,
@@ -299,9 +361,16 @@ export default function NuevaVentaPage() {
           precio_unitario: i.precioUnitario,
           descuento: i.descuento,
         })),
-      });
-      const data = (res.data as { data: { id: number; folio: string } }).data;
-      setCotizacionFolio(data.folio);
+      };
+      if (cotizacionOrigenId) {
+        const res = await cotizacionesApi.update(cotizacionOrigenId, payload);
+        const data = (res.data as { data: { id: number; folio: string } }).data;
+        setCotizacionFolio(data.folio);
+      } else {
+        const res = await cotizacionesApi.create(payload);
+        const data = (res.data as { data: { id: number; folio: string } }).data;
+        setCotizacionFolio(data.folio);
+      }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       alert(e.response?.data?.message || 'Error al guardar cotización');
@@ -385,6 +454,7 @@ export default function NuevaVentaPage() {
                 setDescuentoGlobal(0);
                 setDescuentoMotivo('');
                 setNotas('');
+                setMontoRecibido('');
                 setCotizacionFolio(null);
               }}
               className="border-border"
@@ -447,7 +517,7 @@ export default function NuevaVentaPage() {
           <div className="flex gap-3 mt-2 flex-wrap justify-center">
             <Button
               variant="outline"
-              onClick={() => { setCart([]); setSuccessId(null); setClienteSeleccionado(null); setDescuentoGlobal(0); setDescuentoMotivo(''); setNotas(''); setTicketData(null); }}
+              onClick={() => { setCart([]); setSuccessId(null); setClienteSeleccionado(null); setDescuentoGlobal(0); setDescuentoMotivo(''); setNotas(''); setTicketData(null); setMontoRecibido(''); }}
               className="border-border"
             >
               Nueva venta
@@ -712,6 +782,14 @@ export default function NuevaVentaPage() {
             )}
           </div>
 
+          {/* Monto recibido + cambio/saldo */}
+          <MontoRecibidoInput
+            total={total}
+            value={montoRecibido}
+            onChange={setMontoRecibido}
+            simbolo={monedaSimbolo}
+          />
+
           {/* Descuento + Notas + Total */}
           <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-3">
             <div className="flex items-center gap-3">
@@ -781,21 +859,21 @@ export default function NuevaVentaPage() {
             </div>
 
             <Button
-              disabled={cart.length === 0 || isSubmitting || isSavingCotizacion || cotizacionOrigenId !== null}
+              disabled={cart.length === 0 || isSubmitting || isSavingCotizacion}
               onClick={handleSubmit}
               className="w-full h-12 text-base bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-bold shadow-[0_0_20px_rgba(153,255,61,0.25)] disabled:opacity-40"
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : (
                 <>
                   <Check size={18} className="mr-2" />
-                  Confirmar venta
+                  {cotizacionOrigenId ? 'Confirmar y Convertir' : 'Confirmar venta'}
                 </>
               )}
             </Button>
 
-            <RequirePermission modulo="cotizaciones" accion="crear">
+            <RequirePermission modulo="cotizaciones" accion={cotizacionOrigenId ? 'editar' : 'crear'}>
               <Button
-                disabled={cart.length === 0 || isSubmitting || isSavingCotizacion || cotizacionOrigenId !== null}
+                disabled={cart.length === 0 || isSubmitting || isSavingCotizacion}
                 onClick={handleGuardarComoCotizacion}
                 variant="outline"
                 className="w-full h-11 text-sm border-[#2e9e9b]/40 text-[#2e9e9b] hover:bg-[#2e9e9b]/10 disabled:opacity-40"
@@ -803,13 +881,13 @@ export default function NuevaVentaPage() {
                 {isSavingCotizacion ? <Loader2 size={16} className="mr-2 animate-spin" /> : (
                   <FileSignature size={16} className="mr-2" />
                 )}
-                Guardar como Cotización
+                {cotizacionOrigenId ? 'Actualizar Cotización' : 'Guardar como Cotización'}
               </Button>
             </RequirePermission>
 
             {cotizacionOrigenId && (
               <p className="text-[10px] text-center text-muted-foreground">
-                Venta desde cotización: al confirmar se convierte y descuenta inventario.
+                Cotización cargada: edita productos y guarda con "Actualizar", o confirma para convertir en venta.
               </p>
             )}
           </div>
@@ -821,6 +899,38 @@ export default function NuevaVentaPage() {
         onOpenChange={setShowCotizacionesModal}
         onSeleccionar={cargarCotizacion}
       />
+
+      {stockAlert && (
+        <StockInsuficienteModal
+          open={stockAlert.open}
+          onOpenChange={(v) => { if (!v) setStockAlert(null); }}
+          productoNombre={stockAlert.productoNombre}
+          cantidadSolicitada={stockAlert.cantidadSolicitada}
+          faltantes={stockAlert.faltantes}
+          onCancelar={() => setStockAlert(null)}
+          onContinuar={() => {
+            if (stockAlert.pendingProduct) {
+              const p = stockAlert.pendingProduct;
+              setCart((prev) => {
+                const ex = prev.find((i) => i.productoId === p.id);
+                if (ex) {
+                  return prev.map((i) =>
+                    i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1 } : i,
+                  );
+                }
+                return [...prev, {
+                  productoId: p.id,
+                  nombre: p.nombre,
+                  precioUnitario: Number(p.precio_venta),
+                  cantidad: 1,
+                  descuento: 0,
+                }];
+              });
+            }
+            setStockAlert(null);
+          }}
+        />
+      )}
     </div>
   );
 }

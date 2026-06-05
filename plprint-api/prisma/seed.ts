@@ -90,6 +90,17 @@ const PERMISOS_INICIALES: Array<{ modulo: string; accion: string; descripcion: s
   { modulo: 'mermas',         accion: 'registrar_desde_venta', descripcion: 'Registrar merma desde venta' },
   { modulo: 'abonos',         accion: 'ver',           descripcion: 'Ver abonos' },
   { modulo: 'abonos',         accion: 'registrar',     descripcion: 'Registrar abonos a ventas pendientes' },
+  { modulo: 'maquinas',       accion: 'ver',           descripcion: 'Ver máquinas de impresión' },
+  { modulo: 'maquinas',       accion: 'crear',         descripcion: 'Crear máquinas de impresión' },
+  { modulo: 'maquinas',       accion: 'editar',        descripcion: 'Editar máquinas de impresión' },
+  { modulo: 'maquinas',       accion: 'eliminar',      descripcion: 'Eliminar máquinas de impresión' },
+  { modulo: 'maquinas',       accion: 'ver_contador',  descripcion: 'Ver contador de impresiones' },
+  { modulo: 'maquinas',       accion: 'reset_contador', descripcion: 'Resetear contador de máquina' },
+  { modulo: 'produccion',     accion: 'ver',           descripcion: 'Ver órdenes de producción' },
+  { modulo: 'produccion',     accion: 'crear',         descripcion: 'Crear órdenes de producción' },
+  { modulo: 'produccion',     accion: 'editar',        descripcion: 'Editar órdenes de producción' },
+  { modulo: 'produccion',     accion: 'cambiar_estatus', descripcion: 'Cambiar estatus de órdenes de producción' },
+  { modulo: 'produccion',     accion: 'cancelar',      descripcion: 'Cancelar órdenes de producción' },
   { modulo: 'sucursales',     accion: 'ver',           descripcion: 'Ver sucursales' },
   { modulo: 'sucursales',     accion: 'crear',         descripcion: 'Crear sucursales' },
   { modulo: 'sucursales',     accion: 'editar',        descripcion: 'Editar sucursales' },
@@ -193,8 +204,8 @@ async function main() {
   });
 
   const permisosVendedor = permisosCreados.filter((p) => {
-    const modulosPermitidos = ['dashboard', 'productos', 'insumos', 'ventas', 'clientes', 'reportes'];
-    const accionesPermitidas = ['ver', 'crear', 'editar', 'ajustar_stock', 'exportar'];
+    const modulosPermitidos = ['dashboard', 'productos', 'insumos', 'ventas', 'clientes', 'reportes', 'produccion'];
+    const accionesPermitidas = ['ver', 'crear', 'editar', 'ajustar_stock', 'exportar', 'cambiar_estatus'];
     return modulosPermitidos.includes(p.modulo) && accionesPermitidas.includes(p.accion);
   });
 
@@ -204,8 +215,9 @@ async function main() {
   });
 
   const permisosOperador = permisosCreados.filter((p) => {
-    const modulosPermitidos = ['dashboard', 'productos', 'ventas'];
-    return modulosPermitidos.includes(p.modulo) && p.accion === 'ver';
+    const modulosPermitidos = ['dashboard', 'productos', 'ventas', 'produccion'];
+    const accionesPermitidas = ['ver', 'cambiar_estatus'];
+    return modulosPermitidos.includes(p.modulo) && accionesPermitidas.includes(p.accion);
   });
 
   await prisma.rol_permisos.deleteMany({ where: { rol_id: operadorRol.id } });

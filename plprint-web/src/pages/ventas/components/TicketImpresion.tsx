@@ -27,6 +27,9 @@ export interface TicketData {
   monedaSimbolo?: string;
   monedaDecimales?: number;
   metodoPagoLabel?: string;
+  montoRecibido?: number;
+  cambio?: number;
+  saldoPendiente?: number;
 }
 
 export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO_URL): string {
@@ -125,6 +128,21 @@ export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO
   <div class="row" style="font-size:15px;font-weight:bold;">
     <span>TOTAL:</span><span>${fmt(data.total)}</span>
   </div>
+
+  ${typeof data.montoRecibido === 'number' && data.montoRecibido > 0 ? `
+    <div class="row" style="margin-top:4px;"><span>Recibido:</span><span>${fmt(data.montoRecibido)}</span></div>
+    ${typeof data.cambio === 'number' && data.cambio > 0 ? `
+      <div class="row" style="font-size:14px;font-weight:bold;border:1px dashed #000;padding:4px 6px;margin-top:4px;">
+        <span>CAMBIO:</span><span>${fmt(data.cambio)}</span>
+      </div>
+    ` : ''}
+    ${typeof data.saldoPendiente === 'number' && data.saldoPendiente > 0 ? `
+      <div class="row" style="font-size:13px;font-weight:bold;color:#000;background:#fde68a;padding:4px 6px;margin-top:4px;border:1px solid #b45309;">
+        <span>SALDO PENDIENTE:</span><span>${fmt(data.saldoPendiente)}</span>
+      </div>
+      <div class="center" style="font-size:10px;margin-top:2px;color:#b45309;">~ Pago parcial, abonos requeridos ~</div>
+    ` : ''}
+  ` : ''}
 
   ${data.notas ? `<hr class="divider" /><div style="font-weight:bold;">Notas:</div><div style="color:#444;">${data.notas}</div>` : ''}
 
