@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import logoImage from '@/assets/logo.png';
 
 import './LoginPage.css';
 
@@ -49,14 +50,6 @@ export default function LoginPage(props: LoginViewProps) {
       props.onLoginSuccess(email);
     } else {
       onSubmit(email, password);
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    if (props.onLoginSuccess) {
-      props.onLoginSuccess('google.user@plprint.com');
-    } else {
-      onSubmit('google.user@plprint.com', 'demo');
     }
   };
 
@@ -136,9 +129,8 @@ export default function LoginPage(props: LoginViewProps) {
             <div className="flex items-center justify-center rounded-lg overflow-hidden w-24 h-24">
               <img
                 id="brand-logo"
-                src="https://lh3.googleusercontent.com/aida/ADBb0uinwiszZw19FQ5vriYpnBM8xij-CXri-yV5P-eWKpq_gok4DVW_Efn5CRg30Nb8N31Ivz3n6E8_kDvkNyvG380UPqpvhFfcJnJ8EnDKSpO_LEGB21FvzQpnZNTLBx5E-ZZTZsvV75ffUx_oZdkOGyMgUsV2wbV0flQKG4ooqav2rcADN9RQo0STBXOyTrW8ABabHChwlY_pmFyMeEZMMQrRbB4ggVJ30iPv8hohX7rrQqF6XPZCf45Mmao"
+                src={logoImage}
                 alt="PLPrint Logo"
-                referrerPolicy="no-referrer"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -235,31 +227,6 @@ export default function LoginPage(props: LoginViewProps) {
                 )}
               </button>
             </form>
-
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#bcc9c8] dark:border-[#1a2528]"></div>
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-3 bg-white dark:bg-[#0d1118] text-xs font-semibold text-gray-400 dark:text-[#99a3a9]">O ingresa con Google</span>
-              </div>
-            </div>
-
-            {/* Social Login */}
-            <button
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-[#bcc9c8] dark:border-[#1a2528] rounded-lg hover:bg-[#ddf9fb] dark:hover:bg-[#05080b] disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm text-[#041f21] dark:text-[#f3f6f4] font-semibold cursor-pointer"
-            >
-              <img
-                alt="Google Logo"
-                className="w-5 h-5 object-contain"
-                referrerPolicy="no-referrer"
-                src="https://lh3.googleusercontent.com/aida/AP1WRLtr3rHLXeworJSanPVvGiIZItWIAI2j_PLKI6iAN_57_9oWcdIJB_reWGMRnq5RAJ1IYZ85IozVs54RIMq5sJIDcBRwHBar6dE_SmIcvdD17y7vj7RimyUtsfh4fBB-HP0Vb8XBUO78KvUtwRfR-T27kCUp4H-ECeDzx9BJQ5AVuNGrJ7IL3Nxl6j7WXDV-C1eUodApsukv_xK9XsJUmh9quwc7Jg5IvEdMrrKWXScBF7eGheqy_3Z8gxA"
-              />
-              Continuar con Google
-            </button>
           </section>
       </main>
 
