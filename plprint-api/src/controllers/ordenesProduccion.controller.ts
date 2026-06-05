@@ -47,7 +47,7 @@ export class OrdenesProduccionController {
     try {
       const orden = await this.service.create({
         ...req.body,
-        usuarioCreadorId: req.user?.id ?? req.body.usuarioCreadorId,
+        usuarioCreadorId: req.user?.sub ?? req.body.usuarioCreadorId,
       });
       sendCreated(res, orden);
     } catch (err) {
@@ -68,7 +68,7 @@ export class OrdenesProduccionController {
     try {
       const orden = await this.service.cambiarEstatus(Number(req.params.id), {
         ...req.body,
-        usuarioId: req.user?.id ?? req.body.usuarioId,
+        usuarioId: req.user?.sub ?? req.body.usuarioId,
       });
       sendSuccess(res, orden);
     } catch (err) {
