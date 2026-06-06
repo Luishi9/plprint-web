@@ -472,6 +472,12 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                   )}
                 </div>
 
+                
+              </div>
+
+              {/* Col 2 - Imagen y Extras */}
+              <div className="space-y-4 flex flex-col">
+
                 {/* ── Insumos requeridos ── */}
                 <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
                   <div className="flex items-center gap-2">
@@ -557,10 +563,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* Col 2 - Imagen y Extras */}
-              <div className="space-y-4 flex flex-col">
+                
                 <FormField
                   control={form.control}
                   name="descripcion"
