@@ -138,10 +138,26 @@ model productos {
   mermas             mermas[]
   impresiones        impresiones[]
   ordenes_produccion ordenes_produccion[]
+  producto_precios  producto_precios[]
 
   @@index([categoria_id])
   @@index([activo])
   @@index([maquina_id])
+}
+
+model producto_precios {
+  id              Int       @id @default(autoincrement())
+  producto_id     Int
+  nivel           String    @db.VarChar(20)
+  cantidad_minima Int
+  precio          Decimal   @db.Decimal(10, 2)
+  activo          Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  productos       productos @relation(fields: [producto_id], references: [id], onDelete: Cascade)
+
+  @@unique([producto_id, nivel])
+  @@index([producto_id])
 }
 
 model maquinas {

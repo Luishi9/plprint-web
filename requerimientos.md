@@ -333,9 +333,6 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 [] Devoluciones
 [] Auditoría de acciones (logs de usuarios)
 
-
-1. agregar, medio mayoreo, mayoreo, super mayoreo
-
 2. aplicar descuento global o especifico a un cliente dado de alta, por categoria de productos, 
     descuento por porcentajes.
 
@@ -346,3 +343,111 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 5. [x] cambiar la categoria de impresion a produccion a los productos que entran a produccion
 
 6. [] unidades de medida, jalar las que se dan de alta no las que estan fijas
+
+## Sistema de Niveles de Precios por Volumen (medio mayoreo, mayoreo, super mayoreo) — IMPLEMENTADO 2026-06-06
+
+### Tabla nueva `producto_precios`
+- `producto_id` FK
+- `nivel`: 'medio_mayoreo' | 'mayoreo' | 'super_mayoreo'
+- `cantidad_minima`: desde cuántas unidades aplica
+- `precio`: precio especial del nivel
+- `@@unique([producto_id, nivel])` — un registro por nivel por producto
+- `onDelete: Cascade` desde productos
+
+### Lógica de cálculo
+- Helper `calcularPrecioPorVolumen(precioBase, cantidad, niveles)`:
+  1. Filtra niveles activos donde `cantidad >= nivel.cantidad_minima`
+  2. Ordena por `cantidad_minima` DESC
+  3. Toma el primero (el nivel más alto aplicable)
+  4. Si no hay nivel aplicable, retorna `precioBase`
+- Validación: `cantidad_minima` debe ser estrictamente creciente entre niveles
+
+### Endpoints
+- `GET /api/v1/productos/:id/precios` — listar
+- `POST /api/v1/productos/:id/precios` — crear
+- `PUT /api/v1/productos/:id/precios/:precioId` — actualizar
+- `DELETE /api/v1/productos/:id/precios/:precioId` — eliminar
+
+### Frontend
+- `ProductoFormModal`: sección "Precios por volumen" con 3 filas (medio_mayoreo, mayoreo, super_mayoreo). Cada fila: input "Desde N unidades" + input "Precio $". Vacío = nivel no configurado.
+- `NuevaVentaPage`: precio se recalcula automáticamente al cambiar cantidad (botones +/- o input manual). Badge del nivel aplicado visible en cada item del carrito. Niveles visibles en catálogo.
+
+### Archivos
+- Backend: `prisma/schema.prisma`, `prisma/migrations/20260606000000_add_producto_precios/`, `src/services/preciosProducto.service.ts`, `src/services/productos.service.ts` (include producto_precios), `src/controllers/preciosProducto.controller.ts`, `src/routes/preciosProducto.routes.ts`, `src/routes/index.ts`
+- Frontend: `src/api/preciosProducto.api.ts`, `src/pages/productos/components/ProductoFormModal.tsx`, `src/pages/ventas/NuevaVentaPage.tsx`
+
+----------------------------------------------------------------------
+
+1. Sistema de Niveles de Precios por Volumen (medio mayoreo, mayoreo, super mayoreo)
+1.1 Modelo de datos
+Nueva tabla producto_precios con relaciÃ³n 1-N a productos:
+- nivel: enum controlado (medio_mayoreo | mayoreo | super_mayoreo)
+- cantidad_minima: desde cuÃ¡ntas unidades aplica
+- precio: precio especial del nivel
+- @@unique([producto_id, nivel]) â un registro por nivel por producto
+- onDelete: Cascade desde productos
+1.2 LÃ³gica de cÃ¡lculo (backend)
+- Helper calcularPrecioPorVolumen(producto, cantidad, niveles):
+1. Filtra niveles activos donde cantidad >= nivel.cantidad_minima
+2. Ordena por cantidad_minima DESC
+3. Toma el primero (el nivel mÃ¡s alto aplicable)
+4. Si no hay nivel aplicable, retorna producto.precio_venta
+- GET /api/v1/productos ahora incluye precios[] con los 3 niveles del producto
+- ValidaciÃ³n: cantidad_minima debe ser creciente entre niveles (medio < mayoreo < super). Backend rechaza con 400 si no se cumple.
+1.3 GestiÃ³n de precios (UI)
+Dentro de ProductoFormModal, secciÃ³n nueva "Precios por volumen" abajo de precio_compra:
+- 3 filas: Medio mayoreo, Mayoreo, Super mayoreo
+- Cada fila con 2 inputs: Desde N unidades y Precio $
+- VacÃ­o en ambos = nivel no configurado
+- ValidaciÃ³n visual: mostrar warning si las cantidades mÃ­nimas no son crecientes
+- Se guardan al crear/editar producto (transacciÃ³n junto con producto)
+1.4 AplicaciÃ³n automÃ¡tica en ventas
+- NuevaVentaPage.addToCart: al agregar producto, llama al helper backend con cantidad = 1 para obtener precio inicial
+- setQty (ya existe del paso anterior): al cambiar cantidad, recalcula precio unitario con la nueva cantidad
+- updateQty (botones +/-): misma lÃ³gica, recalcular con cantidad nueva
+- Importante: el precioUnitario del carrito siempre refleja el nivel aplicable segÃºn la cantidad actual
+1.5 Indicador visual
+- En cada item del carrito, badge opcional con el nivel aplicado (ej: "Medio mayoreo") cuando se detecta un nivel activo
+- En la lista de productos del catÃ¡logo, mostrar los 3 precios por volumen visibles para el vendedor
+1.6 Almacenamiento en venta_detalle
+- precio_unitario final (el que aplicÃ³ al momento de vender) se guarda en venta_detalle.precio_unitario
+- Historial correcto: si el cliente comprÃ³ 10 unidades a precio de medio mayoreo, queda registrado ese precio
+- El ticket refleja el precio final real
+1.7 Endpoints
+- GET /api/v1/productos/:id/precios â listar
+- POST /api/v1/productos/:id/precios â crear
+- PUT /api/v1/productos/:id/precios/:precioId â actualizar
+- DELETE /api/v1/productos/:id/precios/:precioId â eliminar
+- Permiso: reusar productos.editar
+1.8 Ejemplo funcional
+- Producto "Impresiones B/N": precio_venta = $2.00
+- ConfiguraciÃ³n: medio_mayoreo desde 10 = $1.80, mayoreo desde 30 = $1.00, super_mayoreo sin configurar
+- Cliente agrega 1 impresiÃ³n al carrito â precio $2.00
+- Sube cantidad a 10 (manual o con botones) â automÃ¡ticamente cambia a $1.80
+- Sube a 30 â cambia a $1.00
+- Total mostrado: 30 Ã $1.00 = $30.00
+- Al confirmar venta, venta_detalle guarda precio_unitario = 1.00
+2. Archivos a tocar
+Backend (/var/www/plprint/plprint-api/):
+- prisma/schema.prisma â agregar modelo producto_precios + relaciÃ³n
+- prisma/migrations/... â nueva migraciÃ³n manual
+- prisma/seed.ts â sin cambios (precios se configuran por producto)
+- src/services/productos.service.ts â incluir precios en getAll/getById; helper de cÃ¡lculo
+- src/services/preciosProducto.service.ts â CRUD nuevo
+- src/controllers/preciosProducto.controller.ts â endpoints
+- src/routes/preciosProducto.routes.ts â rutas con RBAC
+- src/routes/index.ts â registrar
+Frontend (/var/www/plprint/plprint-web/):
+- src/api/preciosProducto.api.ts â tipos y llamadas
+- src/api/productos.api.ts â extender ProductoCatalogo con precios: NivelPrecio[]
+- src/pages/productos/components/ProductoFormModal.tsx â secciÃ³n "Precios por volumen"
+- src/pages/ventas/NuevaVentaPage.tsx â addToCart, setQty, updateQty recalculan precio con helper
+- src/utils/preciosVolumen.ts â helper frontend (espejo de backend)
+3. Orden de implementaciÃ³n
+1. Schema + migraciÃ³n
+2. Backend CRUD de precios
+3. Helper backend + integraciÃ³n en getAll/getById de productos
+4. Frontend API types
+5. ProductoFormModal con secciÃ³n nueva
+6. NuevaVentaPage con recÃ¡lculo de precio
+7. VerificaciÃ³n TS + smoke test con productos existentes

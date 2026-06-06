@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, X, Package, Boxes, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Upload, X, Package, Boxes, Plus, Trash2, Tag } from 'lucide-react';
 
 import {
   Dialog,
@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { productosApi } from '@/api/productos.api';
 import { inventarioApi } from '@/api/inventario.api';
 import { insumosApi } from '@/api/insumos.api';
+import { preciosProductoApi, NIVELES_LABEL, NivelPrecio } from '@/api/preciosProducto.api';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { Producto } from '@/types/producto.types';
@@ -75,6 +76,12 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   const [insumosDisponibles, setInsumosDisponibles] = useState<Insumo[]>([]);
   const [insumosSeleccionados, setInsumosSeleccionados] = useState<Array<{ insumoId: number; cantidadRequerida: number; insumo: Insumo }>>([]);
   const [insumoBusqueda, setInsumoBusqueda] = useState('');
+  type PrecioNivelState = { id: number | null; cantidad_minima: string; precio: string };
+  const [preciosVolumen, setPreciosVolumen] = useState<Record<NivelPrecio, PrecioNivelState>>({
+    medio_mayoreo: { id: null, cantidad_minima: '', precio: '' },
+    mayoreo: { id: null, cantidad_minima: '', precio: '' },
+    super_mayoreo: { id: null, cantidad_minima: '', precio: '' },
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar categorías al montar
@@ -138,13 +145,43 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       setTieneExistencias(false);
       setImagePreview(getImageUrl(producto.imagen_url) ?? null);
       setSelectedFile(null);
+      cargarPreciosVolumen(producto.id);
     } else if (open && !producto) {
       form.reset({ nombre: '', codigo: '', categoriaId: undefined, precioVenta: 0, precioCompra: undefined, unidadMedida: 'unidad', descripcion: '', cantidadInicial: undefined, stockMinimo: undefined });
       setTieneExistencias(false);
       setImagePreview(null);
       setSelectedFile(null);
+      setPreciosVolumen({
+        medio_mayoreo: { id: null, cantidad_minima: '', precio: '' },
+        mayoreo: { id: null, cantidad_minima: '', precio: '' },
+        super_mayoreo: { id: null, cantidad_minima: '', precio: '' },
+      });
     }
   }, [open, producto]);
+
+  const cargarPreciosVolumen = async (productoId: number) => {
+    try {
+      const res = await preciosProductoApi.getByProducto(productoId);
+      const items = (res.data?.data || []) as Array<{ id: number; nivel: string; cantidad_minima: number; precio: number | string; activo: boolean }>;
+      const reset: Record<NivelPrecio, PrecioNivelState> = {
+        medio_mayoreo: { id: null, cantidad_minima: '', precio: '' },
+        mayoreo: { id: null, cantidad_minima: '', precio: '' },
+        super_mayoreo: { id: null, cantidad_minima: '', precio: '' },
+      };
+      items.forEach((it) => {
+        if (it.nivel in reset) {
+          reset[it.nivel as NivelPrecio] = {
+            id: it.id,
+            cantidad_minima: String(it.cantidad_minima),
+            precio: String(it.precio),
+          };
+        }
+      });
+      setPreciosVolumen(reset);
+    } catch (e) {
+      console.error('Error cargando precios por volumen', e);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -237,10 +274,16 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         ));
       }
 
+      let productoId: number | null = producto?.id ?? null;
       if (isEditing && producto) {
         await productosApi.update(producto.id, formData as any);
       } else {
-        await productosApi.create(formData as any);
+        const res = await productosApi.create(formData as any);
+        productoId = (res.data as { data?: { id: number } })?.data?.id ?? null;
+      }
+
+      if (productoId) {
+        await sincronizarPreciosVolumen(productoId);
       }
 
       // Cleanup & Close
@@ -253,6 +296,37 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       alert('Hubo un error al guardar el producto.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const sincronizarPreciosVolumen = async (productoId: number) => {
+    const niveles: NivelPrecio[] = ['medio_mayoreo', 'mayoreo', 'super_mayoreo'];
+    for (const nivel of niveles) {
+      const actual = preciosVolumen[nivel];
+      const tieneCantidad = actual.cantidad_minima.trim() !== '';
+      const tienePrecio = actual.precio.trim() !== '';
+      const completo = tieneCantidad && tienePrecio;
+      try {
+        if (completo && actual.id) {
+          await preciosProductoApi.update(productoId, actual.id, {
+            cantidad_minima: Number(actual.cantidad_minima),
+            precio: Number(actual.precio),
+          });
+        } else if (completo && !actual.id) {
+          await preciosProductoApi.create(productoId, {
+            nivel,
+            cantidad_minima: Number(actual.cantidad_minima),
+            precio: Number(actual.precio),
+          });
+        } else if (!completo && actual.id) {
+          await preciosProductoApi.remove(productoId, actual.id);
+        }
+      } catch (e: unknown) {
+        const err = e as { response?: { data?: { message?: string } } };
+        const msg = err.response?.data?.message || `Error al guardar precio ${nivel}`;
+        console.error(msg, e);
+        alert(msg);
+      }
     }
   };
 
@@ -362,6 +436,46 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="rounded-lg border border-border bg-card/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Tag size={14} className="text-[#2e9e9b]" />
+                    <p className="text-sm font-medium text-foreground">Precios por volumen</p>
+                    <span className="text-xs text-muted-foreground">(opcional)</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Define desde qué cantidad se aplica cada precio. Déjalo vacío para no usar ese nivel.</p>
+                  <div className="space-y-2">
+                    {(Object.keys(preciosVolumen) as NivelPrecio[]).map((nivel) => (
+                      <div key={nivel} className="grid grid-cols-[140px_1fr_1fr] gap-2 items-center">
+                        <span className="text-xs text-muted-foreground">{NIVELES_LABEL[nivel]}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground">Desde</span>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="N"
+                            value={preciosVolumen[nivel].cantidad_minima}
+                            onChange={(e) => setPreciosVolumen((prev) => ({ ...prev, [nivel]: { ...prev[nivel], cantidad_minima: e.target.value } }))}
+                            className="bg-background font-mono h-8 text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground">u.</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground">$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value={preciosVolumen[nivel].precio}
+                            onChange={(e) => setPreciosVolumen((prev) => ({ ...prev, [nivel]: { ...prev[nivel], precio: e.target.value } }))}
+                            className="bg-background font-mono h-8 text-sm"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <FormField

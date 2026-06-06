@@ -24,6 +24,7 @@ import mermasRoutes from './mermas.routes';
 import abonosRoutes from './abonos.routes';
 import maquinasRoutes from './maquinas.routes';
 import ordenesProduccionRoutes from './ordenesProduccion.routes';
+import preciosProductoRoutes from './preciosProducto.routes';
 import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -57,5 +58,6 @@ router.use('/mermas', mermasRoutes);
 router.use('/abonos', abonosRoutes);
 router.use('/maquinas', maquinasRoutes);
 router.use('/ordenes-produccion', ordenesProduccionRoutes);
+router.use('/productos', preciosProductoRoutes);
 
 export default router;

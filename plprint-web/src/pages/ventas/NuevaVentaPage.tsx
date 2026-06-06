@@ -10,6 +10,7 @@ import { productosApi } from '@/api/productos.api';
 import { clientesApi } from '@/api/clientes.api';
 import { ventasApi } from '@/api/ventas.api';
 import { cotizacionesApi, Cotizacion } from '@/api/cotizaciones.api';
+import { calcularPrecioPorVolumen, NivelPrecio, NIVELES_LABEL } from '@/api/preciosProducto.api';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { useIva } from '@/hooks/useIva';
@@ -33,14 +34,18 @@ interface ProductoCatalogo {
   precio_venta: string;
   imagen_url: string | null;
   codigo: string | null;
+  producto_precios?: Array<{ nivel: string; cantidad_minima: number; precio: number | string; activo: boolean }>;
 }
 
 interface CartItem {
   productoId: number;
   nombre: string;
   precioUnitario: number;
+  precioBase: number;
   cantidad: number;
   descuento: number;
+  niveles: Array<{ nivel: string; cantidad_minima: number; precio: number | string; activo: boolean }>;
+  nivelAplicado: NivelPrecio | null;
 }
 
 interface Cliente {
@@ -151,16 +156,25 @@ export default function NuevaVentaPage() {
     setCart((prev) => {
       const ex = prev.find((i) => i.productoId === p.id);
       if (ex) {
+        const nuevaCantidad = ex.cantidad + 1;
+        const calc = calcularPrecioPorVolumen(ex.precioBase, nuevaCantidad, ex.niveles);
         return prev.map((i) =>
-          i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1 } : i,
+          i.productoId === p.id
+            ? { ...i, cantidad: nuevaCantidad, precioUnitario: calc.precio, nivelAplicado: calc.nivel }
+            : i,
         );
       }
+      const niveles = p.producto_precios || [];
+      const calc = calcularPrecioPorVolumen(Number(p.precio_venta), 1, niveles);
       return [...prev, {
         productoId: p.id,
         nombre: p.nombre,
-        precioUnitario: Number(p.precio_venta),
+        precioBase: Number(p.precio_venta),
+        precioUnitario: calc.precio,
         cantidad: 1,
         descuento: 0,
+        niveles,
+        nivelAplicado: calc.nivel,
       }];
     });
   };
@@ -193,7 +207,12 @@ export default function NuevaVentaPage() {
     }
     setCart((prev) =>
       prev
-        .map((i) => i.productoId === id ? { ...i, cantidad: Math.max(1, i.cantidad + delta) } : i)
+        .map((i) => {
+          if (i.productoId !== id) return i;
+          const cantidad = Math.max(1, i.cantidad + delta);
+          const calc = calcularPrecioPorVolumen(i.precioBase, cantidad, i.niveles);
+          return { ...i, cantidad, precioUnitario: calc.precio, nivelAplicado: calc.nivel };
+        })
         .filter((i) => i.cantidad > 0),
     );
   };
@@ -225,7 +244,12 @@ export default function NuevaVentaPage() {
       }
     }
     setCart((prev) =>
-      prev.map((i) => i.productoId === id ? { ...i, cantidad: Math.max(1, nuevaCantidad) } : i),
+      prev.map((i) => {
+        if (i.productoId !== id) return i;
+        const cantidad = Math.max(1, nuevaCantidad);
+        const calc = calcularPrecioPorVolumen(i.precioBase, cantidad, i.niveles);
+        return { ...i, cantidad, precioUnitario: calc.precio, nivelAplicado: calc.nivel };
+      }),
     );
   };
 
@@ -421,9 +445,12 @@ export default function NuevaVentaPage() {
       setCart(detalle.map((d) => ({
         productoId: d.producto_id,
         nombre: d.productos?.nombre || `Producto #${d.producto_id}`,
+        precioBase: Number(d.precio_unitario),
         precioUnitario: Number(d.precio_unitario),
         cantidad: d.cantidad,
         descuento: Number(d.descuento || 0),
+        niveles: [],
+        nivelAplicado: null,
       })));
       if (cot.cliente_id && cot.clientes) {
         setClienteSeleccionado({ id: cot.clientes.id, nombre: cot.clientes.nombre });
@@ -671,6 +698,15 @@ export default function NuevaVentaPage() {
                     <p className="text-sm font-bold text-[#2e9e9b] mt-0.5">
                       {money(Number(p.precio_venta))}
                     </p>
+                    {p.producto_precios && p.producto_precios.filter((n) => n.activo).length > 0 && (
+                      <div className="flex flex-wrap gap-0.5 mt-1">
+                        {p.producto_precios.filter((n) => n.activo).map((n) => (
+                          <span key={n.nivel} className="text-[9px] text-muted-foreground">
+                            ≥{n.cantidad_minima}: {money(Number(n.precio))}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="absolute top-2 right-2 bg-[#2e9e9b] text-black rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(153,255,61,0.5)]">
                     <Plus size={14} />
@@ -718,6 +754,11 @@ export default function NuevaVentaPage() {
                       <p className="text-xs text-muted-foreground font-mono">
                         {money(item.precioUnitario)} c/u
                       </p>
+                      {item.nivelAplicado && (
+                        <span className="inline-block mt-0.5 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
+                          {NIVELES_LABEL[item.nivelAplicado]}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={() => updateQty(item.productoId, -1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
@@ -958,12 +999,17 @@ export default function NuevaVentaPage() {
                     i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1 } : i,
                   );
                 }
+                const niveles = p.producto_precios || [];
+                const calc = calcularPrecioPorVolumen(Number(p.precio_venta), 1, niveles);
                 return [...prev, {
                   productoId: p.id,
                   nombre: p.nombre,
-                  precioUnitario: Number(p.precio_venta),
+                  precioBase: Number(p.precio_venta),
+                  precioUnitario: calc.precio,
                   cantidad: 1,
                   descuento: 0,
+                  niveles,
+                  nivelAplicado: calc.nivel,
                 }];
               });
             }

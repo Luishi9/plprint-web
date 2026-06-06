@@ -45,10 +45,14 @@ export class ProductosService {
         skip,
         take: limit,
         orderBy: { nombre: 'asc' },
-        include: { 
+        include: {
           categorias: { select: { nombre: true } },
           inventario: {
             select: { cantidad: true }
+          },
+          producto_precios: {
+            where: { activo: true },
+            orderBy: { cantidad_minima: 'asc' },
           }
         },
       }),
@@ -78,6 +82,10 @@ export class ProductosService {
               },
             },
           },
+        },
+        producto_precios: {
+          where: { activo: true },
+          orderBy: { cantidad_minima: 'asc' },
         },
       },
     });
