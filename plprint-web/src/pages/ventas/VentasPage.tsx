@@ -212,6 +212,12 @@ export default function VentasPage() {
     try {
       const params: Record<string, unknown> = {};
       if (sucursalActiva) params.sucursalId = sucursalActiva.id;
+      if (filtroEstado === 'cancelada') params.estado = 'cancelada';
+      else if (filtroEstado === 'completada') params.estado = 'completada';
+      else if (filtroEstado === 'pendiente_pago') {
+        params.estadoPago = 'pendiente';
+        params.estado = 'completada';
+      }
       const res = await ventasApi.getAll(params);
       let data: Venta[] = res.data?.data || [];
       if (searchQuery.trim()) {
@@ -223,11 +229,6 @@ export default function VentasPage() {
             v.usuarios?.nombre?.toLowerCase().includes(q),
         );
       }
-      if (filtroEstado === 'pendiente_pago') {
-        data = data.filter((v) => v.estado_pago && v.estado_pago !== 'pagada');
-      } else if (filtroEstado !== 'todas') {
-        data = data.filter((v) => v.estado === filtroEstado);
-      }
       setVentas(data);
     } catch (err: any) {
       if (err?.code !== 'ERR_CANCELED') console.error(err);
@@ -237,7 +238,7 @@ export default function VentasPage() {
     }
   };
 
-  useEffect(() => { fetchVentas(true); }, [sucursalActiva]);
+  useEffect(() => { fetchVentas(true); }, [sucursalActiva, filtroEstado]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchVentas(), 300);

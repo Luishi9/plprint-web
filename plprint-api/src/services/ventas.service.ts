@@ -29,12 +29,14 @@ interface FindAllParams {
   hasta?: string;
   usuarioId?: number;
   sucursalesPermitidas: number[];
+  estado?: 'completada' | 'cancelada';
+  estadoPago?: 'pendiente' | 'parcial';
 }
 
 export class VentasService {
-  async findAll({ page, limit, sucursalId, desde, hasta, sucursalesPermitidas }: FindAllParams) {
+  async findAll({ page, limit, sucursalId, desde, hasta, sucursalesPermitidas, estado, estadoPago }: FindAllParams) {
     const skip = (page - 1) * limit;
-    const where = {
+    const where: Record<string, unknown> = {
       sucursal_id: {
         in: sucursalId ? [sucursalId] : sucursalesPermitidas,
       },
@@ -46,6 +48,8 @@ export class VentasService {
             },
           }
         : {}),
+      ...(estado ? { estado } : {}),
+      ...(estadoPago ? { estado_pago: estadoPago } : {}),
     };
 
     const [data, total] = await Promise.all([

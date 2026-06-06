@@ -12,9 +12,11 @@ export class VentasController {
       const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
       const desde = req.query.desde as string | undefined;
       const hasta = req.query.hasta as string | undefined;
+      const estado = (req.query.estado as 'completada' | 'cancelada' | undefined) || undefined;
+      const estadoPago = (req.query.estadoPago as 'pendiente' | 'parcial' | undefined) || undefined;
 
       const { data, total } = await this.ventasService.findAll({
-        page, limit, sucursalId, desde, hasta,
+        page, limit, sucursalId, desde, hasta, estado, estadoPago,
         usuarioId: req.user!.rolId !== 1 ? req.user!.sub : undefined,
         sucursalesPermitidas: req.user!.sucursales,
       });
