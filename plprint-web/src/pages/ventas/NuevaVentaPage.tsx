@@ -657,11 +657,11 @@ export default function NuevaVentaPage() {
         </motion.div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 h-[calc(100vh-12rem)]">
 
         {/* LEFT — Catálogo */}
-        <div className="flex flex-col gap-3 flex-1 min-w-0">
-          <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-3 flex-1 min-w-0 h-full">
+          <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
             <div className="relative">
               {isSearching
                 ? <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
@@ -674,10 +674,11 @@ export default function NuevaVentaPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 overflow-y-auto min-h-0">
-              <AnimatePresence>
-                {productos.map((p, i) => (
-                  <motion.button
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 min-h-0">
+                <AnimatePresence>
+                  {productos.map((p, i) => (
+                    <motion.button
                     key={p.id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -724,7 +725,7 @@ export default function NuevaVentaPage() {
           </div>
 
           {/* Carrito */}
-          <div className="rounded-xl border border-border bg-card/50 flex flex-col">
+          <div className="rounded-xl border border-border bg-card/50 flex flex-col overflow-hidden h-[320px]">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-sm font-semibold text-white flex items-center gap-2">
                 <ShoppingCart size={14} className="text-[#2e9e9b]" />
@@ -732,7 +733,7 @@ export default function NuevaVentaPage() {
               </span>
               <span className="text-xs text-muted-foreground">{cart.length} ítem(s)</span>
             </div>
-            <div className="flex flex-col divide-y divide-border overflow-y-auto max-h-[280px]">
+            <div className="flex-1 flex flex-col divide-y divide-border overflow-y-auto">
               <AnimatePresence>
                 {cart.length === 0 && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 text-center text-sm text-muted-foreground">
