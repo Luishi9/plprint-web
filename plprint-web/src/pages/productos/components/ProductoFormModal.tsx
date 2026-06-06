@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, Upload, X, Package, Boxes, Plus, Trash2 } from 'lucide-react';
 
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -79,8 +79,8 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
   // Cargar categorías al montar
   useEffect(() => {
-    categoriasApi.getAll().then((res) => setCategorias(res.data?.data || [])).catch(() => {});
-    insumosApi.getAll({ limit: 1000 }).then((res) => setInsumosDisponibles(res.data?.data || [])).catch(() => {});
+    categoriasApi.getAll().then((res) => setCategorias(res.data?.data || [])).catch(() => { });
+    insumosApi.getAll({ limit: 1000 }).then((res) => setInsumosDisponibles(res.data?.data || [])).catch(() => { });
   }, []);
 
   // Cargar insumos del producto cuando se edita
@@ -95,7 +95,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
             insumo: pi.insumos,
           }))
         );
-      }).catch(() => {});
+      }).catch(() => { });
     } else if (open && !producto) {
       setInsumosSeleccionados([]);
     }
@@ -118,7 +118,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
   // Cargar categorías al montar
   useEffect(() => {
-    categoriasApi.getAll().then((res) => setCategorias(res.data?.data || [])).catch(() => {});
+    categoriasApi.getAll().then((res) => setCategorias(res.data?.data || [])).catch(() => { });
   }, []);
 
   // Rellenar formulario cuando se edita
@@ -170,7 +170,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
     const insumo = insumosDisponibles.find(i => i.id === insumoId);
     if (!insumo) return;
     if (insumosSeleccionados.some(i => i.insumoId === insumoId)) return;
-    
+
     setInsumosSeleccionados([
       ...insumosSeleccionados,
       { insumoId, cantidadRequerida: 1, insumo }
@@ -184,7 +184,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
   const cambiarCantidadInsumo = (insumoId: number, cantidad: number) => {
     setInsumosSeleccionados(
-      insumosSeleccionados.map(i => 
+      insumosSeleccionados.map(i =>
         i.insumoId === insumoId ? { ...i, cantidadRequerida: cantidad } : i
       )
     );
@@ -194,7 +194,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
     try {
       setIsSubmitting(true);
       const formData = new FormData();
-      
+
       formData.append('nombre', values.nombre);
       formData.append('precioVenta', values.precioVenta.toString());
       if (values.codigo) formData.append('codigo', values.codigo);
@@ -204,7 +204,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       }
       if (values.unidadMedida) formData.append('unidadMedida', values.unidadMedida);
       if (values.descripcion) formData.append('descripcion', values.descripcion);
-      
+
       if (!isEditing && tieneExistencias && values.cantidadInicial && values.cantidadInicial > 0 && sucursalEfectiva) {
         formData.append('cantidadInicial', values.cantidadInicial.toString());
         formData.append('sucursalId', sucursalEfectiva.id.toString());
@@ -242,7 +242,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       } else {
         await productosApi.create(formData as any);
       }
-      
+
       // Cleanup & Close
       form.reset();
       removeImage();
@@ -270,9 +270,9 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               {/* Col 1 - Datos principales */}
               <div className="space-y-4">
                 <FormField
@@ -397,12 +397,15 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                 />
 
                 {/* ── Existencias ── */}
-                <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
-
+                <div className='space-y-3 '>
                   <h2 className="flex items-center gap-2"> Caracteristicas </h2>
                   <p className="text-sm text-muted-foreground">
                     Sección para agregar otras características del producto.
                   </p>
+                  
+                </div>
+
+                <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
 
                   <label className="flex items-center gap-2.5 cursor-pointer select-none">
                     <input
@@ -565,8 +568,8 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                     <FormItem>
                       <FormLabel>Descripción</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Detalles sobre el producto..." 
+                        <Textarea
+                          placeholder="Detalles sobre el producto..."
                           className="resize-none bg-background h-24"
                           {...field}
                         />
