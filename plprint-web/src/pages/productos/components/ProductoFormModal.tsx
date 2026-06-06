@@ -332,7 +332,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border">
       {/* <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border"> */}
 
         <DialogHeader>
