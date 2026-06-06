@@ -332,3 +332,15 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
     con opcion de registrar el proveedor
 [] Devoluciones
 [] Auditoría de acciones (logs de usuarios)
+
+
+1. agregar, medio mayoreo, mayoreo, super mayoreo
+
+2. aplicar descuento global o especifico a un cliente dado de alta, por categoria de productos, 
+    descuento por porcentajes.
+
+3. [x] en venta agregar manual la cantidad de impresiones o productos
+
+4. excel de los reportes
+
+5. cambiar la categoria de impresion a produccion a los productos que entran a produccion

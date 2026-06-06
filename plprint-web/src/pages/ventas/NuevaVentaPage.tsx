@@ -198,6 +198,37 @@ export default function NuevaVentaPage() {
     );
   };
 
+  const setQty = async (id: number, nuevaCantidad: number) => {
+    if (nuevaCantidad < 1) return;
+    if (sucursalEfectiva) {
+      const item = cart.find((i) => i.productoId === id);
+      if (item && nuevaCantidad > item.cantidad) {
+        try {
+          const res = await ventasApi.validarInsumos({
+            sucursalId: sucursalEfectiva.id,
+            items: [{ productoId: id, cantidad: nuevaCantidad }],
+          });
+          const data = res.data?.data as { suficiente: boolean; faltantes: Faltante[] };
+          if (data && !data.suficiente && data.faltantes.length > 0) {
+            setStockAlert({
+              open: true,
+              productoNombre: item.nombre,
+              cantidadSolicitada: nuevaCantidad,
+              faltantes: data.faltantes,
+              pendingProduct: null,
+            });
+            return;
+          }
+        } catch (e) {
+          console.error('Error validando stock:', e);
+        }
+      }
+    }
+    setCart((prev) =>
+      prev.map((i) => i.productoId === id ? { ...i, cantidad: Math.max(1, nuevaCantidad) } : i),
+    );
+  };
+
   const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.productoId !== id));
 
   const subtotal = cart.reduce((acc, i) => acc + i.precioUnitario * i.cantidad - i.descuento, 0);
@@ -692,7 +723,16 @@ export default function NuevaVentaPage() {
                       <button onClick={() => updateQty(item.productoId, -1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
                         <Minus size={10} />
                       </button>
-                      <span className="w-6 text-center text-sm font-mono">{item.cantidad}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.cantidad}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) setQty(item.productoId, val);
+                        }}
+                        className="w-10 text-center text-sm font-mono bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      />
                       <button onClick={() => updateQty(item.productoId, 1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
                         <Plus size={10} />
                       </button>
