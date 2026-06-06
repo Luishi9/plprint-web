@@ -674,7 +674,7 @@ export default function NuevaVentaPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto min-h-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 overflow-y-auto min-h-0">
               <AnimatePresence>
                 {productos.map((p, i) => (
                   <motion.button
@@ -694,7 +694,7 @@ export default function NuevaVentaPage() {
                         </div>
                       )}
                     </div>
-                    <div className="p-2">
+                    <div className="p-1.5">
                       <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">{p.nombre}</p>
                       <p className="text-sm font-bold text-[#2e9e9b] mt-0.5">
                         {money(Number(p.precio_venta))}
