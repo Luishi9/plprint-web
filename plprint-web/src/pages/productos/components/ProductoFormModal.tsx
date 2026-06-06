@@ -332,7 +332,9 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      {/* <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border"> */}
+
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight text-[#2e9e9b]">
             {isEditing ? 'Editar Producto' : 'Registrar Producto'}
