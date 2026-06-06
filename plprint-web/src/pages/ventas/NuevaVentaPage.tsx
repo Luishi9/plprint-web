@@ -789,8 +789,7 @@ export default function NuevaVentaPage() {
             </div>
           </div>
         </div>
-
-        {/* RIGHT — Cliente + Pago + metodo de pago */}
+        </div>
         <div className="flex flex-col gap-3 w-full lg:w-[380px] shrink-0">
 
           {/* Cliente */}
