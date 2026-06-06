@@ -661,64 +661,66 @@ export default function NuevaVentaPage() {
 
         {/* LEFT — Catálogo */}
         <div className="flex flex-col gap-3 flex-1 min-w-0">
-          <div className="relative">
-            {isSearching
-              ? <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
-              : <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />}
-            <Input
-              placeholder="Buscar producto por nombre o código..."
-              className="pl-9 bg-card border-border focus-visible:ring-[#2e9e9b]"
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-            />
-          </div>
+          <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-4">
+            <div className="relative">
+              {isSearching
+                ? <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
+                : <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />}
+              <Input
+                placeholder="Buscar producto por nombre o código..."
+                className="pl-9 bg-card border-border focus-visible:ring-[#2e9e9b]"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+              />
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto pr-1">
-            <AnimatePresence>
-              {productos.map((p, i) => (
-                <motion.button
-                  key={p.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.03 }}
-                  onClick={() => addToCart(p)}
-                  className="group relative flex flex-col rounded-xl border border-border bg-card/60 hover:border-[#2e9e9b]/50 hover:bg-card transition-all text-left overflow-hidden"
-                >
-                  <div className="aspect-square bg-background/50 overflow-hidden">
-                    {p.imagen_url ? (
-                      <img src={getImageUrl(p.imagen_url)} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
-                        <Package size={32} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2">
-                    <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">{p.nombre}</p>
-                    <p className="text-sm font-bold text-[#2e9e9b] mt-0.5">
-                      {money(Number(p.precio_venta))}
-                    </p>
-                    {p.producto_precios && p.producto_precios.filter((n) => n.activo).length > 0 && (
-                      <div className="flex flex-wrap gap-0.5 mt-1">
-                        {p.producto_precios.filter((n) => n.activo).map((n) => (
-                          <span key={n.nivel} className="text-[9px] text-muted-foreground">
-                            ≥{n.cantidad_minima}: {money(Number(n.precio))}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="absolute top-2 right-2 bg-[#2e9e9b] text-black rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(153,255,61,0.5)]">
-                    <Plus size={14} />
-                  </div>
-                </motion.button>
-              ))}
-            </AnimatePresence>
-            {!isSearching && productos.length === 0 && (
-              <div className="col-span-full h-32 flex items-center justify-center text-muted-foreground text-sm">
-                No se encontraron productos.
-              </div>
-            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto min-h-0">
+              <AnimatePresence>
+                {productos.map((p, i) => (
+                  <motion.button
+                    key={p.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => addToCart(p)}
+                    className="group relative flex flex-col rounded-xl border border-border bg-card/60 hover:border-[#2e9e9b]/50 hover:bg-card transition-all text-left overflow-hidden"
+                  >
+                    <div className="aspect-square bg-background/50 overflow-hidden">
+                      {p.imagen_url ? (
+                        <img src={getImageUrl(p.imagen_url)} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
+                          <Package size={32} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">{p.nombre}</p>
+                      <p className="text-sm font-bold text-[#2e9e9b] mt-0.5">
+                        {money(Number(p.precio_venta))}
+                      </p>
+                      {p.producto_precios && p.producto_precios.filter((n) => n.activo).length > 0 && (
+                        <div className="flex flex-wrap gap-0.5 mt-1">
+                          {p.producto_precios.filter((n) => n.activo).map((n) => (
+                            <span key={n.nivel} className="text-[9px] text-muted-foreground">
+                              ≥{n.cantidad_minima}: {money(Number(n.precio))}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute top-2 right-2 bg-[#2e9e9b] text-black rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(153,255,61,0.5)]">
+                      <Plus size={14} />
+                    </div>
+                  </motion.button>
+                ))}
+              </AnimatePresence>
+              {!isSearching && productos.length === 0 && (
+                <div className="col-span-full h-32 flex items-center justify-center text-muted-foreground text-sm">
+                  No se encontraron productos.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Carrito */}
@@ -787,10 +789,8 @@ export default function NuevaVentaPage() {
           </div>
         </div>
 
-        {/* RIGHT — Carrito + Pago */}
+        {/* RIGHT — Cliente + Pago + metodo de pago */}
         <div className="flex flex-col gap-3 w-full lg:w-[380px] shrink-0">
-
-
 
           {/* Cliente */}
           <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-2">
