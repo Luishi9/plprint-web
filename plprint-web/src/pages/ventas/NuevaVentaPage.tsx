@@ -123,7 +123,7 @@ export default function NuevaVentaPage() {
       try {
         const res = await clientesApi.getAll({ search: clienteSearch, limit: 5 });
         setClientes(res.data?.data || []);
-      } catch (_) {}
+      } catch (_) { }
     }, 300);
     return () => clearTimeout(timer);
   }, [clienteSearch]);
@@ -559,51 +559,51 @@ export default function NuevaVentaPage() {
       <>
         <div className="flex flex-col items-center justify-center h-full gap-6">
           <TicketImpresion ref={ticketRef} data={ticketData} />
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="flex flex-col items-center gap-4 text-center"
-        >
-          <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
-            <Check size={40} className="text-[#2e9e9b]" />
-          </div>
-          <h2 className="text-2xl font-bold text-white">¡Venta registrada!</h2>
-          <p className="text-muted-foreground">Venta #{successId} completada correctamente.</p>
-          <p className="text-3xl font-bold text-[#2e9e9b]">
-            {money(total)}
-          </p>
-          <div className="flex gap-3 mt-2 flex-wrap justify-center">
-            <Button
-              variant="outline"
-              onClick={() => { setCart([]); setSuccessId(null); setClienteSeleccionado(null); setDescuentoGlobal(0); setDescuentoMotivo(''); setNotas(''); setTicketData(null); setMontoRecibido(''); }}
-              className="border-border"
-            >
-              Nueva venta
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handlePrint}
-              className="border-border gap-2"
-            >
-              <Printer size={16} />
-              Imprimir ticket
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowQR(true)}
-              className="border-border gap-2"
-            >
-              <QrCode size={16} />
-              QR para cliente
-            </Button>
-            <Button
-              onClick={() => navigate('/ventas')}
-              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
-            >
-              Ver historial
-            </Button>
-          </div>
-        </motion.div>
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex flex-col items-center gap-4 text-center"
+          >
+            <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
+              <Check size={40} className="text-[#2e9e9b]" />
+            </div>
+            <h2 className="text-2xl font-bold text-white">¡Venta registrada!</h2>
+            <p className="text-muted-foreground">Venta #{successId} completada correctamente.</p>
+            <p className="text-3xl font-bold text-[#2e9e9b]">
+              {money(total)}
+            </p>
+            <div className="flex gap-3 mt-2 flex-wrap justify-center">
+              <Button
+                variant="outline"
+                onClick={() => { setCart([]); setSuccessId(null); setClienteSeleccionado(null); setDescuentoGlobal(0); setDescuentoMotivo(''); setNotas(''); setTicketData(null); setMontoRecibido(''); }}
+                className="border-border"
+              >
+                Nueva venta
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handlePrint}
+                className="border-border gap-2"
+              >
+                <Printer size={16} />
+                Imprimir ticket
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowQR(true)}
+                className="border-border gap-2"
+              >
+                <QrCode size={16} />
+                QR para cliente
+              </Button>
+              <Button
+                onClick={() => navigate('/ventas')}
+                className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
+              >
+                Ver historial
+              </Button>
+            </div>
+          </motion.div>
         </div>
 
         <QRTicketModal data={ticketData} open={showQR} onClose={() => setShowQR(false)} />
@@ -720,10 +720,6 @@ export default function NuevaVentaPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* RIGHT — Carrito + Pago */}
-        <div className="flex flex-col gap-3 w-full lg:w-[380px] shrink-0">
 
           {/* Carrito */}
           <div className="rounded-xl border border-border bg-card/50 flex flex-col">
@@ -789,6 +785,12 @@ export default function NuevaVentaPage() {
               </AnimatePresence>
             </div>
           </div>
+        </div>
+
+        {/* RIGHT — Carrito + Pago */}
+        <div className="flex flex-col gap-3 w-full lg:w-[380px] shrink-0">
+
+
 
           {/* Cliente */}
           <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-2">
@@ -848,11 +850,10 @@ export default function NuevaVentaPage() {
                     <button
                       key={m.id}
                       onClick={() => setMetodoPago(value)}
-                      className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-all ${
-                        isActive
+                      className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-all ${isActive
                           ? 'border-[#2e9e9b] bg-[#2e9e9b]/10 text-[#2e9e9b]'
                           : 'border-border text-muted-foreground hover:border-border/80 hover:bg-white/5'
-                      }`}
+                        }`}
                     >
                       <Icon size={16} />
                       <span className="line-clamp-1 text-center">{m.nombre}</span>
