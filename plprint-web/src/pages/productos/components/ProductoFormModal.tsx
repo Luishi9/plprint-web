@@ -289,43 +289,109 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4"></div>
-                <FormField
-                  control={form.control}
-                  name="codigo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Código / SKU</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ej. ZAP-001" {...field} className="bg-background" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="codigo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Código / SKU</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ej. ZAP-001" {...field} className="bg-background" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="categoriaId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Categoría</FormLabel>
+                        <Select
+                          onValueChange={(val) => field.onChange(val === 'none' ? undefined : Number(val))}
+                          value={field.value ? String(field.value) : 'none'}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Sin categoría" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-card border border-border text-foreground z-[200]">
+                            <SelectItem value="none">Sin categoría</SelectItem>
+                            {categorias.map((cat) => (
+                              <SelectItem key={cat.id} value={String(cat.id)}>
+                                {cat.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="precioVenta"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Precio Venta *</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} className="bg-background font-mono" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="precioCompra"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Precio Compra</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} value={field.value ?? ''} className="bg-background font-mono" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
-                  name="categoriaId"
+                  name="unidadMedida"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Categoría</FormLabel>
-                      <Select
-                        onValueChange={(val) => field.onChange(val === 'none' ? undefined : Number(val))}
-                        value={field.value ? String(field.value) : 'none'}
-                      >
+                      <FormLabel>Unidad de medida</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Sin categoría" />
+                            <SelectValue placeholder="Selecciona una unidad" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="bg-card border border-border text-foreground z-[200]">
-                          <SelectItem value="none">Sin categoría</SelectItem>
-                          {categorias.map((cat) => (
-                            <SelectItem key={cat.id} value={String(cat.id)}>
-                              {cat.nombre}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="unidad">Unidad</SelectItem>
+                          <SelectItem value="pieza">Pieza</SelectItem>
+                          <SelectItem value="par">Par</SelectItem>
+                          <SelectItem value="docena">Docena</SelectItem>
+                          <SelectItem value="caja">Caja</SelectItem>
+                          <SelectItem value="paquete">Paquete</SelectItem>
+                          <SelectItem value="rollo">Rollo</SelectItem>
+                          <SelectItem value="bolsa">Bolsa</SelectItem>
+                          <SelectItem value="kg">Kilogramo (kg)</SelectItem>
+                          <SelectItem value="g">Gramo (g)</SelectItem>
+                          <SelectItem value="ton">Tonelada (ton)</SelectItem>
+                          <SelectItem value="litro">Litro</SelectItem>
+                          <SelectItem value="ml">Mililitro (ml)</SelectItem>
+                          <SelectItem value="metro">Metro</SelectItem>
+                          <SelectItem value="cm">Centímetro (cm)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -333,323 +399,257 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                   )}
                 />
 
-              </div>
+                {/* ── Existencias ── */}
+                <div className='space-y-3 '>
+                  <h2 className="flex items-center gap-2"> Caracteristicas </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Sección para agregar otras características del producto.
+                  </p>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="precioVenta"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Precio Venta *</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" {...field} className="bg-background font-mono" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                </div>
+
+                <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={tieneExistencias}
+                      onChange={(e) => {
+                        setTieneExistencias(e.target.checked);
+                        if (!e.target.checked) {
+                          form.setValue('cantidadInicial', undefined);
+                          form.setValue('stockMinimo', undefined);
+                        }
+                      }}
+                      className="w-4 h-4 accent-[#2e9e9b] cursor-pointer"
+                    />
+                    <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                      <Package size={14} className="text-[#2e9e9b]" />
+                      {isEditing ? 'Registrar movimiento de stock' : 'Este producto tiene existencias (inventario)'}
+                    </span>
+                  </label>
+
+                  {tieneExistencias && (
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <FormField
+                        control={form.control}
+                        name="cantidadInicial"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isEditing ? 'Cantidad a añadir *' : 'Cantidad inicial *'}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                {...field}
+                                value={field.value ?? ''}
+                                className="bg-background font-mono border-[#2e9e9b]/50 focus-visible:ring-[#2e9e9b]"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="stockMinimo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock mínimo</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="Ej. 5"
+                                {...field}
+                                value={field.value ?? ''}
+                                className="bg-background font-mono"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   )}
-                />
-                <FormField
-                  control={form.control}
-                  name="precioCompra"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Precio Compra</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" {...field} value={field.value ?? ''} className="bg-background font-mono" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                </div>
+
+
+              </div>
+
+              {/* Col 2 - Imagen y Extras */}
+              <div className="space-y-4 flex flex-col">
+
+                {/* ── Insumos requeridos ── */}
+                <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+                  <div className="flex items-center gap-2">
+                    <Boxes size={14} className="text-[#2e9e9b]" />
+                    <span className="text-sm font-medium text-foreground">
+                      Insumos requeridos
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Insumos que se descuentan automáticamente al vender este producto
+                  </p>
+
+                  {/* Lista de insumos seleccionados */}
+                  {insumosSeleccionados.length > 0 && (
+                    <div className="space-y-2">
+                      {insumosSeleccionados.map(({ insumoId, cantidadRequerida, insumo }) => (
+                        <div
+                          key={insumoId}
+                          className="flex items-center gap-2 bg-background rounded-md p-2 border border-border"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {insumo.nombre}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {insumo.codigo || 'Sin código'} • {insumo.unidad_medida}
+                            </p>
+                          </div>
+                          <Input
+                            type="number"
+                            step="0.001"
+                            min="0.001"
+                            value={cantidadRequerida}
+                            onChange={(e) => cambiarCantidadInsumo(insumoId, parseFloat(e.target.value) || 0)}
+                            className="w-20 bg-background font-mono text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground w-12">
+                            {insumo.unidad_medida}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => quitarInsumo(insumoId)}
+                            className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="unidadMedida"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unidad de medida</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Selecciona una unidad" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-card border border-border text-foreground z-[200]">
-                        <SelectItem value="unidad">Unidad</SelectItem>
-                        <SelectItem value="pieza">Pieza</SelectItem>
-                        <SelectItem value="par">Par</SelectItem>
-                        <SelectItem value="docena">Docena</SelectItem>
-                        <SelectItem value="caja">Caja</SelectItem>
-                        <SelectItem value="paquete">Paquete</SelectItem>
-                        <SelectItem value="rollo">Rollo</SelectItem>
-                        <SelectItem value="bolsa">Bolsa</SelectItem>
-                        <SelectItem value="kg">Kilogramo (kg)</SelectItem>
-                        <SelectItem value="g">Gramo (g)</SelectItem>
-                        <SelectItem value="ton">Tonelada (ton)</SelectItem>
-                        <SelectItem value="litro">Litro</SelectItem>
-                        <SelectItem value="ml">Mililitro (ml)</SelectItem>
-                        <SelectItem value="metro">Metro</SelectItem>
-                        <SelectItem value="cm">Centímetro (cm)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* ── Existencias ── */}
-              <div className='space-y-3 '>
-                <h2 className="flex items-center gap-2"> Caracteristicas </h2>
-                <p className="text-sm text-muted-foreground">
-                  Sección para agregar otras características del producto.
-                </p>
-
-              </div>
-
-              <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
-
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={tieneExistencias}
-                    onChange={(e) => {
-                      setTieneExistencias(e.target.checked);
-                      if (!e.target.checked) {
-                        form.setValue('cantidadInicial', undefined);
-                        form.setValue('stockMinimo', undefined);
+                  {/* Selector de insumos */}
+                  <Select
+                    value={insumoBusqueda}
+                    onValueChange={(val) => {
+                      if (val) {
+                        agregarInsumo(Number(val));
                       }
                     }}
-                    className="w-4 h-4 accent-[#2e9e9b] cursor-pointer"
-                  />
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <Package size={14} className="text-[#2e9e9b]" />
-                    {isEditing ? 'Registrar movimiento de stock' : 'Este producto tiene existencias (inventario)'}
-                  </span>
-                </label>
-
-                {tieneExistencias && (
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <FormField
-                      control={form.control}
-                      name="cantidadInicial"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{isEditing ? 'Cantidad a añadir *' : 'Cantidad inicial *'}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="0"
-                              placeholder="0"
-                              {...field}
-                              value={field.value ?? ''}
-                              className="bg-background font-mono border-[#2e9e9b]/50 focus-visible:ring-[#2e9e9b]"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="stockMinimo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Stock mínimo</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="0"
-                              placeholder="Ej. 5"
-                              {...field}
-                              value={field.value ?? ''}
-                              className="bg-background font-mono"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-              </div>
-
-
-            </div>
-
-            {/* Col 2 - Imagen y Extras */}
-            <div className="space-y-4 flex flex-col">
-
-              {/* ── Insumos requeridos ── */}
-              <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
-                <div className="flex items-center gap-2">
-                  <Boxes size={14} className="text-[#2e9e9b]" />
-                  <span className="text-sm font-medium text-foreground">
-                    Insumos requeridos
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Insumos que se descuentan automáticamente al vender este producto
-                </p>
-
-                {/* Lista de insumos seleccionados */}
-                {insumosSeleccionados.length > 0 && (
-                  <div className="space-y-2">
-                    {insumosSeleccionados.map(({ insumoId, cantidadRequerida, insumo }) => (
-                      <div
-                        key={insumoId}
-                        className="flex items-center gap-2 bg-background rounded-md p-2 border border-border"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {insumo.nombre}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {insumo.codigo || 'Sin código'} • {insumo.unidad_medida}
-                          </p>
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Agregar insumo..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border text-foreground z-[200]">
+                      {insumosDisponibles
+                        .filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id))
+                        .map((insumo) => (
+                          <SelectItem key={insumo.id} value={String(insumo.id)}>
+                            <div className="flex items-center gap-2">
+                              <Plus size={12} />
+                              <span>{insumo.nombre}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({insumo.codigo || 'Sin código'})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      {insumosDisponibles.filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id)).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          No hay insumos disponibles
                         </div>
-                        <Input
-                          type="number"
-                          step="0.001"
-                          min="0.001"
-                          value={cantidadRequerida}
-                          onChange={(e) => cambiarCantidadInsumo(insumoId, parseFloat(e.target.value) || 0)}
-                          className="w-20 bg-background font-mono text-sm"
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="descripcion"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Detalles sobre el producto..."
+                          className="resize-none bg-background h-24"
+                          {...field}
                         />
-                        <span className="text-xs text-muted-foreground w-12">
-                          {insumo.unidad_medida}
-                        </span>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex-1 flex flex-col">
+                  <FormLabel className="mb-2">Fotografía (Opcional)</FormLabel>
+                  <div className="flex-1 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center relative overflow-hidden bg-background/50 hover:bg-background transition-colors min-h-[160px]">
+                    {imagePreview ? (
+                      <>
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                         <button
                           type="button"
-                          onClick={() => quitarInsumo(insumoId)}
-                          className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                          onClick={removeImage}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-colors"
                         >
-                          <Trash2 size={14} />
+                          <X size={16} />
                         </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Selector de insumos */}
-                <Select
-                  value={insumoBusqueda}
-                  onValueChange={(val) => {
-                    if (val) {
-                      agregarInsumo(Number(val));
-                    }
-                  }}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Agregar insumo..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border border-border text-foreground z-[200]">
-                    {insumosDisponibles
-                      .filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id))
-                      .map((insumo) => (
-                        <SelectItem key={insumo.id} value={String(insumo.id)}>
-                          <div className="flex items-center gap-2">
-                            <Plus size={12} />
-                            <span>{insumo.nombre}</span>
-                            <span className="text-xs text-muted-foreground">
-                              ({insumo.codigo || 'Sin código'})
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    {insumosDisponibles.filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id)).length === 0 && (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">
-                        No hay insumos disponibles
-                      </div>
+                      </>
+                    ) : (
+                      <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-white transition-colors">
+                        <Upload size={28} className="mb-2 opacity-50" />
+                        <span className="text-sm font-medium">Subir imagen</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          ref={fileInputRef}
+                          onChange={handleImageChange}
+                        />
+                      </label>
                     )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="descripcion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Detalles sobre el producto..."
-                        className="resize-none bg-background h-24"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex-1 flex flex-col">
-                <FormLabel className="mb-2">Fotografía (Opcional)</FormLabel>
-                <div className="flex-1 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center relative overflow-hidden bg-background/50 hover:bg-background transition-colors min-h-[160px]">
-                  {imagePreview ? (
-                    <>
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-colors"
-                      >
-                        <X size={16} />
-                      </button>
-                    </>
-                  ) : (
-                    <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-white transition-colors">
-                      <Upload size={28} className="mb-2 opacity-50" />
-                      <span className="text-sm font-medium">Subir imagen</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleImageChange}
-                      />
-                    </label>
-                  )}
+                  </div>
                 </div>
+
               </div>
 
             </div>
 
-          </div>
+            {/* Mensaje de Info Stock */}
+            {tieneExistencias && form.watch('cantidadInicial') ? (
+              <div className="bg-[#2e9e9b]/10 border border-[#2e9e9b]/20 rounded-lg p-3 text-sm text-[#2e9e9b]">
+                <p>
+                  {isEditing
+                    ? <>Se registrará una <strong>Entrada de {form.watch('cantidadInicial')}</strong> unidades en la sucursal <strong>{sucursalEfectiva?.nombre || 'actual'}</strong>.</>
+                    : <>Se registrará una <strong>Entrada Inicial de {form.watch('cantidadInicial')}</strong> unidades en la sucursal <strong>{sucursalEfectiva?.nombre || 'actual'}</strong>.</>}
+                  {form.watch('stockMinimo') ? ` Stock mínimo: ${form.watch('stockMinimo')} uds.` : ''}
+                </p>
+              </div>
+            ) : null}
 
-          {/* Mensaje de Info Stock */}
-          {tieneExistencias && form.watch('cantidadInicial') ? (
-            <div className="bg-[#2e9e9b]/10 border border-[#2e9e9b]/20 rounded-lg p-3 text-sm text-[#2e9e9b]">
-              <p>
-                {isEditing
-                  ? <>Se registrará una <strong>Entrada de {form.watch('cantidadInicial')}</strong> unidades en la sucursal <strong>{sucursalEfectiva?.nombre || 'actual'}</strong>.</>
-                  : <>Se registrará una <strong>Entrada Inicial de {form.watch('cantidadInicial')}</strong> unidades en la sucursal <strong>{sucursalEfectiva?.nombre || 'actual'}</strong>.</>}
-                {form.watch('stockMinimo') ? ` Stock mínimo: ${form.watch('stockMinimo')} uds.` : ''}
-              </p>
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  isEditing ? 'Guardar Cambios' : 'Guardar Producto'
+                )}
+              </Button>
             </div>
-          ) : null}
+          </form>
+        </Form>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                isEditing ? 'Guardar Cambios' : 'Guardar Producto'
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
-
-    </DialogContent>
+      </DialogContent>
     </Dialog >
   );
 }
