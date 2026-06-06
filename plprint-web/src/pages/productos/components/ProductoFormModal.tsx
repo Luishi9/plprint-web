@@ -398,6 +398,12 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
                 {/* ── Existencias ── */}
                 <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+
+                  <h2 className="flex items-center gap-2"> Caracteristicas </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Sección para agregar otras características del producto.
+                  </p>
+
                   <label className="flex items-center gap-2.5 cursor-pointer select-none">
                     <input
                       type="checkbox"

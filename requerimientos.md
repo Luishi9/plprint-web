@@ -343,4 +343,6 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 
 4. excel de los reportes
 
-5. cambiar la categoria de impresion a produccion a los productos que entran a produccion
+5. [x] cambiar la categoria de impresion a produccion a los productos que entran a produccion
+
+6. [] unidades de medida, jalar las que se dan de alta no las que estan fijas
