@@ -154,11 +154,14 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
                     <FormLabel className="text-white/80">Código</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="INS-001"
+                        placeholder="Se genera automáticamente"
                         className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
                         {...field}
                       />
                     </FormControl>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Déjalo vacío para generar uno a partir del nombre (ej. PAPE-0001)
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
