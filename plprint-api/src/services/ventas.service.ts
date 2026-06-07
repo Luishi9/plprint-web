@@ -6,6 +6,9 @@ interface VentaItem {
   cantidad: number;
   precioUnitario: number;
   descuento?: number;
+  ancho_m?: number;
+  alto_m?: number;
+  unidad_medida_detalle?: string;
 }
 
 interface CreateVentaDTO {
@@ -49,7 +52,7 @@ export class VentasService {
           }
         : {}),
       ...(estado ? { estado } : {}),
-      ...(estadoPago ? { estado_pago: estadoPago } : {}),
+      ...(estadoPago ? { estado_pago: { in: estadoPago.split(',') } } : {}),
     };
 
     const [data, total] = await Promise.all([
@@ -138,6 +141,9 @@ export class VentasService {
               precio_unitario: i.precioUnitario,
               descuento: i.descuento ?? 0,
               subtotal: i.subtotal,
+              ancho_m: i.ancho_m ?? null,
+              alto_m: i.alto_m ?? null,
+              unidad_medida_detalle: i.unidad_medida_detalle ?? null,
             })),
           },
         },

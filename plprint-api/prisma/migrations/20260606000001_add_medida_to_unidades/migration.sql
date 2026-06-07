@@ -1,0 +1,3 @@
+ALTER TABLE `unidades_medida`
+  ADD COLUMN `es_medida` BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN `tipo_medida` VARCHAR(2) NULL;

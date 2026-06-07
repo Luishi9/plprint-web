@@ -7,6 +7,9 @@ export interface CotizacionItem {
   precio_unitario: number | string;
   descuento?: number | string;
   subtotal?: number | string;
+  ancho_m?: number | string;
+  alto_m?: number | string;
+  unidad_medida_detalle?: string;
   productos?: { id: number; nombre: string; precio_venta: number | string };
 }
 

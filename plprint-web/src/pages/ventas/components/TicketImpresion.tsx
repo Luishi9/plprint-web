@@ -15,6 +15,11 @@ export interface TicketData {
     cantidad: number;
     precioUnitario: number;
     descuento: number;
+    ancho_m?: number;
+    alto_m?: number;
+    labelUnidad?: string;
+    esMedida?: boolean;
+    tipoMedida?: 'm2' | 'ml' | null;
   }[];
   subtotal: number;
   descuentoGlobal: number;
@@ -45,9 +50,12 @@ export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO
 
   const rows = data.items.map((item) => {
     const lineTotal = item.precioUnitario * item.cantidad - item.descuento;
+    const medidaInfo = item.esMedida && item.ancho_m != null && item.alto_m != null
+      ? `<div style="font-size:9px;color:#666;">${item.tipoMedida === 'm2' ? `${item.ancho_m}m × ${item.alto_m}m` : `${item.alto_m}m`} = ${item.labelUnidad ?? ''}</div>`
+      : '';
     return `
       <tr>
-        <td style="padding:3px 2px;font-weight:600;">${item.nombre}</td>
+        <td style="padding:3px 2px;font-weight:600;">${item.nombre}${medidaInfo}</td>
         <td style="padding:3px 2px;text-align:center;">${item.cantidad}</td>
         <td style="padding:3px 2px;text-align:right;">${fmt(item.precioUnitario)}</td>
         <td style="padding:3px 2px;text-align:right;">${fmt(lineTotal)}</td>

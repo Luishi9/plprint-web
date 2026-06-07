@@ -34,6 +34,7 @@ import { productosApi } from '@/api/productos.api';
 import { inventarioApi } from '@/api/inventario.api';
 import { insumosApi } from '@/api/insumos.api';
 import { preciosProductoApi, NIVELES_LABEL, NivelPrecio } from '@/api/preciosProducto.api';
+import { unidadesMedidaApi, UnidadMedida } from '@/api/unidadesMedida.api';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { Producto } from '@/types/producto.types';
@@ -77,6 +78,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   const [insumosSeleccionados, setInsumosSeleccionados] = useState<Array<{ insumoId: number; cantidadRequerida: number; insumo: Insumo }>>([]);
   const [insumoBusqueda, setInsumoBusqueda] = useState('');
   type PrecioNivelState = { id: number | null; cantidad_minima: string; precio: string };
+  const [unidadesMedida, setUnidadesMedida] = useState<UnidadMedida[]>([]);
   const [preciosVolumen, setPreciosVolumen] = useState<Record<NivelPrecio, PrecioNivelState>>({
     medio_mayoreo: { id: null, cantidad_minima: '', precio: '' },
     mayoreo: { id: null, cantidad_minima: '', precio: '' },
@@ -126,6 +128,13 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   // Cargar categorías al montar
   useEffect(() => {
     categoriasApi.getAll().then((res) => setCategorias(res.data?.data || [])).catch(() => { });
+  }, []);
+
+  // Cargar unidades de medida al montar
+  useEffect(() => {
+    unidadesMedidaApi.getAll()
+      .then((res) => setUnidadesMedida((res.data?.data as UnidadMedida[]) || []))
+      .catch(() => { });
   }, []);
 
   // Rellenar formulario cuando se edita
@@ -483,36 +492,50 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                 <FormField
                   control={form.control}
                   name="unidadMedida"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unidad de medida</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Selecciona una unidad" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-card border border-border text-foreground z-[200]">
-                          <SelectItem value="unidad">Unidad</SelectItem>
-                          <SelectItem value="pieza">Pieza</SelectItem>
-                          <SelectItem value="par">Par</SelectItem>
-                          <SelectItem value="docena">Docena</SelectItem>
-                          <SelectItem value="caja">Caja</SelectItem>
-                          <SelectItem value="paquete">Paquete</SelectItem>
-                          <SelectItem value="rollo">Rollo</SelectItem>
-                          <SelectItem value="bolsa">Bolsa</SelectItem>
-                          <SelectItem value="kg">Kilogramo (kg)</SelectItem>
-                          <SelectItem value="g">Gramo (g)</SelectItem>
-                          <SelectItem value="ton">Tonelada (ton)</SelectItem>
-                          <SelectItem value="litro">Litro</SelectItem>
-                          <SelectItem value="ml">Mililitro (ml)</SelectItem>
-                          <SelectItem value="metro">Metro</SelectItem>
-                          <SelectItem value="cm">Centímetro (cm)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const unidadSeleccionada = unidadesMedida.find((u) => u.abreviatura === field.value);
+                    const esMedida = unidadSeleccionada?.es_medida;
+                    const tipoMedida = unidadSeleccionada?.tipo_medida;
+                    return (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          Unidad de medida
+                          {esMedida && tipoMedida && (
+                            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
+                              {tipoMedida === 'm2' ? 'por m²' : 'por ml'}
+                            </span>
+                          )}
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Selecciona una unidad" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-card border border-border text-foreground z-[200]">
+                            {unidadesMedida.length === 0 ? (
+                              <div className="px-3 py-2 text-xs text-muted-foreground">
+                                Sin unidades. Crea desde Configuración → Unidades de medida.
+                              </div>
+                            ) : (
+                              unidadesMedida.map((u) => (
+                                <SelectItem key={u.id} value={u.abreviatura}>
+                                  {u.nombre} ({u.abreviatura})
+                                  {u.es_medida && u.tipo_medida ? ` — ${u.tipo_medida === 'm2' ? 'm²' : 'ml'}` : ''}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {esMedida && (
+                          <p className="text-[11px] text-muted-foreground">
+                            El precio de venta se cobrará por {tipoMedida === 'm2' ? 'metro cuadrado' : 'metro lineal'}. El cliente indicará ancho/alto al vender.
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 {/* ── Existencias ── */}

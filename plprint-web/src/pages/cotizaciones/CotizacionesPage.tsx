@@ -8,6 +8,7 @@ import {
 import { cotizacionesApi, Cotizacion } from '@/api/cotizaciones.api';
 import { clientesApi } from '@/api/clientes.api';
 import { productosApi } from '@/api/productos.api';
+import { calcularPrecioItem, TipoMedida } from '@/api/unidadesMedida.api';
 import { useMoney } from '@/hooks/useMoney';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
@@ -27,13 +28,17 @@ const ESTADO_CLS: Record<string, string> = {
 };
 
 interface Cliente { id: number; nombre: string; }
-interface Producto { id: number; nombre: string; precio_venta: number | string; }
+interface Producto { id: number; nombre: string; precio_venta: number | string; unidad_info?: { es_medida: boolean; tipo_medida: TipoMedida | null }; }
 
 interface ItemForm {
   producto_id: number;
   cantidad: number;
   precio_unitario: number;
   descuento: number;
+  ancho_m: number;
+  alto_m: number;
+  esMedida: boolean;
+  tipoMedida: TipoMedida | null;
 }
 
 export default function CotizacionesPage() {
@@ -135,6 +140,10 @@ export default function CotizacionesPage() {
       cantidad: d.cantidad,
       precio_unitario: Number(d.precio_unitario),
       descuento: Number(d.descuento || 0),
+      ancho_m: d.ancho_m ? Number(d.ancho_m) : 0,
+      alto_m: d.alto_m ? Number(d.alto_m) : 0,
+      esMedida: false,
+      tipoMedida: null,
     })));
     setFormError('');
     await cargarCatalogos();
@@ -143,7 +152,18 @@ export default function CotizacionesPage() {
 
   const agregarItem = () => {
     if (productos.length === 0) return;
-    setItems([...items, { producto_id: productos[0].id, cantidad: 1, precio_unitario: Number(productos[0].precio_venta), descuento: 0 }]);
+    const p0 = productos[0];
+    const esMedida = !!p0.unidad_info?.es_medida;
+    setItems([...items, {
+      producto_id: p0.id,
+      cantidad: 1,
+      precio_unitario: Number(p0.precio_venta),
+      descuento: 0,
+      ancho_m: 0,
+      alto_m: 0,
+      esMedida,
+      tipoMedida: p0.unidad_info?.tipo_medida ?? null,
+    }]);
   };
 
   const actualizarItem = (idx: number, field: keyof ItemForm, value: number) => {
@@ -151,7 +171,13 @@ export default function CotizacionesPage() {
     nuevos[idx] = { ...nuevos[idx], [field]: value };
     if (field === 'producto_id') {
       const p = productos.find((pp) => pp.id === value);
-      if (p) nuevos[idx].precio_unitario = Number(p.precio_venta);
+      if (p) {
+        nuevos[idx].precio_unitario = Number(p.precio_venta);
+        nuevos[idx].esMedida = !!p.unidad_info?.es_medida;
+        nuevos[idx].tipoMedida = p.unidad_info?.tipo_medida ?? null;
+        nuevos[idx].ancho_m = 0;
+        nuevos[idx].alto_m = 0;
+      }
     }
     setItems(nuevos);
   };
@@ -176,6 +202,9 @@ export default function CotizacionesPage() {
           cantidad: i.cantidad,
           precio_unitario: i.precio_unitario,
           descuento: i.descuento || 0,
+          ...(i.esMedida && i.ancho_m > 0 ? { ancho_m: i.ancho_m } : {}),
+          ...(i.esMedida && i.alto_m > 0 ? { alto_m: i.alto_m } : {}),
+          ...(i.esMedida && i.tipoMedida ? { unidad_medida_detalle: i.tipoMedida } : {}),
         })),
       };
       if (editando) {
@@ -489,39 +518,89 @@ export default function CotizacionesPage() {
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {items.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-4">Sin productos.</p>
-                ) : items.map((it, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-background/40 border border-border rounded-md p-2">
-                    <select
-                      value={it.producto_id}
-                      onChange={(e) => actualizarItem(idx, 'producto_id', Number(e.target.value))}
-                      className="flex-1 bg-background border border-border rounded text-sm px-2 py-1 min-w-0"
-                    >
-                      {productos.map((p) => (
-                        <option key={p.id} value={p.id}>{p.nombre}</option>
-                      ))}
-                    </select>
-                    <Input
-                      type="number" min="1" value={it.cantidad}
-                      onChange={(e) => actualizarItem(idx, 'cantidad', Number(e.target.value))}
-                      className="w-20 bg-background"
-                    />
-                    <Input
-                      type="number" step="0.01" min="0" value={it.precio_unitario}
-                      onChange={(e) => actualizarItem(idx, 'precio_unitario', Number(e.target.value))}
-                      className="w-28 bg-background"
-                    />
-                    <span className="font-mono text-sm text-[#2e9e9b] w-24 text-right">
-                      {money((it.cantidad * it.precio_unitario - (it.descuento || 0)))}
-                    </span>
-                    <button
-                      onClick={() => eliminarItem(idx)}
-                      className="p-1 text-muted-foreground hover:text-red-400"
-                      type="button"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
+                ) : items.map((it, idx) => {
+                  const calcMedida = it.esMedida
+                    ? calcularPrecioItem(it.precio_unitario, it.cantidad, { es_medida: true, tipo_medida: it.tipoMedida }, { ancho_m: it.ancho_m, alto_m: it.alto_m })
+                    : { precioUnitario: 0, labelUnidad: '' };
+                  const subtotal = it.esMedida
+                    ? calcMedida.precioUnitario * it.cantidad - (it.descuento || 0)
+                    : it.cantidad * it.precio_unitario - (it.descuento || 0);
+                  return (
+                    <div key={idx} className="flex flex-col gap-1.5 bg-background/40 border border-border rounded-md p-2">
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={it.producto_id}
+                          onChange={(e) => actualizarItem(idx, 'producto_id', Number(e.target.value))}
+                          className="flex-1 bg-background border border-border rounded text-sm px-2 py-1 min-w-0"
+                        >
+                          {productos.map((p) => (
+                            <option key={p.id} value={p.id}>{p.nombre}</option>
+                          ))}
+                        </select>
+                        <Input
+                          type="number" min="1" value={it.cantidad}
+                          onChange={(e) => actualizarItem(idx, 'cantidad', Number(e.target.value))}
+                          className="w-16 bg-background"
+                          title="Cantidad (piezas)"
+                        />
+                        <span className="text-xs text-muted-foreground w-6 text-center">×</span>
+                        <Input
+                          type="number" step="0.01" min="0" value={it.precio_unitario}
+                          onChange={(e) => actualizarItem(idx, 'precio_unitario', Number(e.target.value))}
+                          className="w-24 bg-background"
+                          title="Precio unitario base"
+                        />
+                        <span className="font-mono text-sm text-[#2e9e9b] w-24 text-right">
+                          {money(subtotal)}
+                        </span>
+                        <button
+                          onClick={() => eliminarItem(idx)}
+                          className="p-1 text-muted-foreground hover:text-red-400"
+                          type="button"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                      {it.esMedida && (
+                        <div className="flex items-center gap-2 pl-1 text-xs">
+                          <span className="text-[10px] uppercase tracking-wider px-1 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
+                            {it.tipoMedida === 'm2' ? 'm²' : 'ml'}
+                          </span>
+                          <span className="text-muted-foreground">ancho</span>
+                          <Input
+                            type="number" step="0.01" min="0" value={it.ancho_m || ''}
+                            onChange={(e) => {
+                              const nuevos = [...items];
+                              nuevos[idx] = { ...nuevos[idx], ancho_m: parseFloat(e.target.value) || 0 };
+                              setItems(nuevos);
+                            }}
+                            className="w-20 h-7 bg-background"
+                            placeholder="0"
+                          />
+                          {it.tipoMedida === 'm2' && (
+                            <>
+                              <span className="text-muted-foreground">alto</span>
+                              <Input
+                                type="number" step="0.01" min="0" value={it.alto_m || ''}
+                                onChange={(e) => {
+                                  const nuevos = [...items];
+                                  nuevos[idx] = { ...nuevos[idx], alto_m: parseFloat(e.target.value) || 0 };
+                                  setItems(nuevos);
+                                }}
+                                className="w-20 h-7 bg-background"
+                                placeholder="0"
+                              />
+                            </>
+                          )}
+                          <span className="text-muted-foreground">m</span>
+                          {calcMedida.labelUnidad && (
+                            <span className="text-muted-foreground ml-auto">= {calcMedida.labelUnidad}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

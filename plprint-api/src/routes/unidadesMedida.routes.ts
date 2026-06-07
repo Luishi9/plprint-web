@@ -11,6 +11,8 @@ const controller = new UnidadesMedidaController(new UnidadesMedidaService());
 const unidadSchema = z.object({
   nombre: z.string().min(1).max(50),
   abreviatura: z.string().min(1).max(10),
+  es_medida: z.boolean().optional(),
+  tipo_medida: z.enum(['m2', 'ml']).nullable().optional(),
 });
 
 router.get('/', controller.getAll);

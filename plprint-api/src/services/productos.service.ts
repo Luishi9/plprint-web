@@ -8,6 +8,28 @@ interface FindAllParams {
   categoriaId?: number;
 }
 
+const _unidadInfoCache = new Map<string, { es_medida: boolean; tipo_medida: string | null }>();
+
+const getUnidadInfo = async (abreviatura: string | null) => {
+  if (!abreviatura) return { es_medida: false, tipo_medida: null };
+  if (_unidadInfoCache.has(abreviatura)) return _unidadInfoCache.get(abreviatura)!;
+  const u = await prisma.unidades_medida.findFirst({ where: { abreviatura } });
+  const info = { es_medida: u?.es_medida ?? false, tipo_medida: u?.tipo_medida ?? null };
+  _unidadInfoCache.set(abreviatura, info);
+  return info;
+};
+
+export const clearUnidadInfoCache = () => _unidadInfoCache.clear();
+
+const attachUnidadInfo = async <T extends { unidad_medida: string | null }>(productos: T[]) => {
+  const unidades = Array.from(new Set(productos.map((p) => p.unidad_medida).filter(Boolean) as string[]));
+  await Promise.all(unidades.map(getUnidadInfo));
+  return productos.map((p) => {
+    const info = p.unidad_medida ? _unidadInfoCache.get(p.unidad_medida) : null;
+    return { ...p, unidad_info: info ?? { es_medida: false, tipo_medida: null } };
+  });
+};
+
 interface CreateProductoDTO {
   codigo?: string;
   nombre: string;
@@ -59,7 +81,7 @@ export class ProductosService {
       prisma.productos.count({ where }),
     ]);
 
-    return { data, total };
+    return { data: await attachUnidadInfo(data), total };
   }
 
   async findById(id: number) {
@@ -91,7 +113,8 @@ export class ProductosService {
     });
 
     if (!producto) throw new NotFoundError('Producto');
-    return producto;
+    const [withInfo] = await attachUnidadInfo([producto]);
+    return withInfo;
   }
 
   async create(data: CreateProductoDTO) {

@@ -13,6 +13,9 @@ const itemSchema = z.object({
   cantidad: z.number().int().positive(),
   precio_unitario: z.number().nonnegative(),
   descuento: z.number().nonnegative().default(0),
+  ancho_m: z.number().min(0).optional(),
+  alto_m: z.number().min(0).optional(),
+  unidad_medida_detalle: z.string().max(20).optional(),
 });
 
 const cotizacionSchema = z.object({

@@ -451,3 +451,40 @@ Frontend (/var/www/plprint/plprint-web/):
 5. ProductoFormModal con secciÃ³n nueva
 6. NuevaVentaPage con recÃ¡lculo de precio
 7. VerificaciÃ³n TS + smoke test con productos existentes
+
+## Sistema de Productos por Medidas (M² / ML) — IMPLEMENTADO 2026-06-06
+
+### Tablas modificadas
+- `unidades_medida`: extender con `es_medida BOOLEAN`, `tipo_medida VARCHAR(2)` ('m2' | 'ml' | NULL)
+- `venta_detalle`: extender con `ancho_m DECIMAL(10,4)`, `alto_m DECIMAL(10,4)`, `unidad_medida_detalle VARCHAR(20)`
+- `cotizacion_detalle`: mismas 3 columnas que `venta_detalle`
+
+### Migraciones
+- `20260606000001_add_medida_to_unidades`
+- `20260606000002_add_medidas_to_detalle`
+
+### Lógica
+- `calcularPrecioItem(precioVenta, cantidad, unidad, medidas)`:
+  - Si `unidad.es_medida` y `tipo_medida='m2'`: `precioUnitario = precioVenta * (ancho_m * alto_m)`, label = "X.XX m²"
+  - Si `unidad.es_medida` y `tipo_medida='ml'`: `precioUnitario = precioVenta * alto_m`, label = "X.XX m"
+  - Si no: `precioUnitario = precioVenta`, label vacío
+- `subtotal_item = precioUnitario * cantidad_piezas`
+- `precioVenta` del producto se interpreta como **precio por m² o por ml** según la unidad
+- ML usa solo `alto_m` como largo
+
+### Endpoints (sin cambios)
+- `GET /api/v1/unidades-medida` ahora retorna `es_medida` y `tipo_medida` por cada unidad
+- `POST/PUT /api/v1/unidades-medida` acepta `es_medida` y `tipo_medida`
+- `GET /api/v1/productos/:id` adjunta `unidad_info: { es_medida, tipo_medida }` (lookup por abreviatura, con cache en memoria)
+- Cache se invalida al crear/actualizar una unidad de medida
+
+### Frontend
+- `UnidadesMedidaPage`: tabla con columna "Por medidas" (badge m²/ml); modal crear/editar con checkbox "Esta unidad se vende por medidas" + botones para elegir tipo (m²/ml)
+- `ProductoFormModal`: badge "(por m²)" / "(por ml)" al lado del select de unidad cuando la unidad seleccionada es de medida; mensaje explicativo
+- `NuevaVentaPage`: card de catálogo muestra badge "por m²" / "por ml"; fila del carrito muestra inputs inline `ancho` y `alto` (m), recálculo en tiempo real al cambiar valores; precio final `= precioBase × área × cantidad`
+- `CotizacionesPage`: misma lógica inline en cada item del modal
+- `TicketImpresion`: muestra `X.XXm × Y.YYm = Z.ZZm²` debajo del nombre del producto
+
+### Archivos
+- Backend: `prisma/schema.prisma`, 2 migraciones, `src/services/unidadesMedida.service.ts`, `src/services/productos.service.ts` (lookup + cache), `src/services/ventas.service.ts`, `src/services/cotizaciones.service.ts`, `src/routes/ventas.routes.ts`, `src/routes/cotizaciones.routes.ts`, `src/routes/unidadesMedida.routes.ts`
+- Frontend: `src/api/unidadesMedida.api.ts` (helper `calcularPrecioItem`), `src/pages/unidades-medida/UnidadesMedidaPage.tsx`, `src/pages/productos/components/ProductoFormModal.tsx`, `src/pages/ventas/NuevaVentaPage.tsx`, `src/pages/cotizaciones/CotizacionesPage.tsx`, `src/pages/ventas/components/TicketImpresion.tsx`, `src/api/cotizaciones.api.ts`

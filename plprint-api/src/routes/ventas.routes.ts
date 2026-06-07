@@ -24,6 +24,9 @@ const createVentaSchema = z.object({
         cantidad: z.number().int().positive(),
         precioUnitario: z.number().positive(),
         descuento: z.number().min(0).default(0),
+        ancho_m: z.number().min(0).optional(),
+        alto_m: z.number().min(0).optional(),
+        unidad_medida_detalle: z.string().max(20).optional(),
       }),
     )
     .min(1),

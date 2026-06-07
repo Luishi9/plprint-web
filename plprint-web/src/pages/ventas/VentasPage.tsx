@@ -215,7 +215,7 @@ export default function VentasPage() {
       if (filtroEstado === 'cancelada') params.estado = 'cancelada';
       else if (filtroEstado === 'completada') params.estado = 'completada';
       else if (filtroEstado === 'pendiente_pago') {
-        params.estadoPago = 'pendiente';
+        params.estadoPago = 'pendiente,parcial';
         params.estado = 'completada';
       }
       const res = await ventasApi.getAll(params);

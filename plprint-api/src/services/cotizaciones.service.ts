@@ -7,6 +7,9 @@ export interface CotizacionItemInput {
   cantidad: number;
   precio_unitario: number;
   descuento?: number;
+  ancho_m?: number;
+  alto_m?: number;
+  unidad_medida_detalle?: string;
 }
 
 export interface CotizacionInput {
@@ -93,6 +96,9 @@ export class CotizacionesService {
               subtotal: new Prisma.Decimal(
                 Number((i.cantidad * i.precio_unitario - (i.descuento || 0)).toFixed(2)),
               ),
+              ancho_m: i.ancho_m != null ? new Prisma.Decimal(i.ancho_m) : null,
+              alto_m: i.alto_m != null ? new Prisma.Decimal(i.alto_m) : null,
+              unidad_medida_detalle: i.unidad_medida_detalle ?? null,
             })),
           },
         },
@@ -131,6 +137,9 @@ export class CotizacionesService {
                 subtotal: new Prisma.Decimal(
                   Number((i.cantidad * i.precio_unitario - (i.descuento || 0)).toFixed(2)),
                 ),
+                ancho_m: i.ancho_m != null ? new Prisma.Decimal(i.ancho_m) : null,
+                alto_m: i.alto_m != null ? new Prisma.Decimal(i.alto_m) : null,
+                unidad_medida_detalle: i.unidad_medida_detalle ?? null,
               })),
             },
           },
