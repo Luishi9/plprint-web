@@ -66,13 +66,14 @@ export class InsumosService {
   }
 
   async create(data: CreateInsumoDTO) {
-    if (data.codigo) {
-      const existing = await prisma.insumos.findUnique({ where: { codigo: data.codigo } });
+    const codigo = data.codigo && data.codigo.trim() !== '' ? data.codigo.trim() : null;
+    if (codigo) {
+      const existing = await prisma.insumos.findUnique({ where: { codigo } });
       if (existing) throw new ConflictError('Ya existe un insumo con ese código');
     }
     return prisma.insumos.create({
       data: {
-        codigo: data.codigo,
+        codigo,
         nombre: data.nombre,
         descripcion: data.descripcion,
         unidad_medida: data.unidadMedida ?? 'unidad',
@@ -84,9 +85,13 @@ export class InsumosService {
 
   async update(id: number, data: Partial<CreateInsumoDTO>) {
     await this.findById(id);
-    if (data.codigo) {
-      const existing = await prisma.insumos.findFirst({ where: { codigo: data.codigo, NOT: { id } } });
-      if (existing) throw new ConflictError('Ya existe un insumo con ese código');
+    let codigo: string | null | undefined;
+    if (data.codigo !== undefined) {
+      codigo = data.codigo && data.codigo.trim() !== '' ? data.codigo.trim() : null;
+      if (codigo) {
+        const existing = await prisma.insumos.findFirst({ where: { codigo, NOT: { id } } });
+        if (existing) throw new ConflictError('Ya existe un insumo con ese código');
+      }
     }
     return prisma.insumos.update({
       where: { id },
@@ -96,7 +101,7 @@ export class InsumosService {
         ...(data.unidadMedida && { unidad_medida: data.unidadMedida }),
         ...(data.precioCompra !== undefined && { precio_compra: data.precioCompra }),
         ...(data.proveedorId !== undefined && { proveedor_id: data.proveedorId }),
-        ...(data.codigo && { codigo: data.codigo }),
+        ...(codigo !== undefined && { codigo }),
       },
     });
   }
