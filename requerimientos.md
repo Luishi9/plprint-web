@@ -488,3 +488,5 @@ Frontend (/var/www/plprint/plprint-web/):
 ### Archivos
 - Backend: `prisma/schema.prisma`, 2 migraciones, `src/services/unidadesMedida.service.ts`, `src/services/productos.service.ts` (lookup + cache), `src/services/ventas.service.ts`, `src/services/cotizaciones.service.ts`, `src/routes/ventas.routes.ts`, `src/routes/cotizaciones.routes.ts`, `src/routes/unidadesMedida.routes.ts`
 - Frontend: `src/api/unidadesMedida.api.ts` (helper `calcularPrecioItem`), `src/pages/unidades-medida/UnidadesMedidaPage.tsx`, `src/pages/productos/components/ProductoFormModal.tsx`, `src/pages/ventas/NuevaVentaPage.tsx`, `src/pages/cotizaciones/CotizacionesPage.tsx`, `src/pages/ventas/components/TicketImpresion.tsx`, `src/api/cotizaciones.api.ts`
+
+

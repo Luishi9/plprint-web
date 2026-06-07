@@ -332,7 +332,7 @@ model kardex_movimientos {
 
 model insumos {
   id               Int                  @id @default(autoincrement())
-  codigo           String?              @unique @db.VarChar(50)
+  codigo           String               @unique @db.VarChar(50)
   nombre           String               @db.VarChar(150)
   descripcion      String?              @db.Text
   unidad_medida    String               @default("unidad") @db.VarChar(20)

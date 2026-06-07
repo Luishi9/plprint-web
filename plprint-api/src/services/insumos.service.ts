@@ -151,16 +151,16 @@ export class InsumosService {
   }
 
   async update(id: number, data: Partial<CreateInsumoDTO>) {
-    await this.findById(id);
-    let codigo: string | null | undefined;
+    const current = await this.findById(id);
+    let codigo: string | undefined;
     if (data.codigo !== undefined) {
       const trimmed = data.codigo.trim();
       if (trimmed === '') {
-        codigo = null;
+        codigo = await generarCodigoInsumo(data.nombre ?? current.nombre);
       } else {
-        codigo = trimmed;
-        const existing = await prisma.insumos.findFirst({ where: { codigo, NOT: { id } } });
+        const existing = await prisma.insumos.findFirst({ where: { codigo: trimmed, NOT: { id } } });
         if (existing) throw new ConflictError('Ya existe un insumo con ese código');
+        codigo = trimmed;
       }
     }
     return prisma.insumos.update({
