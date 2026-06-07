@@ -156,6 +156,7 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
                       <Input
                         placeholder="Se genera automáticamente"
                         className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                        readOnly
                         {...field}
                       />
                     </FormControl>
