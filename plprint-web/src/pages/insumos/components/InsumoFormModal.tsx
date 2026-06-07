@@ -24,7 +24,15 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 import { insumosApi } from '@/api/insumos.api';
+import { unidadesMedidaApi, UnidadMedida } from '@/api/unidadesMedida.api';
 import { Insumo } from '@/types/insumo.types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const formSchema = z.object({
   nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres.'),
@@ -46,6 +54,13 @@ interface InsumoFormModalProps {
 export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormModalProps) {
   const isEditing = !!insumo;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
+
+  useEffect(() => {
+    unidadesMedidaApi.getAll()
+      .then((res) => setUnidades((res.data?.data as UnidadMedida[]) || []))
+      .catch(() => { });
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -155,13 +170,26 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-white/80">Unidad de medida *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="unidad, kg, litro"
-                        className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
-                        {...field}
-                      />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-white/5 border-border text-white">
+                          <SelectValue placeholder="Selecciona una unidad" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-card border border-border text-foreground z-[200]">
+                        {unidades.length === 0 ? (
+                          <div className="px-3 py-2 text-xs text-muted-foreground">
+                            Sin unidades. Crea desde Configuración → Unidades de medida.
+                          </div>
+                        ) : (
+                          unidades.map((u) => (
+                            <SelectItem key={u.id} value={u.abreviatura}>
+                              {u.nombre} ({u.abreviatura})
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
