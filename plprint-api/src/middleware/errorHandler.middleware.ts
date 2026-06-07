@@ -32,11 +32,13 @@ export const errorHandler = (
 
   // Error de Prisma — clave duplicada
   if (typeof err === 'object' && err !== null && 'code' in err) {
-    const prismaErr = err as { code: string; meta?: { target?: string[] } };
+    const prismaErr = err as { code: string; meta?: { target?: string[] | string } };
     if (prismaErr.code === 'P2002') {
+      const target = prismaErr.meta?.target;
+      const targetStr = Array.isArray(target) ? target.join(', ') : typeof target === 'string' ? target : 'campo único';
       res.status(409).json({
         success: false,
-        message: `Ya existe un registro con ese valor (${prismaErr.meta?.target?.join(', ')})`,
+        message: `Ya existe un registro con ese valor (${targetStr})`,
         code: 'CONFLICT',
       });
       return;
