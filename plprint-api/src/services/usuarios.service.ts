@@ -14,8 +14,8 @@ export class UsuariosService {
     return prisma.usuarios.findMany({
       where: { activo: true },
       select: {
-        id: true, nombre: true, email: true, activo: true, created_at: true,
-        roles: { select: { nombre: true } },
+        id: true, nombre: true, email: true, activo: true, rol_id: true, created_at: true,
+        roles: { select: { id: true, nombre: true } },
         usuarios_sucursales: {
           select: { sucursales: { select: { id: true, nombre: true } } },
         },
@@ -27,8 +27,8 @@ export class UsuariosService {
     const u = await prisma.usuarios.findFirst({
       where: { id, activo: true },
       select: {
-        id: true, nombre: true, email: true, activo: true, created_at: true,
-        roles: { select: { nombre: true } },
+        id: true, nombre: true, email: true, activo: true, rol_id: true, created_at: true,
+        roles: { select: { id: true, nombre: true } },
         usuarios_sucursales: {
           select: { sucursales: { select: { id: true, nombre: true } } },
         },

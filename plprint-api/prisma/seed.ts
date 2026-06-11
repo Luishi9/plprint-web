@@ -118,6 +118,13 @@ const PERMISOS_INICIALES: Array<{ modulo: string; accion: string; descripcion: s
   { modulo: 'audit_log',      accion: 'ver',           descripcion: 'Ver bitacora' },
   { modulo: 'notificaciones', accion: 'ver',           descripcion: 'Ver notificaciones' },
   { modulo: 'notificaciones', accion: 'editar',        descripcion: 'Editar configuracion de notificaciones' },
+  { modulo: 'caja',           accion: 'ver',           descripcion: 'Ver caja y movimientos' },
+  { modulo: 'caja',           accion: 'aperturar',     descripcion: 'Aperturar caja' },
+  { modulo: 'caja',           accion: 'cerrar',        descripcion: 'Realizar corte de caja' },
+  { modulo: 'caja',           accion: 'ingreso',       descripcion: 'Registrar ingreso a caja' },
+  { modulo: 'caja',           accion: 'gasto',         descripcion: 'Registrar gasto desde caja' },
+  { modulo: 'caja',           accion: 'retiro',        descripcion: 'Registrar retiro de caja' },
+  { modulo: 'caja',           accion: 'reimprimir',    descripcion: 'Reimprimir corte de caja' },
 ];
 
 const METODOS_PAGO_INICIALES: Array<{ nombre: string; icono: string }> = [
@@ -204,8 +211,8 @@ async function main() {
   });
 
   const permisosVendedor = permisosCreados.filter((p) => {
-    const modulosPermitidos = ['dashboard', 'productos', 'insumos', 'ventas', 'clientes', 'reportes', 'produccion'];
-    const accionesPermitidas = ['ver', 'crear', 'editar', 'ajustar_stock', 'exportar', 'cambiar_estatus'];
+    const modulosPermitidos = ['dashboard', 'productos', 'insumos', 'ventas', 'clientes', 'reportes', 'produccion', 'caja'];
+    const accionesPermitidas = ['ver', 'crear', 'editar', 'ajustar_stock', 'exportar', 'cambiar_estatus', 'aperturar', 'cerrar', 'ingreso', 'gasto'];
     return modulosPermitidos.includes(p.modulo) && accionesPermitidas.includes(p.accion);
   });
 
@@ -215,7 +222,7 @@ async function main() {
   });
 
   const permisosOperador = permisosCreados.filter((p) => {
-    const modulosPermitidos = ['dashboard', 'productos', 'ventas', 'produccion'];
+    const modulosPermitidos = ['dashboard', 'productos', 'ventas', 'produccion', 'caja'];
     const accionesPermitidas = ['ver', 'cambiar_estatus'];
     return modulosPermitidos.includes(p.modulo) && accionesPermitidas.includes(p.accion);
   });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { usuariosApi, sucursalesApi, Usuario } from '@/api/usuarios.api';
+import { rolesApi, Rol } from '@/api/roles.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,45 +19,46 @@ interface Props {
   onSaved: () => void;
 }
 
-const ROLES = [
-  { id: 1, nombre: 'admin', label: 'Admin' },
-  { id: 2, nombre: 'vendedor', label: 'Vendedor' },
-  { id: 3, nombre: 'operador', label: 'Operador' },
-];
-
 export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Props) {
   const isEdit = !!usuario;
 
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rolId, setRolId] = useState<string>('2');
+  const [rolId, setRolId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [sucursales, setSucursales] = useState<{ id: number; nombre: string }[]>([]);
   const [sucursalesAsignadas, setSucursalesAsignadas] = useState<number[]>([]);
   const [loadingSucursales, setLoadingSucursales] = useState(false);
+  const [roles, setRoles] = useState<Rol[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
 
-  // Cargar sucursales disponibles
   useEffect(() => {
     if (!open) return;
     setLoadingSucursales(true);
+    setLoadingRoles(true);
     sucursalesApi.getAll()
       .then((res) => setSucursales(res.data?.data ?? []))
       .catch(console.error)
       .finally(() => setLoadingSucursales(false));
+    rolesApi.getAll()
+      .then((res) => {
+        const rolesActivos = (res.data?.data ?? []).filter((r: Rol) => r.activo);
+        setRoles(rolesActivos);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingRoles(false));
   }, [open]);
 
-  // Inicializar form
   useEffect(() => {
     if (open) {
       setNombre(usuario?.nombre ?? '');
       setEmail(usuario?.email ?? '');
       setPassword('');
       setErrors({});
-      const rolActual = ROLES.find((r) => r.nombre === usuario?.roles?.nombre);
-      setRolId(String(rolActual?.id ?? 2));
+      setRolId(String(usuario?.rol_id ?? ''));
       setSucursalesAsignadas(
         usuario?.usuarios_sucursales?.map((us) => us.sucursales.id) ?? [],
       );
@@ -194,16 +196,22 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
           {/* Rol */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Rol</Label>
-            <Select value={rolId} onValueChange={setRolId}>
-              <SelectTrigger className="bg-background/50 border-border">
-                <SelectValue placeholder="Seleccionar rol" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border text-foreground z-[200]">
-                {ROLES.map((r) => (
-                  <SelectItem key={r.id} value={String(r.id)}>{r.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {loadingRoles ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 size={12} className="animate-spin" /> Cargando roles…
+              </div>
+            ) : (
+              <Select value={rolId} onValueChange={setRolId}>
+                <SelectTrigger className="bg-background/50 border-border">
+                  <SelectValue placeholder="Seleccionar rol" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border text-foreground z-[200]">
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={String(r.id)}>{r.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Sucursales */}

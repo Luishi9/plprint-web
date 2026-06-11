@@ -22,6 +22,7 @@ const MermasPage = lazy(() => import('@/pages/mermas/MermasPage'));
 const ProduccionPage = lazy(() => import('@/pages/produccion/ProduccionPage'));
 const TicketPublicoPage = lazy(() => import('@/pages/ventas/TicketPublicoPage'));
 const ConfiguracionPage = lazy(() => import('@/pages/configuracion/ConfiguracionPage'));
+const CajaPage = lazy(() => import('@/pages/caja/CajaPage'));
 
 const Loader = () => (
   <div className="flex h-screen items-center justify-center">
@@ -85,6 +86,7 @@ export const AppRoutes = () => (
             }
           />
           <Route path="/gastos" element={<GastosPage />} />
+          <Route path="/caja" element={<CajaPage />} />
           <Route path="/cotizaciones" element={<CotizacionesPage />} />
           <Route path="/mermas" element={<MermasPage />} />
           <Route path="/produccion" element={<ProduccionPage />} />

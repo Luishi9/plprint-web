@@ -12,7 +12,7 @@ const createSchema = z.object({
   nombre: z.string().min(1).max(100),
   email: z.string().email(),
   password: z.string().min(8),
-  rolId: z.number().int().min(1).max(3),
+  rolId: z.number().int().positive(),
 });
 
 const asignarSchema = z.object({

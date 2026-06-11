@@ -5,8 +5,9 @@ export interface Usuario {
   nombre: string;
   email: string;
   activo: boolean;
+  rol_id: number | null;
   created_at: string;
-  roles: { nombre: string };
+  roles: { id: number; nombre: string };
   usuarios_sucursales: { sucursales: { id: number; nombre: string } }[];
 }
 

@@ -286,52 +286,42 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 
 [] Quiero agregar los siguientes modulos:
 
-  1. categoria de gastos, seccion para dar de alta lista de gastos y registrar estos, restandolos a los ingresos totales del dia en caso de tener gastos ese mismo dia
-  2. Control de proveedores, seccion para dar de alta lista de proveedoress
+  1. [x] categoria de gastos, seccion para dar de alta lista de gastos y registrar estos, restandolos a los ingresos totales del dia en caso de tener gastos ese mismo dia
+  2. [x] Control de proveedores, seccion para dar de alta lista de proveedoress
   3. unidades de medida
 
-  4. cotizaciones: este modulo permitira que cuando se este realizando una venta se pueda guardar esta como
+  4. [x] cotizaciones: este modulo permitira que cuando se este realizando una venta se pueda guardar esta como
       una cotizacion en caso de que no se quiera realizar la compra por parte del cliente, permitiendo 
       guardarla y exportarla como PDF, al guardarla se visualizara en la seccion de cotizaciones, 
       dentro de la vista de ventas en la parte superior derecha se moestrar aun boton "Venta desde Cotizacion"
       al dar click mostrara una lista de las cotizaciones donde se podra seleccionar una y automaticamente se pondran los productos listos para la venta (la busqueda de cotizaciones tiene filtros de busqueda, por nombre del cliente, por fecha, por usuario vendedor que ralizo la cotizacion "eso solo lo ve el admin", y por folio de cotizacion o ticket)
-  5. boton mermas con dos subopciones "mermas productos", "mermas insumos", donde cada una tendra la vista donde estara una tabla donde se visualizara la lista de todas las mermas dadas de alta, con botones de "agregar" agregar merma, "exportar" exportar excel del listado de las mermas echas, y filtro de fechas inicio - fin este sirve para buscar mermas en ese radio de fechas y para exportar los datos en el excel
-  6. Maquinas, poder agregar mi maquina de impresion, donde se dara de alta el nombre de la impresora, y tener un contador de las impresiones realizadas del dia a dia con esa impresora o impresoras. dame una sugerencia de como podriamos enlazar los procutos con categoria "Impresion" a la impresora y poder hacer el conteo de las impresiones.
+  5. [x] boton mermas con dos subopciones "mermas productos", "mermas insumos", donde cada una tendra la vista donde estara una tabla donde se visualizara la lista de todas las mermas dadas de alta, con botones de "agregar" agregar merma, "exportar" exportar excel del listado de las mermas echas, y filtro de fechas inicio - fin este sirve para buscar mermas en ese radio de fechas y para exportar los datos en el excel
+  6. [] Maquinas, poder agregar mi maquina de impresion, donde se dara de alta el nombre de la impresora, y tener un contador de las impresiones realizadas del dia a dia con esa impresora o impresoras. dame una sugerencia de como podriamos enlazar los procutos con categoria "Impresion" a la impresora y poder hacer el conteo de las impresiones.
 
   tambien tener en cuenta las mermas, cuando se registre una venta poder dar de alta mermas desde ahi ya que puede que por alguna razon salgan mal las impresiones, obvio se tendria que aun asi registrar esa impresion al contador de la impresora
 
   7. reportes, donde se podra obtener los reportes de: ventas vs ingresos, cuentas por cobrar, gastos
 
-  8. produccion, donde se podran tener el proceso de creacion de un producto, como productos que tienen un proceso de maquila o productos que tienen varios pasos de ralizacion. tendra las opciones de pasos:
+  8. [x] produccion, donde se podran tener el proceso de creacion de un producto, como productos que tienen un proceso de maquila o productos que tienen varios pasos de ralizacion. tendra las opciones de pasos:
   pendientes, en diseño, en produccion, acabados, terminados y entregados. 
   Los productos que entran a esta seccion son los que tengan la categoria de produccion.
   entre cada paso se pueden agregar indicaciones, una indicacion para cada paso.
   cuando entra un producto a produccion, entra como estado pendiente, despues de revisarlo el usuario podra agregar los comentarios y despues cuando vea correcto pasarlo a estado de diseño, despues de eso el usuario checaria el diseño o indicaciones sobre el diseño o indicaciones que tenga el producto lo puede pasar a estado Produccion, despues de checar el usuario que el producto salio y esta correcto al salir del produccion lo pasa a estado de Acabados, al finalizar el usuario los acabados podra pasarlo a estado Terminado, y para finalizar pasarlo a estado Entregado cuando se le entregue al cliente.
 
-  9. boton con subopciones de: 
-  1. Caja: dentro de caja, se tendra todo lo de poder hacer un corte de caja, visualizar el historial de ventas realizadas durante todo el dia con fecha, usuario que realizo la venta, si fue ingreso o descuento de ingresos, total pagado, metodo de pago con el que se realizo, sucursal donde se realizo esta venta o gasto.
-  Opciones de botones que abra en esta vista:
-  - registrar gasto
-  - Registrar ingreso
-  - Registrar retiro (ejemplo para cuando se hace un pequeño corte de caja a medio dia)
-  - Realizar corte
-  - Reimprimir corte
-  - Filtro de fecha, sucursal, usuario que realizo venta
+  9. Caja: dentro de caja, se tendra todo lo de poder hacer un corte de caja (investigar los requerimientos para poder hacer un corte de caja de una manera sencilla en el sistema pero a la misma vez completa), visualizar en una tabla el historial de ventas realizadas durante todo el dia con fecha, usuario que realizo la venta, si fue ingreso o descuento de ingresos, total pagado, metodo de pago con el que se realizo, sucursal donde se realizo esta venta o gasto. botones que se mostraran en la parte superior derecha: Realizar corte, Reimprimir corte, registrar ingreso, registrar gasto, registrar retiro.
 
-  2. Ingresos/Gastos, donde podremos ver un historico o informacion de tallada de estos
-  3. Ventas/Utilidades, donde podremos ver nuestras utilidades respecto a las ventas, y mas informacion que creas conveniente que sea importante en esta seccion
+  2. [x] Ingresos/Gastos, donde podremos ver un historico o informacion de tallada de estos
+  3. [] Ventas/Utilidades, donde podremos ver nuestras utilidades respecto a las ventas, y mas informacion que creas conveniente que sea importante en esta seccion
   
 
-[] agregar la opcion de cancelar ventas desde la vista de ventas, asi como un check para mostrar unicamente el listado de las ventas canceladas
+[x] agregar la opcion de cancelar ventas desde la vista de ventas, asi como un check para mostrar unicamente el listado de las ventas canceladas
 
-[] Ventas con pendiente de pago y abonos, agregar el check de mostrar ventas con pendiente de pago en la vista de ventas
+[x] Ventas con pendiente de pago y abonos, agregar el check de mostrar ventas con pendiente de pago en la vista de ventas
 
-[] en donde entraria esos modulos, en la seccion de navegacion o administracion del sidebar?
-
-[] cuando se de alta de insumo o aumentar cantidad de insumos, registrarlo como una compra, 
+[x] cuando se de alta de insumo o aumentar cantidad de insumos, registrarlo como una compra, 
     con opcion de registrar el proveedor
-[] Devoluciones
-[] Auditoría de acciones (logs de usuarios)
+[x] Devoluciones
+[x] Auditoría de acciones (logs de usuarios)
 
 2. aplicar descuento global o especifico a un cliente dado de alta, por categoria de productos, 
     descuento por porcentajes.
@@ -490,3 +480,323 @@ Frontend (/var/www/plprint/plprint-web/):
 - Frontend: `src/api/unidadesMedida.api.ts` (helper `calcularPrecioItem`), `src/pages/unidades-medida/UnidadesMedidaPage.tsx`, `src/pages/productos/components/ProductoFormModal.tsx`, `src/pages/ventas/NuevaVentaPage.tsx`, `src/pages/cotizaciones/CotizacionesPage.tsx`, `src/pages/ventas/components/TicketImpresion.tsx`, `src/api/cotizaciones.api.ts`
 
 
+## Plan de Desarrollo — Módulo Caja (Corte de Caja)
+
+### Resumen del módulo
+
+El módulo de **Caja** permitirá gestionar el flujo de efectivo diario por sucursal mediante sesiones de trabajo (apertura → movimientos → corte). Proporciona una vista unificada de todos los movimientos del día (ventas, ingresos, gastos, retiros) y facilita el arqueo de caja al cierre con comparación de efectivo esperado vs. real.
+
+---
+
+### 1. Modelo de datos ✅
+
+#### Tabla nueva: `cortes_caja`
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id` | INT PK AUTO_INCREMENT | Identificador único |
+| `sucursal_id` | INT FK → sucursales | Sucursal donde se abre la caja |
+| `usuario_apertura_id` | INT FK → usuarios | Usuario que abrió la caja |
+| `fecha_apertura` | DATETIME | Fecha/hora de apertura |
+| `monto_inicial` | DECIMAL(12,2) | Efectivo inicial en caja (cambio/arranque) |
+| `fecha_cierre` | DATETIME NULL | Fecha/hora del corte (NULL = sigue abierta) |
+| `usuario_cierre_id` | INT FK → usuarios NULL | Usuario que realizó el corte |
+| `monto_final_esperado` | DECIMAL(12,2) NULL | Efectivo que debería haber en caja |
+| `monto_final_real` | DECIMAL(12,2) NULL | Efectivo real contado por el cajero |
+| `diferencia` | DECIMAL(12,2) NULL | `monto_final_real - monto_final_esperado` |
+| `observaciones` | TEXT NULL | Notas del cierre (explicar diferencia, etc.) |
+| `estado` | ENUM('abierta','cerrada') DEFAULT 'abierta' | Estado de la sesión |
+| `created_at` | DATETIME DEFAULT CURRENT_TIMESTAMP | |
+| `updated_at` | DATETIME | |
+
+**Restricciones:**
+- Solo una caja abierta por sucursal a la vez — se controla en lógica de negocio (service)
+- `@@index([sucursal_id])`, `@@index([fecha_apertura])`, `@@index([estado])`
+
+**Relación desde sucursales:**
+```
+sucursal_id  →  sucursales.id
+usuario_apertura_id  →  usuarios.id
+usuario_cierre_id  →  usuarios.id
+```
+
+#### Sin cambios a tablas existentes
+
+Los movimientos se obtienen por **rango de fechas** (`fecha_apertura` → `fecha_cierre` o `NOW()` si está abierta) + `sucursal_id`:
+- **Ventas en efectivo**: `ventas` WHERE `sucursal_id = X` AND `created_at BETWEEN apertura AND cierre` AND `metodo_pago = 'Efectivo'` AND `estado = 'completada'`
+- **Abonos en efectivo**: `ventas_abonos` WHERE `metodo_pago = 'Efectivo'` AND `fecha BETWEEN apertura AND cierre` (filtrados por venta de la sucursal)
+- **Gastos/Ingresos/Retiros**: `gastos` WHERE `sucursal_id = X` AND `fecha BETWEEN apertura AND cierre`
+
+---
+
+### 2. Lógica de negocio (backend) ✅
+
+#### 2.1 Apertura de caja
+- Solo puede haber **una caja abierta por sucursal** a la vez
+- El usuario ingresa el `monto_inicial` (efectivo con el que arranca)
+- Se registra `fecha_apertura = NOW()`
+- Permisos requeridos: `caja.aperturar`
+
+#### 2.2 Movimientos durante la sesión
+No se modifican las tablas de ventas/gastos. Los movimientos se obtienen con queries que filtran por el rango de la caja abierta:
+
+**Fuentes de movimientos:**
+1. **Ventas** (`ventas`): solo las pagadas en efectivo, estado `completada`. Se muestran como "Ingreso por venta".
+2. **Gastos tipo 'ingreso'**: ingresos extras registrados manualmente. Se muestran como "Ingreso".
+3. **Gastos tipo 'gasto'**: gastos operativos. Se muestran como "Descuento de ingresos".
+4. **Gastos tipo 'retiro'**: retiros de efectivo de caja. Se muestran como "Descuento de ingresos".
+
+#### 2.3 Cálculo del corte de caja
+Al presionar "Realizar corte":
+```
+monto_final_esperado = monto_inicial
+                      + SUM(ventas_efectivo)
+                      + SUM(abonos_efectivo)
+                      + SUM(gastos_tipo_ingreso)
+                      - SUM(gastos_tipo_gasto)
+                      - SUM(gastos_tipo_retiro)
+```
+
+El sistema presenta:
+- Resumen por método de pago (efectivo, tarjeta, transferencia) — informativo
+- Total de ventas en efectivo
+- Total de ingresos registrados
+- Total de gastos registrados
+- Total de retiros registrados
+- **Monto esperado en caja**
+- El cajero ingresa el **monto real contado**
+- El sistema calcula la **diferencia** (`real - esperado`)
+- El cajero puede agregar observaciones
+- Se guarda el cierre con `estado = 'cerrada'`
+
+#### 2.4 Reimpresión de corte
+- Genera un ticket/PDF con el resumen del corte cerrado
+- Se puede reimprimir el último corte o seleccionar de historial
+
+#### 2.5 Registrar ingreso / gasto / retiro desde Caja
+- Abre un modal que crea un registro en la tabla `gastos` con el `tipo` correspondiente (`ingreso`, `gasto`, `retiro`)
+- Usa la misma tabla `gastos` existente, con `sucursal_id` de la sucursal activa
+- Requiere: categoría de gasto, concepto, monto, notas opcionales
+- Los retiros requieren `autorizado_por` (usuario admin o con permiso)
+
+---
+
+### 3. Endpoints ✅
+
+| Método | Ruta | Descripción | Permiso |
+|---|---|---|---|
+| `GET` | `/api/v1/caja/estado` | Obtener caja abierta de la sucursal activa (o null) | `caja.ver` |
+| `POST` | `/api/v1/caja/apertura` | Abrir caja con monto inicial | `caja.aperturar` |
+| `POST` | `/api/v1/caja/corte` | Realizar corte de caja | `caja.cerrar` |
+| `GET` | `/api/v1/caja/movimientos` | Movimientos del día (ventas + gastos en rango de caja) | `caja.ver` |
+| `GET` | `/api/v1/caja/cortes` | Historial de cortes (paginado, filtros por fecha/sucursal) | `caja.ver` |
+| `GET` | `/api/v1/caja/cortes/:id` | Detalle de un corte específico | `caja.ver` |
+| `GET` | `/api/v1/caja/cortes/:id/reimprimir` | Datos para reimprimir corte | `caja.reimprimir` |
+| `POST` | `/api/v1/caja/ingreso` | Registrar ingreso (crea gasto tipo 'ingreso') | `caja.ingreso` |
+| `POST` | `/api/v1/caja/gasto` | Registrar gasto (crea gasto tipo 'gasto') | `caja.gasto` |
+| `POST` | `/api/v1/caja/retiro` | Registrar retiro (crea gasto tipo 'retiro') | `caja.retiro` |
+
+**Query params para `GET /api/v1/caja/movimientos`:**
+
+| Param | Tipo | Descripción |
+|---|---|---|
+| `sucursalId` | number | Filtrar por sucursal (default: sucursal activa del usuario) |
+| `usuarioId` | number | Filtrar por usuario que realizó el movimiento |
+| `corteId` | number | Al seleccionar un corte, usa su `fecha_apertura` y `fecha_cierre` como rango |
+| `page` | number | Paginación |
+| `limit` | number | Paginación |
+
+**Zod schemas de validación** en cada ruta, siguiendo la convención existente.
+
+---
+
+### 4. Permisos (RBAC) ✅
+
+Nuevos permisos a agregar en `seed.ts`:
+
+| Módulo | Acción | Descripción |
+|---|---|---|
+| `caja` | `ver` | Ver movimientos y historial de caja |
+| `caja` | `aperturar` | Aperturar caja |
+| `caja` | `cerrar` | Realizar corte de caja |
+| `caja` | `ingreso` | Registrar ingreso |
+| `caja` | `gasto` | Registrar gasto |
+| `caja` | `retiro` | Registrar retiro |
+| `caja` | `reimprimir` | Reimprimir corte de caja |
+
+**Asignación por rol:**
+- **Admin**: todos los permisos de caja
+- **Vendedor**: `caja.ver`, `caja.aperturar`, `caja.cerrar`, `caja.ingreso`, `caja.gasto` (retiro requiere autorización)
+- **Operador**: `caja.ver` (solo lectura)
+
+---
+
+### 5. Frontend ✅
+
+#### 5.1 Página `CajaPage` (`/caja`)
+
+**Estructura de la página:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Caja                                                          │
+│  Estado: ● Abierta desde DD/MM/YYYY HH:MM    [Botones →]       │
+├─────────────────────────────────────────────────────────────────┤
+│  [Resumen cards]                                                │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │
+│  │ Ventas   │ │ Ingresos │ │  Gastos  │ │  Retiros │          │
+│  │ $X,XXX   │ │ $X,XXX   │ │ $X,XXX   │ │ $X,XXX   │          │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │
+│  ┌───────────────────────┐ ┌───────────────────────┐           │
+│  │ Efectivo en caja      │ │ Diferencia (al corte) │           │
+│  │ $X,XXX (esperado)     │ │ $XXX                  │           │
+│  └───────────────────────┘ └───────────────────────┘           │
+├─────────────────────────────────────────────────────────────────┤
+│  [Filtros]                                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Corte        │  │ Usuario      │  │ Sucursal     │          │
+│  │ [Todas ▼]   │  │ [Todos ▼]   │  │ [Actual ▼]  │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+├─────────────────────────────────────────────────────────────────┤
+│  Historial de movimientos                                       │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ Fecha    │ Usuario  │ Tipo     │ Monto │ M.Pago │ Suc.  │   │
+│  │ 10:30    │ Juan     │ Venta    │+$250  │Efectivo│ Suc.1 │   │
+│  │ 10:45    │ Juan     │ Venta    │+$180  │Tarjeta │ Suc.1 │   │
+│  │ 11:00    │ María    │ Gasto    │-$50   │Efectivo│ Suc.1 │   │
+│  │ 11:30    │ Juan     │ Venta    │+$320  │Efectivo│ Suc.1 │   │
+│  │ 12:00    │ Admin    │ Retiro   │-$500  │Efectivo│ Suc.1 │   │
+│  │ 12:15    │ Juan     │ Ingreso  │+$100  │Efectivo│ Suc.1 │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│  Paginación                                                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Filtros (debajo de las resumen cards):**
+
+| Filtro | Tipo | Opciones | Comportamiento |
+|---|---|---|---|
+| **Corte** | Select | "Caja actual" + lista de cortes anteriores (ID + fecha) | Al seleccionar un corte anterior, la tabla muestra los movimientos del rango `fecha_apertura` → `fecha_cierre` de ese corte. Las resumen cards se recalculan con los datos de ese periodo. Si se selecciona "Caja actual", muestra los movimientos desde la apertura actual hasta ahora. |
+| **Usuario** | Select | "Todos" + usuarios asignados a la sucursal activa | Filtra la tabla para mostrar solo movimientos donde el `usuario_id` coincida (ventas realizadas por ese usuario, gastos/ingresos/retiros registrados por ese usuario). Las resumen cards se recalculan solo con los datos filtrados. |
+| **Sucursal** | Select | Lista de sucursales del usuario (o todas para admin) | Por defecto muestra la sucursal activa del usuario. Permite cambiar para ver movimientos de otra sucursal. Admin puede ver todas. Las resumen cards y la tabla se filtran por `sucursal_id`. |
+
+**Lógica de combinación de filtros:**
+- Los 3 filtros son independientes y se pueden combinar entre sí
+- Al cambiar cualquier filtro, se hace un nuevo request a `GET /api/v1/caja/movimientos` con los query params: `corteId`, `usuarioId`, `sucursalId`
+- Las resumen cards se actualizan dinámicamente con los datos filtrados
+- Si se selecciona un corte cerrado, los botones "Realizar corte" se deshabilita (no se puede cortar un corte ya cerrado). "Reimprimir corte" se habilita para ese corte específico.
+
+**Botones superiores derechos:**
+- **Realizar corte**: Abre modal de cierre (solo si hay caja abierta Y no hay un corte anterior seleccionado en el filtro)
+- **Reimprimir corte**: Si hay un corte seleccionado en el filtro, reimprime ese. Si no, abre modal para seleccionar del historial.
+- **Registrar ingreso**: Abre modal para crear gasto tipo `ingreso` (usa sucursal del filtro o sucursal activa)
+- **Registrar gasto**: Abre modal para crear gasto tipo `gasto`
+- **Registrar retiro**: Abre modal para crear gasto tipo `retiro` (requiere permiso `caja.retiro`)
+
+**Si NO hay caja abierta:**
+- Se muestra un banner con "No hay caja abierta" y botón "Aperturar caja"
+- Los botones de corte/ingreso/gasto/retiro están deshabilitados
+- El filtro de cortes permite navegar el historial de cortes cerrados (consulta histórica)
+- Los filtros de usuario y sucursal siguen funcionando para explorar datos pasados
+
+#### 5.2 Modales
+
+1. **Modal Apertura de Caja**: Input monto inicial + botón confirmar
+2. **Modal Corte de Caja**: 
+   - Resumen detallado (totales por tipo, por método de pago)
+   - Input "Monto real contado"
+   - Cálculo en tiempo real de diferencia
+   - Textarea "Observaciones"
+   - Botón "Confirmar corte"
+3. **Modal Registrar Ingreso/Gasto/Retiro**: 
+   - Select categoría de gasto
+   - Input concepto
+   - Input monto
+   - Textarea notas
+   - (Retiro: requiere contraseña o confirmación de admin)
+4. **Modal Reimprimir Corte**: 
+   - Lista de últimos cortes
+   - Vista previa del ticket
+   - Botón imprimir
+
+#### 5.3 Componente de impresión
+- `CorteTicketImpresion.tsx`: Ticket HTML formateado para impresión del corte, similar a `TicketImpresion.tsx` existente
+- Muestra: datos de la empresa, sucursal, usuario, hora apertura, hora cierre, resumen de movimientos, totales, monto esperado, monto real, diferencia, observaciones
+
+---
+
+### 6. Navegación ✅
+
+- Ruta: `/caja`
+- Sidebar: Sección "Navegación", ícono `Wallet` (de lucide-react), módulo `caja`
+- Posición: Después de "Gastos" en la lista de navegación
+
+---
+
+### 7. Archivos a crear/modificar ✅
+
+#### Backend (`/var/www/plprint/plprint-api/`)
+
+**Nuevos:**
+- `prisma/migrations/YYYYMMDDHHMMSS_add_cortes_caja/migration.sql`
+- `src/services/caja.service.ts` — Lógica de apertura, corte, movimientos
+- `src/controllers/caja.controller.ts` — Handlers HTTP
+- `src/routes/caja.routes.ts` — Rutas con validación Zod + RBAC
+
+**Modificar:**
+- `prisma/schema.prisma` — Agregar modelo `cortes_caja` + relaciones en `sucursales` y `usuarios`
+- `prisma/seed.ts` — Agregar permisos de `caja` y asignación a roles
+- `src/routes/index.ts` — Registrar rutas de caja
+
+#### Frontend (`/var/www/plprint/plprint-web/`)
+
+**Nuevos:**
+- `src/api/caja.api.ts` — Tipos y llamadas API
+- `src/pages/caja/CajaPage.tsx` — Página principal
+- `src/pages/caja/components/AperturaModal.tsx`
+- `src/pages/caja/components/CorteModal.tsx`
+- `src/pages/caja/components/MovimientoModal.tsx` (ingreso/gasto/retiro)
+- `src/pages/caja/components/ReimprimirCorteModal.tsx`
+- `src/pages/caja/components/CorteTicketImpresion.tsx`
+- `src/pages/caja/components/MovimientosTable.tsx`
+- `src/pages/caja/components/ResumenCards.tsx`
+- `src/pages/caja/components/FiltrosBar.tsx` — Componente con los 3 selects (Corte, Usuario, Sucursal)
+
+**Modificar:**
+- `src/routes/index.tsx` — Agregar ruta `/caja`
+- `src/components/layout/Sidebar.tsx` — Agregar ítem "Caja" en navegación
+
+---
+
+### 8. Orden de implementación ✅
+
+| Paso | Descripción |
+|---|---|
+| 1 | Schema Prisma + migración (`cortes_caja`) |
+| 2 | Seed: permisos de caja + asignación a roles |
+| 3 | Backend: `caja.service.ts` (apertura, movimientos, corte) |
+| 4 | Backend: `caja.controller.ts` + `caja.routes.ts` |
+| 5 | Backend: registrar rutas en `routes/index.ts` |
+| 6 | Frontend: `caja.api.ts` (tipos + llamadas) |
+| 7 | Frontend: `CajaPage.tsx` con tabla de movimientos + resumen |
+| 8 | Frontend: modales (apertura, corte, movimiento, reimprimir) |
+| 9 | Frontend: ruta + sidebar |
+| 10 | Verificación TypeScript + smoke test |
+
+---
+
+### 9. Consideraciones técnicas ✅
+
+- **Una sola caja abierta por sucursal**: Se valida en el service antes de crear apertura. Query: `SELECT * FROM cortes_caja WHERE sucursal_id = ? AND estado = 'abierta' LIMIT 1`
+- **Multi-sucursal**: Cada sucursal tiene su propia sesión de caja independiente
+- **Scope por usuario**: Usuarios no-admin solo ven caja de sus sucursales asignadas
+- **Rendimiento**: Los queries de movimientos usan índices existentes en `ventas.created_at`, `gastos.fecha`, `ventas.sucursal_id`, `gastos.sucursal_id`
+- **Transacciones**: La apertura y el corte se hacen en transacción Prisma para consistencia
+- **No se modifican ventas ni gastos**: El corte es una "foto" del rango de tiempo; los datos fuente siguen siendo las tablas existentes
+- **Historial**: Los cortes cerrados se conservan para consulta y reimprimir en cualquier momento
+- **Integración con tabla gastos**: Los ingresos/gastos/retiros registrados desde caja se crean en la tabla `gastos` existente, reutilizando el modelo y las categorías ya definidas
+
+---
+
+
+- agregar que al imprimir el corte de caja, este esa opcion de ticket y la opcion del documento pdf detallado

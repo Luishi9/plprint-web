@@ -25,6 +25,7 @@ import abonosRoutes from './abonos.routes';
 import maquinasRoutes from './maquinas.routes';
 import ordenesProduccionRoutes from './ordenesProduccion.routes';
 import preciosProductoRoutes from './preciosProducto.routes';
+import cajaRoutes from './caja.routes';
 import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -59,5 +60,6 @@ router.use('/abonos', abonosRoutes);
 router.use('/maquinas', maquinasRoutes);
 router.use('/ordenes-produccion', ordenesProduccionRoutes);
 router.use('/productos', preciosProductoRoutes);
+router.use('/caja', cajaRoutes);
 
 export default router;

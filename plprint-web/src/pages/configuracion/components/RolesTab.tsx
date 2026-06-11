@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Shield, Plus, Pencil, Trash2, Loader2, Search, Check,
+  Shield, Plus, Pencil, Trash2, Loader2, Search, Check, AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,8 @@ export default function RolesTab() {
   const [editando, setEditando] = useState<Rol | null>(null);
   const [eliminarItem, setEliminarItem] = useState<Rol | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -60,11 +62,17 @@ export default function RolesTab() {
   };
 
   const handleToggle = async (rol: Rol) => {
+    setTogglingId(rol.id);
+    setToggleError(null);
     try {
       await rolesApi.update(rol.id, { activo: !rol.activo });
-      fetchData();
-    } catch (err) {
+      await fetchData();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'Error al actualizar el estado del rol';
+      setToggleError(msg);
       console.error(err);
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -109,6 +117,12 @@ export default function RolesTab() {
           </div>
 
           <div className="space-y-2">
+            {toggleError && (
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">
+                <AlertCircle size={14} />
+                {toggleError}
+              </div>
+            )}
             {filtrados.map((r) => (
               <div
                 key={r.id}
@@ -130,7 +144,15 @@ export default function RolesTab() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Switch checked={r.activo} onCheckedChange={() => handleToggle(r)} />
+                  {togglingId === r.id ? (
+                    <Loader2 size={16} className="animate-spin text-[#2e9e9b]" />
+                  ) : (
+                    <Switch
+                      checked={r.activo}
+                      onCheckedChange={() => handleToggle(r)}
+                      disabled={togglingId !== null}
+                    />
+                  )}
                   <Button variant="ghost" size="icon" onClick={() => { setEditando(r); setModalOpen(true); }}>
                     <Pencil size={15} />
                   </Button>
