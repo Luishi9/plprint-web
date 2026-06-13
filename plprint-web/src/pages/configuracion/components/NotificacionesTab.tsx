@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Bell, Loader2, Save, Package, Boxes, ShoppingCart, XCircle, PackageX,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,33 +12,33 @@ const META: Record<string, { label: string; desc: string; icon: React.ReactNode;
   stock_bajo_productos: {
     label: 'Stock bajo de productos',
     desc: 'Avisa cuando un producto tiene stock igual o menor al mínimo',
-    icon: <Package size={16} />,
+    icon: <Icon name="inventory_2" size={16} />,
     hasUmbral: true,
     umbralLabel: 'Umbral global (unidades)',
   },
   stock_bajo_insumos: {
     label: 'Stock bajo de insumos',
     desc: 'Avisa cuando un insumo tiene stock por debajo del mínimo',
-    icon: <Boxes size={16} />,
+    icon: <Icon name="inventory" size={16} />,
     hasUmbral: true,
     umbralLabel: 'Umbral global (unidades)',
   },
   ventas_dia: {
     label: 'Resumen de ventas del día',
     desc: 'Muestra un resumen de ventas realizadas en el día',
-    icon: <ShoppingCart size={16} />,
+    icon: <Icon name="shopping_cart" size={16} />,
     hasUmbral: false,
   },
   venta_cancelada: {
     label: 'Ventas canceladas',
     desc: 'Notifica cuando se cancela una venta en las últimas 24h',
-    icon: <XCircle size={16} />,
+    icon: <Icon name="cancel" size={16} />,
     hasUmbral: false,
   },
   producto_sin_stock: {
     label: 'Productos sin stock',
     desc: 'Avisa sobre productos agotados o sin inventario registrado',
-    icon: <PackageX size={16} />,
+    icon: <Icon name="remove_shopping_cart" size={16} />,
     hasUmbral: false,
   },
 };
@@ -106,7 +104,7 @@ export default function NotificacionesTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin" size={24} />
+        <Icon name="progress_activity" className="animate-spin" size={24} />
       </div>
     );
   }
@@ -116,7 +114,7 @@ export default function NotificacionesTab() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Bell size={16} /> Configuración de notificaciones
+            <Icon name="notifications" size={16} /> Configuración de notificaciones
           </CardTitle>
           <CardDescription>Activa o desactiva los avisos y configura umbrales</CardDescription>
         </CardHeader>
@@ -166,7 +164,7 @@ export default function NotificacionesTab() {
                       disabled={!dirty || isSaving[c.tipo]}
                       className="bg-[#2e9e9b] hover:bg-[#48b9b4]"
                     >
-                      {isSaving[c.tipo] ? <Loader2 className="animate-spin mr-1" size={14} /> : <Save className="mr-1" size={14} />}
+                      {isSaving[c.tipo] ? <Icon name="progress_activity" className="animate-spin mr-1" size={14} /> : <Icon name="save" className="mr-1" size={14} />}
                       Guardar
                     </Button>
                     {message?.key === c.tipo && (

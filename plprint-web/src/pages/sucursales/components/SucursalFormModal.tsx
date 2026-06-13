@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, PackageSearch, Boxes, CheckCircle2 } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { sucursalesApi, Sucursal, SucursalDTO } from '@/api/sucursales.api';
 import { Button } from '@/components/ui/button';
@@ -150,7 +150,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
                 copiarProductos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
               }`}>
                 <div className="flex items-start gap-2.5">
-                  <PackageSearch size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarProductos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
+                  <Icon name="package_2" size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarProductos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
                   <div>
                     <p className="text-sm text-white/80 font-medium">
                       {isEdit ? 'Sincronizar catálogo de productos' : 'Heredar catálogo de productos'}
@@ -171,7 +171,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
                 copiarInsumos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
               }`}>
                 <div className="flex items-start gap-2.5">
-                  <Boxes size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarInsumos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
+                  <Icon name="inventory" size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarInsumos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
                   <div>
                     <p className="text-sm text-white/80 font-medium">
                       {isEdit ? 'Sincronizar catálogo de insumos' : 'Heredar catálogo de insumos'}
@@ -193,8 +193,8 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
           {isSaving && (copiarProductos || copiarInsumos) && (
             <div className="flex items-center gap-3 rounded-lg border border-[#2e9e9b]/30 bg-[#2e9e9b]/5 px-4 py-3">
               {copyDone
-                ? <CheckCircle2 size={15} className="text-[#2e9e9b] shrink-0" />
-                : <Loader2 size={15} className="animate-spin text-[#2e9e9b] shrink-0" />
+                ? <Icon name="check_circle" size={15} className="text-[#2e9e9b] shrink-0" />
+                : <Icon name="progress_activity" size={15} className="animate-spin text-[#2e9e9b] shrink-0" />
               }
               <p className="text-xs text-[#2e9e9b]">
                 {copyDone 
@@ -220,7 +220,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
               disabled={isSaving}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
             >
-              {isSaving && <Loader2 size={14} className="animate-spin" />}
+              {isSaving && <Icon name="progress_activity" size={14} className="animate-spin" />}
               {isSaving
                 ? ((copiarProductos || copiarInsumos) ? 'Procesando...' : 'Guardando...')
                 : (isEdit ? 'Guardar cambios' : 'Crear sucursal')

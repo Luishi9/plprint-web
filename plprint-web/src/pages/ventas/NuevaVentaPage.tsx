@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Search, Loader2, Plus, Minus, Trash2, ShoppingCart,
-  ArrowLeft, Check, Package, Printer, QrCode, FileText, FileSignature, X, Download,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { productosApi } from '@/api/productos.api';
 import { clientesApi } from '@/api/clientes.api';
@@ -593,7 +590,7 @@ export default function NuevaVentaPage() {
           className="flex flex-col items-center gap-4 text-center"
         >
           <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
-            <FileSignature size={40} className="text-[#2e9e9b]" />
+            <Icon name="draw" size={40} className="text-[#2e9e9b]" />
           </div>
           <h2 className="text-2xl font-bold text-white">¡Cotización guardada!</h2>
           <p className="text-muted-foreground">Folio: <span className="text-[#2e9e9b] font-mono font-bold">{cotizacionFolio}</span></p>
@@ -620,7 +617,7 @@ export default function NuevaVentaPage() {
               onClick={handleDescargarPdf}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
             >
-              <Download size={16} />
+              <Icon name="download" size={16} />
               Descargar PDF
             </Button>
             <Button
@@ -662,7 +659,7 @@ export default function NuevaVentaPage() {
             className="flex flex-col items-center gap-4 text-center"
           >
             <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
-              <Check size={40} className="text-[#2e9e9b]" />
+              <Icon name="check" size={40} className="text-[#2e9e9b]" />
             </div>
             <h2 className="text-2xl font-bold text-white">¡Venta registrada!</h2>
             <p className="text-muted-foreground">Venta #{successId} completada correctamente.</p>
@@ -682,7 +679,7 @@ export default function NuevaVentaPage() {
                 onClick={handlePrint}
                 className="border-border gap-2"
               >
-                <Printer size={16} />
+                <Icon name="print" size={16} />
                 Imprimir ticket
               </Button>
               <Button
@@ -690,7 +687,7 @@ export default function NuevaVentaPage() {
                 onClick={() => setShowQR(true)}
                 className="border-border gap-2"
               >
-                <QrCode size={16} />
+                <Icon name="qr_code" size={16} />
                 QR para cliente
               </Button>
               <Button
@@ -714,11 +711,11 @@ export default function NuevaVentaPage() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/ventas')} className="text-muted-foreground hover:text-white">
-            <ArrowLeft size={18} />
+            <Icon name="arrow_back" size={18} />
           </Button>
           <div>
             <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-              <ShoppingCart className="text-[#2e9e9b]" size={24} />
+              <Icon name="shopping_cart" className="text-[#2e9e9b]" size={24} />
               Nueva Venta
             </h2>
             <p className="text-xs text-muted-foreground">{sucursalEfectiva?.nombre ?? 'Sin sucursal'}</p>
@@ -730,7 +727,7 @@ export default function NuevaVentaPage() {
             onClick={() => setShowCotizacionesModal(true)}
             className="border-[#2e9e9b]/40 text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
           >
-            <FileText size={16} className="mr-2" /> Ver cotizaciones
+            <Icon name="description" size={16} className="mr-2" /> Ver cotizaciones
           </Button>
         </RequirePermission>
       </div>
@@ -742,14 +739,14 @@ export default function NuevaVentaPage() {
           className="bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 rounded-md px-3 py-2 text-xs text-[#2e9e9b] flex items-center justify-between"
         >
           <span>
-            <FileSignature size={12} className="inline mr-1" />
+            <Icon name="draw" size={12} className="inline mr-1" />
             Productos cargados desde cotización #{cotizacionOrigenId}. Al confirmar se generará la venta automáticamente.
           </span>
           <button
             onClick={() => setCotizacionOrigenId(null)}
             className="text-muted-foreground hover:text-white"
           >
-            <X size={14} />
+            <Icon name="close" size={14} />
           </button>
         </motion.div>
       )}
@@ -761,8 +758,8 @@ export default function NuevaVentaPage() {
           <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
             <div className="relative">
               {isSearching
-                ? <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
-                : <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />}
+                ? <Icon name="progress_activity" className="absolute left-3 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
+                : <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />}
               <Input
                 placeholder="Buscar producto por nombre o código..."
                 className="pl-9 bg-card border-border focus-visible:ring-[#2e9e9b]"
@@ -788,7 +785,7 @@ export default function NuevaVentaPage() {
                         <img src={getImageUrl(p.imagen_url)} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
-                          <Package size={32} />
+                          <Icon name="inventory_2" size={32} />
                         </div>
                       )}
                     </div>
@@ -813,7 +810,7 @@ export default function NuevaVentaPage() {
                       )}
                     </div>
                     <div className="absolute top-2 right-2 bg-[#2e9e9b] text-black rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(153,255,61,0.5)]">
-                      <Plus size={14} />
+                      <Icon name="add" size={14} />
                     </div>
                   </motion.button>
                 ))}
@@ -830,7 +827,7 @@ export default function NuevaVentaPage() {
           <div className="rounded-xl border border-border bg-card/50 flex flex-col overflow-hidden h-[320px]">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-sm font-semibold text-white flex items-center gap-2">
-                <ShoppingCart size={14} className="text-[#2e9e9b]" />
+                <Icon name="shopping_cart" size={14} className="text-[#2e9e9b]" />
                 Carrito
               </span>
               <span className="text-xs text-muted-foreground">{cart.length} ítem(s)</span>
@@ -900,7 +897,7 @@ export default function NuevaVentaPage() {
                     )}
                     <div className="flex items-center gap-1">
                       <button onClick={() => updateQty(item.productoId, -1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
-                        <Minus size={10} />
+                        <Icon name="remove" size={10} />
                       </button>
                       <input
                         type="number"
@@ -913,14 +910,14 @@ export default function NuevaVentaPage() {
                         className="w-10 text-center text-sm font-mono bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                       />
                       <button onClick={() => updateQty(item.productoId, 1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
-                        <Plus size={10} />
+                        <Icon name="add" size={10} />
                       </button>
                     </div>
                     <span className="text-sm font-bold text-[#2e9e9b] w-20 text-right font-mono">
                       {money(item.precioUnitario * item.cantidad)}
                     </span>
                     <button onClick={() => removeItem(item.productoId)} className="text-muted-foreground/50 hover:text-red-400 transition-colors">
-                      <Trash2 size={14} />
+                      <Icon name="delete" size={14} />
                     </button>
                   </motion.div>
                 ))}
@@ -983,7 +980,7 @@ export default function NuevaVentaPage() {
               >
                 {metodosPagoActivos.map((m) => {
                   const value = m.nombre.toLowerCase();
-                  const Icon = getMetodoIcon(value);
+                  const iconName = getMetodoIcon(value);
                   const isActive = metodoPago === value;
                   return (
                     <button
@@ -994,7 +991,7 @@ export default function NuevaVentaPage() {
                           : 'border-border text-muted-foreground hover:border-border/80 hover:bg-white/5'
                         }`}
                     >
-                      <Icon size={16} />
+                      <Icon name={iconName} size={16} />
                       <span className="line-clamp-1 text-center">{m.nombre}</span>
                     </button>
                   );
@@ -1084,9 +1081,9 @@ export default function NuevaVentaPage() {
               onClick={handleSubmit}
               className="w-full h-12 text-base bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-bold shadow-[0_0_20px_rgba(153,255,61,0.25)] disabled:opacity-40"
             >
-              {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : (
+              {isSubmitting ? <Icon name="progress_activity" size={18} className="animate-spin" /> : (
                 <>
-                  <Check size={18} className="mr-2" />
+                  <Icon name="check" size={18} className="mr-2" />
                   {cotizacionOrigenId ? 'Confirmar y Convertir' : 'Confirmar venta'}
                 </>
               )}
@@ -1099,8 +1096,8 @@ export default function NuevaVentaPage() {
                 variant="outline"
                 className="w-full h-11 text-sm border-[#2e9e9b]/40 text-[#2e9e9b] hover:bg-[#2e9e9b]/10 disabled:opacity-40"
               >
-                {isSavingCotizacion ? <Loader2 size={16} className="mr-2 animate-spin" /> : (
-                  <FileSignature size={16} className="mr-2" />
+                {isSavingCotizacion ? <Icon name="progress_activity" size={16} className="mr-2 animate-spin" /> : (
+                  <Icon name="draw" size={16} className="mr-2" />
                 )}
                 {cotizacionOrigenId ? 'Actualizar Cotización' : 'Guardar como Cotización'}
               </Button>

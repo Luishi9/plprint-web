@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, AlertCircle, Check } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/input';
 
 interface MontoRecibidoInputProps {
@@ -31,7 +31,7 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
     <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-          <Wallet size={12} /> Monto recibido
+          <Icon name="account_balance_wallet" size={12} /> Monto recibido
         </p>
         <span className="text-[10px] text-muted-foreground">Total: <span className="font-mono text-[#2e9e9b] font-bold">{simbolo}{total.toFixed(2)}</span></span>
       </div>
@@ -75,7 +75,7 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
             className="overflow-hidden"
           >
             <div className="text-[10px] text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded p-2 flex items-center gap-1.5">
-              <AlertCircle size={12} />
+              <Icon name="error" size={12} />
               <span>La venta se registrará como <b>PENDIENTE DE COBRO</b></span>
             </div>
           </motion.div>
@@ -89,7 +89,7 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
             exit={{ opacity: 0, scale: 0.9 }}
             className="text-[10px] text-green-400 bg-green-500/10 border border-green-500/30 rounded p-2 flex items-center gap-1.5"
           >
-            <Check size={12} />
+            <Icon name="check" size={12} />
             <span>Pago exacto · Venta será marcada como <b>PAGADA</b></span>
           </motion.div>
         )}
@@ -130,7 +130,7 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
             <div className="rounded-md p-2.5 bg-orange-500/10 border border-orange-500/30">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-orange-400 flex items-center gap-1">
-                  <AlertCircle size={11} /> Quedará pendiente:
+                  <Icon name="error" size={11} /> Quedará pendiente:
                 </span>
                 <motion.span
                   key={saldo}

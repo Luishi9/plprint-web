@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Plus, Pencil, Trash2, Loader2, Banknote, Landmark, Wallet } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,16 +13,16 @@ import {
 import { metodosPagoApi, MetodoPago, CreateMetodoPagoDTO } from '@/api/metodosPago.api';
 
 const ICONOS_DISPONIBLES = [
-  { value: 'Banknote', label: 'Efectivo', icon: Banknote },
-  { value: 'CreditCard', label: 'Tarjeta', icon: CreditCard },
-  { value: 'Landmark', label: 'Banco', icon: Landmark },
-  { value: 'Wallet', label: 'Cartera', icon: Wallet },
+  { value: 'Banknote', label: 'Efectivo', iconName: 'payments' },
+  { value: 'CreditCard', label: 'Tarjeta', iconName: 'credit_card' },
+  { value: 'Landmark', label: 'Banco', iconName: 'account_balance' },
+  { value: 'Wallet', label: 'Cartera', iconName: 'account_balance_wallet' },
 ];
 
 function IconPreview({ name }: { name: string | null }) {
   const found = ICONOS_DISPONIBLES.find((i) => i.value === name);
-  const Icon = found?.icon ?? Banknote;
-  return <Icon size={16} />;
+  const iconName = found?.iconName ?? 'payments';
+  return <Icon name={iconName} size={16} />;
 }
 
 export default function MetodosPagoTab() {
@@ -73,7 +73,7 @@ export default function MetodosPagoTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin" size={24} />
+        <Icon name="progress_activity" className="animate-spin" size={24} />
       </div>
     );
   }
@@ -84,12 +84,12 @@ export default function MetodosPagoTab() {
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <CreditCard size={16} /> Métodos de pago
+              <Icon name="credit_card" size={16} /> Métodos de pago
             </CardTitle>
             <CardDescription>Personaliza las formas de pago disponibles</CardDescription>
           </div>
           <Button onClick={() => { setEditando(null); setModalOpen(true); }} className="bg-[#2e9e9b] hover:bg-[#48b9b4]">
-            <Plus className="mr-2" size={16} /> Nuevo método
+            <Icon name="add" className="mr-2" size={16} /> Nuevo método
           </Button>
         </CardHeader>
         <CardContent>
@@ -114,11 +114,11 @@ export default function MetodosPagoTab() {
                 <div className="flex items-center gap-2 shrink-0">
                   <Switch checked={m.activo} onCheckedChange={() => handleToggle(m)} />
                   <Button variant="ghost" size="icon" onClick={() => { setEditando(m); setModalOpen(true); }}>
-                    <Pencil size={15} />
+                    <Icon name="edit" size={15} />
                   </Button>
                   {!m.es_sistema && (
                     <Button variant="ghost" size="icon" onClick={() => setEliminarItem(m)}>
-                      <Trash2 size={15} className="text-red-500" />
+                      <Icon name="delete" size={15} className="text-red-500" />
                     </Button>
                   )}
                 </div>
@@ -147,7 +147,7 @@ export default function MetodosPagoTab() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEliminarItem(null)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleEliminar} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              {isDeleting ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} /> : null}
               Eliminar
             </Button>
           </DialogFooter>
@@ -212,7 +212,6 @@ function MetodoPagoFormModal({ open, onOpenChange, metodo, onSaved }: MetodoPago
             <Label>Icono</Label>
             <div className="grid grid-cols-4 gap-2">
               {ICONOS_DISPONIBLES.map((i) => {
-                const Icon = i.icon;
                 return (
                   <button
                     key={i.value}
@@ -220,7 +219,7 @@ function MetodoPagoFormModal({ open, onOpenChange, metodo, onSaved }: MetodoPago
                     onClick={() => setIcono(i.value)}
                     className={`p-3 rounded-md border flex flex-col items-center gap-1 cursor-pointer ${icono === i.value ? 'border-[#2e9e9b] bg-[#2e9e9b]/10' : 'border-border hover:bg-muted'}`}
                   >
-                    <Icon size={20} className={icono === i.value ? 'text-[#2e9e9b]' : ''} />
+                    <Icon name={i.iconName} size={20} className={icono === i.value ? 'text-[#2e9e9b]' : ''} />
                     <span className="text-xs">{i.label}</span>
                   </button>
                 );
@@ -231,7 +230,7 @@ function MetodoPagoFormModal({ open, onOpenChange, metodo, onSaved }: MetodoPago
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={isSaving} className="bg-[#2e9e9b] hover:bg-[#48b9b4]">
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              {isSaving ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} /> : null}
               {metodo ? 'Guardar' : 'Crear'}
             </Button>
           </DialogFooter>

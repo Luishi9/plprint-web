@@ -238,6 +238,7 @@ model clientes {
 
 model ventas {
   id                 Int                  @id @default(autoincrement())
+  folio              String?              @unique @db.VarChar(20)
   sucursal_id        Int?
   cliente_id         Int?
   usuario_id         Int?

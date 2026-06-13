@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, History, Receipt, ChevronDown, ChevronUp, BadgeCheck, XCircle, Clock } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { clientesApi } from '@/api/clientes.api';
 import { useMetodosPago } from '@/hooks/useMetodosPago';
 import { useMoney } from '@/hooks/useMoney';
@@ -13,17 +13,17 @@ import { Fragment } from 'react';
 const ESTADO_CONFIG: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
     completada: {
         label: 'Completada',
-        icon: <BadgeCheck size={11} />,
+        icon: <Icon name="verified" size={11} />,
         cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30',
     },
     cancelada: {
         label: 'Cancelada',
-        icon: <XCircle size={11} />,
+        icon: <Icon name="cancel" size={11} />,
         cls: 'bg-red-500/10 text-red-400 border-red-500/30',
     },
     pendiente: {
         label: 'Pendiente',
-        icon: <Clock size={11} />,
+        icon: <Icon name="schedule" size={11} />,
         cls: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30',
     },
 };
@@ -77,7 +77,7 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
             <DialogContent className="bg-card border-border max-w-2xl max-h-[85vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-white">
-                        <History size={18} className="text-blue-400" />
+                        <Icon name="history" size={18} className="text-blue-400" />
                         Historial de compras — {cliente?.nombre}
                     </DialogTitle>
                 </DialogHeader>
@@ -97,11 +97,11 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
                 <div className="flex-1 overflow-y-auto pr-1 min-h-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-40">
-                            <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
+                            <Icon name="progress_activity" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
                         </div>
                     ) : ventas.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
-                            <Receipt size={32} className="opacity-20" />
+                            <Icon name="receipt" size={32} className="mx-auto opacity-20" />
                             <p className="text-sm">Este cliente no tiene compras registradas.</p>
                         </div>
                     ) : (
@@ -140,8 +140,8 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
                                                         {money(Number(v.total))}
                                                     </span>
                                                     {isExpanded
-                                                        ? <ChevronUp size={13} className="text-muted-foreground" />
-                                                        : <ChevronDown size={13} className="text-muted-foreground" />}
+                                                        ? <Icon name="expand_less" size={13} className="text-muted-foreground" />
+                                                        : <Icon name="expand_more" size={13} className="text-muted-foreground" />}
                                                 </div>
                                             </div>
 

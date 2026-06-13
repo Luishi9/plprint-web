@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Plus, Search, Loader2, Pencil, Filter, Package, Boxes, X, Check } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { mermasApi, Merma } from '@/api/mermas.api';
 import { productosApi } from '@/api/productos.api';
@@ -152,7 +152,7 @@ export default function MermasPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Trash2 className="text-[#2e9e9b]" size={32} />
+            <Icon name="delete" className="text-[#2e9e9b]" size={32} />
             Mermas
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -161,7 +161,7 @@ export default function MermasPage() {
         </motion.div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar..."
               value={search}
@@ -171,14 +171,14 @@ export default function MermasPage() {
           </div>
           <RequirePermission modulo="mermas" accion="crear">
             <Button onClick={abrirCrear} className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold">
-              <Plus className="mr-2 h-4 w-4" /> Nueva Merma
+              <Icon name="add" className="mr-2" size={16} /> Nueva Merma
             </Button>
           </RequirePermission>
         </div>
       </div>
 
       <div className="flex items-center gap-3 text-sm">
-        <Filter size={14} className="text-muted-foreground" />
+        <Icon name="filter_list" size={14} className="text-muted-foreground" />
         <div className="flex items-center gap-2">
           {[
             { v: 'todos' as const,    label: 'Todas' },
@@ -225,11 +225,11 @@ export default function MermasPage() {
           <tbody>
             {isLoading ? (
               <tr><td colSpan={8} className="px-6 py-8 text-center">
-                <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                <Icon name="progress_activity" className="mx-auto animate-spin text-[#2e9e9b]" size={24} />
               </td></tr>
             ) : mermas.length === 0 ? (
               <tr><td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                <Trash2 size={32} className="mx-auto mb-2 opacity-20" />
+                <Icon name="delete" size={32} className="mx-auto mb-2 opacity-20" />
                 <p>No hay mermas registradas.</p>
               </td></tr>
             ) : (
@@ -251,7 +251,7 @@ export default function MermasPage() {
                           ? 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30'
                           : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
                       }`}>
-                        {m.tipo === 'producto' ? <Package size={11} /> : <Boxes size={11} />}
+                        {m.tipo === 'producto' ? <Icon name="inventory_2" size={11} /> : <Icon name="inventory" size={11} />}
                         {m.tipo}
                       </span>
                     </td>
@@ -273,7 +273,7 @@ export default function MermasPage() {
                             title="Editar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
                           >
-                            <Pencil size={14} />
+                            <Icon name="edit" size={14} />
                           </button>
                         </RequirePermission>
                         <RequirePermission modulo="mermas" accion="eliminar">
@@ -282,7 +282,7 @@ export default function MermasPage() {
                             title="Eliminar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
                           >
-                            <Trash2 size={14} />
+                            <Icon name="delete" size={14} />
                           </button>
                         </RequirePermission>
                       </div>
@@ -321,7 +321,7 @@ export default function MermasPage() {
                   form.tipo === 'producto' ? 'bg-[#2e9e9b]/20 text-[#2e9e9b] border border-[#2e9e9b]/50' : 'bg-background border border-border text-muted-foreground'
                 }`}
               >
-                <Package size={14} /> Producto
+                <Icon name="inventory_2" size={14} /> Producto
               </button>
               <button
                 onClick={() => setForm({ ...form, tipo: 'insumo' })}
@@ -329,7 +329,7 @@ export default function MermasPage() {
                   form.tipo === 'insumo' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50' : 'bg-background border border-border text-muted-foreground'
                 }`}
               >
-                <Boxes size={14} /> Insumo
+                <Icon name="inventory" size={14} /> Insumo
               </button>
             </div>
             <div>
@@ -383,14 +383,14 @@ export default function MermasPage() {
           </div>
           <DialogFooter className="gap-2 flex justify-end">
             <Button variant="outline" onClick={() => setModalOpen(false)} disabled={isSaving}>
-              <X size={14} className="mr-1" /> Cancelar
+              <Icon name="close" size={14} className="mr-1" /> Cancelar
             </Button>
             <Button
               onClick={handleGuardar}
               disabled={isSaving}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
-              {isSaving ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Check size={14} className="mr-1" />}
+              {isSaving ? <Icon name="hourglass_top" size={14} className="mr-1 animate-spin" /> : <Icon name="check" size={14} className="mr-1" />}
               {editando ? 'Guardar' : 'Registrar'}
             </Button>
           </DialogFooter>
@@ -408,7 +408,7 @@ export default function MermasPage() {
           <DialogFooter className="gap-2 flex justify-end pt-2">
             <Button variant="outline" onClick={() => setEliminarItem(null)} disabled={isDeleting}>Cancelar</Button>
             <Button onClick={handleEliminar} disabled={isDeleting} className="bg-red-500 hover:bg-red-600 text-white font-semibold">
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              {isDeleting ? <Icon name="hourglass_top" size={16} className="animate-spin" /> : <Icon name="delete" size={16} className="mr-1" />}
               Eliminar
             </Button>
           </DialogFooter>

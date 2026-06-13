@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Wallet, Printer, ArrowUpRight, ArrowDownRight, Landmark, Plus } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { cajaApi, CorteCaja, MovimientoCaja, ResumenCaja } from '@/api/caja.api';
 import { usuariosApi } from '@/api/usuarios.api';
@@ -165,7 +165,7 @@ export default function CajaPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Wallet className="text-[#2e9e9b]" size={32} />
+            <Icon name="account_balance_wallet" size={32} className="text-[#2e9e9b]" />
             Caja
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -181,19 +181,19 @@ export default function CajaPage() {
           {cajaActual && (
             <>
               <Button onClick={() => abrirMovimiento('ingreso')} variant="outline" className="h-10 px-4 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 whitespace-nowrap">
-                <ArrowUpRight className="mr-2 h-4 w-4" /> Ingreso
+                <Icon name="arrow_outward" size={16} className="mr-2" /> Ingreso
               </Button>
               <Button onClick={() => abrirMovimiento('gasto')} variant="outline" className="h-10 px-4 border-red-500/30 text-red-400 hover:bg-red-500/10 whitespace-nowrap">
-                <ArrowDownRight className="mr-2 h-4 w-4" /> Gasto
+                <Icon name="south_east" size={16} className="mr-2" /> Gasto
               </Button>
               <RequirePermission modulo="caja" accion="retiro">
                 <Button onClick={() => abrirMovimiento('retiro')} variant="outline" className="h-10 px-4 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 whitespace-nowrap">
-                  <Landmark className="mr-2 h-4 w-4" /> Retiro
+                  <Icon name="account_balance" size={16} className="mr-2" /> Retiro
                 </Button>
               </RequirePermission>
               <RequirePermission modulo="caja" accion="cerrar">
                 <Button onClick={() => setCorteOpen(true)} className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap">
-                  <Wallet className="mr-2 h-4 w-4" /> Realizar corte
+                  <Icon name="account_balance_wallet" size={16} className="mr-2" /> Realizar corte
                 </Button>
               </RequirePermission>
             </>
@@ -201,13 +201,13 @@ export default function CajaPage() {
           {!cajaActual && !corteSeleccionado && (
             <RequirePermission modulo="caja" accion="aperturar">
               <Button onClick={() => setAperturaOpen(true)} className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap">
-                <Plus className="mr-2 h-4 w-4" /> Aperturar caja
+                <Icon name="add" size={16} className="mr-2" /> Aperturar caja
               </Button>
             </RequirePermission>
           )}
           <RequirePermission modulo="caja" accion="reimprimir">
             <Button onClick={() => setReimprimirOpen(true)} variant="outline" className="h-10 px-4 whitespace-nowrap">
-              <Printer className="mr-2 h-4 w-4" /> Reimprimir corte
+              <Icon name="print" size={16} className="mr-2" /> Reimprimir corte
             </Button>
           </RequirePermission>
         </div>

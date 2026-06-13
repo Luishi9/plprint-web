@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, SlidersHorizontal, Loader2, History } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { inventarioApi } from '@/api/inventario.api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
@@ -22,10 +22,10 @@ interface KardexModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const TIPO_CONFIG: Record<string, { icon: React.ReactNode; cls: string; label: string }> = {
-  entrada: { icon: <TrendingUp size={12} />, cls: 'text-[#2e9e9b] bg-[#2e9e9b]/10', label: 'Entrada' },
-  salida:  { icon: <TrendingDown size={12} />, cls: 'text-red-400 bg-red-400/10', label: 'Salida' },
-  ajuste:  { icon: <SlidersHorizontal size={12} />, cls: 'text-yellow-400 bg-yellow-400/10', label: 'Ajuste' },
+const TIPO_CONFIG: Record<string, { icon: string; cls: string; label: string }> = {
+  entrada: { icon: 'login', cls: 'text-[#2e9e9b] bg-[#2e9e9b]/10', label: 'Entrada' },
+  salida:  { icon: 'logout', cls: 'text-red-400 bg-red-400/10', label: 'Salida' },
+  ajuste:  { icon: 'tune', cls: 'text-yellow-400 bg-yellow-400/10', label: 'Ajuste' },
 };
 
 export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOpenChange }: KardexModalProps) {
@@ -46,7 +46,7 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-[#2e9e9b] flex items-center gap-2">
-            <History size={18} />
+            <Icon name="history" size={18} />
             Kardex — {nombreProducto}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -57,7 +57,7 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
         <div className="flex-1 overflow-y-auto mt-2 min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <Loader2 className="animate-spin text-[#2e9e9b]" size={24} />
+              <Icon name="hourglass_top" size={24} className="animate-spin text-[#2e9e9b]" />
             </div>
           ) : movimientos.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
@@ -78,7 +78,7 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
                     >
                       {/* Tipo badge */}
                       <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${conf.cls}`}>
-                        {conf.icon}
+                        <Icon name={conf.icon} size={12} />
                         {conf.label}
                       </span>
 

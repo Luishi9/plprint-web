@@ -1,9 +1,6 @@
 import { useEffect, useState, Fragment } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Factory, Plus, Search, Loader2, Pencil, Trash2, ChevronDown, ChevronUp,
-  Play, CheckCircle2, PackageCheck, XCircle, Clock, AlertCircle, History, User, Cpu, Boxes,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -21,34 +18,34 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getImageUrl } from '@/utils/format';
 
-const ESTATUS_META: Record<EstatusOrden, { label: string; icon: any; cls: string; ringCls: string }> = {
+const ESTATUS_META: Record<EstatusOrden, { label: string; icon: string; cls: string; ringCls: string }> = {
   pendiente: {
     label: 'Pendientes',
-    icon: Clock,
+    icon: 'schedule',
     cls: 'bg-slate-500/10 text-slate-300 border-slate-500/30',
     ringCls: 'data-[state=active]:bg-slate-500/15 data-[state=active]:text-slate-200',
   },
   en_proceso: {
     label: 'En proceso',
-    icon: Play,
+    icon: 'play_arrow',
     cls: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
     ringCls: 'data-[state=active]:bg-blue-500/15 data-[state=active]:text-blue-300',
   },
   terminado: {
     label: 'Terminadas',
-    icon: PackageCheck,
+    icon: 'inventory',
     cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
     ringCls: 'data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300',
   },
   entregado: {
     label: 'Entregadas',
-    icon: CheckCircle2,
+    icon: 'check_circle',
     cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30',
     ringCls: 'data-[state=active]:bg-[#2e9e9b]/15 data-[state=active]:text-[#2e9e9b]',
   },
   cancelado: {
     label: 'Canceladas',
-    icon: XCircle,
+    icon: 'cancel',
     cls: 'bg-red-500/10 text-red-400 border-red-500/30',
     ringCls: 'data-[state=active]:bg-red-500/15 data-[state=active]:text-red-400',
   },
@@ -127,7 +124,7 @@ export default function ProduccionPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Factory className="text-[#2e9e9b]" size={32} />
+            <Icon name="factory" size={32} className="text-[#2e9e9b]" />
             Producción
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -138,7 +135,7 @@ export default function ProduccionPage() {
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Icon name="search" size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" />
             <Input
               placeholder="Buscar por producto, código..."
               className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#2e9e9b]"
@@ -151,7 +148,7 @@ export default function ProduccionPage() {
               onClick={() => { setEditando(null); setModalOpen(true); }}
               className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold whitespace-nowrap"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" size={16} className="mr-2" />
               Nueva orden
             </Button>
           </RequirePermission>
@@ -162,23 +159,23 @@ export default function ProduccionPage() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as EstatusOrden | 'todas')}>
         <TabsList className="bg-card/50 border border-border h-auto p-1 flex flex-wrap gap-1">
           <TabsTrigger value="pendiente" className={ESTATUS_META.pendiente.ringCls}>
-            <Clock size={13} className="mr-1.5" /> Pendientes
+            <Icon name="schedule" size={13} className="mr-1.5" /> Pendientes
             <span className="ml-1.5 text-[10px] opacity-70">({counts.pendiente ?? 0})</span>
           </TabsTrigger>
           <TabsTrigger value="en_proceso" className={ESTATUS_META.en_proceso.ringCls}>
-            <Play size={13} className="mr-1.5" /> En proceso
+            <Icon name="play_arrow" size={13} className="mr-1.5" /> En proceso
             <span className="ml-1.5 text-[10px] opacity-70">({counts.en_proceso ?? 0})</span>
           </TabsTrigger>
           <TabsTrigger value="terminado" className={ESTATUS_META.terminado.ringCls}>
-            <PackageCheck size={13} className="mr-1.5" /> Terminadas
+            <Icon name="inventory" size={13} className="mr-1.5" /> Terminadas
             <span className="ml-1.5 text-[10px] opacity-70">({counts.terminado ?? 0})</span>
           </TabsTrigger>
           <TabsTrigger value="entregado" className={ESTATUS_META.entregado.ringCls}>
-            <CheckCircle2 size={13} className="mr-1.5" /> Entregadas
+            <Icon name="check_circle" size={13} className="mr-1.5" /> Entregadas
             <span className="ml-1.5 text-[10px] opacity-70">({counts.entregado ?? 0})</span>
           </TabsTrigger>
           <TabsTrigger value="cancelado" className={ESTATUS_META.cancelado.ringCls}>
-            <XCircle size={13} className="mr-1.5" /> Canceladas
+            <Icon name="cancel" size={13} className="mr-1.5" /> Canceladas
             <span className="ml-1.5 text-[10px] opacity-70">({counts.cancelado ?? 0})</span>
           </TabsTrigger>
         </TabsList>
@@ -220,7 +217,7 @@ export default function ProduccionPage() {
         <DialogContent className="bg-card border-border max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <Trash2 size={18} className="text-red-400" />
+              <Icon name="delete" size={18} className="text-red-400" />
               Eliminar orden #{eliminarItem?.id}
             </DialogTitle>
             <DialogDescription>
@@ -237,7 +234,7 @@ export default function ProduccionPage() {
               disabled={isDeleting}
               className="bg-red-500/90 hover:bg-red-500"
             >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Eliminar'}
+              {isDeleting ? <Icon name="hourglass_top" size={16} className="animate-spin" /> : 'Eliminar'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -265,7 +262,7 @@ function TablaOrdenes({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-40 text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
+        <Icon name="hourglass_top" size={24} className="animate-spin text-[#2e9e9b]" />
       </div>
     );
   }
@@ -273,7 +270,7 @@ function TablaOrdenes({
   if (ordenes.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/30 p-12 flex flex-col items-center text-center text-muted-foreground">
-        <Factory size={48} className="opacity-20 mb-3" />
+        <Icon name="factory" size={48} className="opacity-20 mb-3" />
         <p className="text-sm">No hay órdenes en este estatus.</p>
       </div>
     );
@@ -302,7 +299,6 @@ function TablaOrdenes({
             <AnimatePresence>
               {ordenes.map((o, i) => {
                 const estatusMeta = ESTATUS_META[o.estatus];
-                const EstatusIcon = estatusMeta.icon;
                 const prioMeta = PRIORIDAD_META[o.prioridad];
                 const isExpanded = expandedId === o.id;
                 const avance = o.cantidad_producida / o.cantidad;
@@ -322,7 +318,7 @@ function TablaOrdenes({
                           onClick={() => setExpandedId(isExpanded ? null : o.id)}
                           className="text-muted-foreground hover:text-white"
                         >
-                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {isExpanded ? <Icon name="keyboard_arrow_up" size={14} /> : <Icon name="keyboard_arrow_down" size={14} />}
                         </button>
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
@@ -338,7 +334,7 @@ function TablaOrdenes({
                             />
                           ) : (
                             <div className="w-8 h-8 rounded bg-background border border-border flex items-center justify-center">
-                              <Boxes size={14} className="text-muted-foreground" />
+                              <Icon name="inventory_2" size={14} className="text-muted-foreground" />
                             </div>
                           )}
                           <div className="min-w-0">
@@ -371,7 +367,7 @@ function TablaOrdenes({
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${estatusMeta.cls}`}>
-                          <EstatusIcon size={11} /> {estatusMeta.label}
+                          <Icon name={estatusMeta.icon} size={11} /> {estatusMeta.label}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -395,7 +391,7 @@ function TablaOrdenes({
                             className="p-1.5 rounded hover:bg-white/5 text-muted-foreground hover:text-[#2e9e9b]"
                             title="Ver detalle"
                           >
-                            <History size={14} />
+                            <Icon name="history" size={14} />
                           </button>
                           <RequirePermission modulo="produccion" accion="cambiar_estatus">
                             {o.estatus !== 'entregado' && o.estatus !== 'cancelado' && (
@@ -404,7 +400,7 @@ function TablaOrdenes({
                                 className="p-1.5 rounded hover:bg-white/5 text-muted-foreground hover:text-blue-400"
                                 title="Cambiar estatus"
                               >
-                                <Play size={14} />
+                                <Icon name="play_arrow" size={14} />
                               </button>
                             )}
                           </RequirePermission>
@@ -415,7 +411,7 @@ function TablaOrdenes({
                                 className="p-1.5 rounded hover:bg-white/5 text-muted-foreground hover:text-amber-400"
                                 title="Editar"
                               >
-                                <Pencil size={14} />
+                                <Icon name="edit" size={14} />
                               </button>
                             )}
                           </RequirePermission>
@@ -426,7 +422,7 @@ function TablaOrdenes({
                                 className="p-1.5 rounded hover:bg-white/5 text-muted-foreground hover:text-red-400"
                                 title="Eliminar"
                               >
-                                <Trash2 size={14} />
+                                <Icon name="delete" size={14} />
                               </button>
                             )}
                           </RequirePermission>
@@ -587,7 +583,7 @@ function OrdenProduccionModal({ open, onClose, editando, onSaved }: OrdenProducc
       <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <Factory size={18} className="text-[#2e9e9b]" />
+            <Icon name="factory" size={18} className="text-[#2e9e9b]" />
             {editando ? `Editar orden #${editando.id}` : 'Nueva orden de producción'}
           </DialogTitle>
           <DialogDescription>
@@ -697,7 +693,7 @@ function OrdenProduccionModal({ open, onClose, editando, onSaved }: OrdenProducc
 
           {formError && (
             <div className="md:col-span-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle size={14} /> {formError}
+              <Icon name="error" size={14} /> {formError}
             </div>
           )}
         </div>
@@ -709,7 +705,7 @@ function OrdenProduccionModal({ open, onClose, editando, onSaved }: OrdenProducc
             disabled={isSaving}
             className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
           >
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : editando ? 'Guardar cambios' : 'Crear orden'}
+            {isSaving ? <Icon name="hourglass_top" size={16} className="animate-spin" /> : editando ? 'Guardar cambios' : 'Crear orden'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -730,7 +726,7 @@ function DetalleOrdenModal({ orden, onClose }: DetalleModalProps) {
       <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <Factory size={18} className="text-[#2e9e9b]" />
+            <Icon name="factory" size={18} className="text-[#2e9e9b]" />
             Orden #{String(orden.id).padStart(5, '0')}
           </DialogTitle>
           <DialogDescription>
@@ -760,13 +756,13 @@ function DetalleOrdenModal({ orden, onClose }: DetalleModalProps) {
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Asignado a</p>
               <p className="text-foreground/80 flex items-center gap-1">
-                <User size={11} /> {orden.usuario_asignado?.nombre ?? '—'}
+                <Icon name="person" size={11} /> {orden.usuario_asignado?.nombre ?? '—'}
               </p>
             </div>
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Máquina</p>
               <p className="text-foreground/80 flex items-center gap-1">
-                <Cpu size={11} /> {orden.maquinas?.nombre ?? '—'}
+                <Icon name="memory" size={11} /> {orden.maquinas?.nombre ?? '—'}
               </p>
             </div>
             <div>
@@ -791,7 +787,7 @@ function DetalleOrdenModal({ orden, onClose }: DetalleModalProps) {
           {orden.productos?.producto_insumos && orden.productos.producto_insumos.length > 0 && (
             <div className="rounded-lg border border-border bg-background/30 p-3">
               <p className="text-xs font-semibold text-white mb-2 flex items-center gap-1.5">
-                <Boxes size={13} className="text-[#2e9e9b]" /> Insumos requeridos (BOM)
+                <Icon name="inventory_2" size={13} className="text-[#2e9e9b]" /> Insumos requeridos (BOM)
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
                 {orden.productos.producto_insumos.map((pi) => (
@@ -810,7 +806,7 @@ function DetalleOrdenModal({ orden, onClose }: DetalleModalProps) {
           {orden.historial && orden.historial.length > 0 && (
             <div className="rounded-lg border border-border bg-background/30 p-3">
               <p className="text-xs font-semibold text-white mb-2 flex items-center gap-1.5">
-                <History size={13} className="text-blue-400" /> Historial de cambios
+                <Icon name="history" size={13} className="text-blue-400" /> Historial de cambios
               </p>
               <div className="space-y-2">
                 {orden.historial.map((h) => (
@@ -917,7 +913,7 @@ function CambiarEstatusModal({ orden, onClose, onSaved }: CambiarEstatusModalPro
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <Play size={18} className="text-blue-400" />
+            <Icon name="play_arrow" size={18} className="text-blue-400" />
             Cambiar estatus — Orden #{orden.id}
           </DialogTitle>
           <DialogDescription>
@@ -980,7 +976,7 @@ function CambiarEstatusModal({ orden, onClose, onSaved }: CambiarEstatusModalPro
 
           {formError && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle size={14} /> {formError}
+              <Icon name="error" size={14} /> {formError}
             </div>
           )}
         </div>
@@ -993,7 +989,7 @@ function CambiarEstatusModal({ orden, onClose, onSaved }: CambiarEstatusModalPro
               disabled={isSaving}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmar'}
+              {isSaving ? <Icon name="hourglass_top" size={16} className="animate-spin" /> : 'Confirmar'}
             </Button>
           )}
         </DialogFooter>

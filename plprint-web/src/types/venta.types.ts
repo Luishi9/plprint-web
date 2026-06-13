@@ -18,6 +18,7 @@ export interface VentaAbono {
 
 export interface Venta {
   id: number;
+  folio?: string;
   total: number;
   descuento: number;
   metodo_pago: string;

@@ -14,10 +14,13 @@ export class VentasController {
       const hasta = req.query.hasta as string | undefined;
       const estado = (req.query.estado as 'completada' | 'cancelada' | undefined) || undefined;
       const estadoPago = (req.query.estadoPago as 'pendiente' | 'parcial' | undefined) || undefined;
+      const search = req.query.search as string | undefined;
+      const usuarioIdFiltro = req.query.usuarioId ? Number(req.query.usuarioId) : undefined;
 
       const { data, total } = await this.ventasService.findAll({
-        page, limit, sucursalId, desde, hasta, estado, estadoPago,
+        page, limit, sucursalId, desde, hasta, estado, estadoPago, search,
         usuarioId: req.user!.rolId !== 1 ? req.user!.sub : undefined,
+        usuarioIdFiltro: req.user!.rolId === 1 ? usuarioIdFiltro : undefined,
         sucursalesPermitidas: req.user!.sucursales,
       });
       sendSuccess(res, data, 200, buildPaginationMeta(total, page, limit));

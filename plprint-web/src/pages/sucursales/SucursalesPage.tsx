@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Building2, Plus, Pencil, Trash2, Loader2,
-  MapPin, Phone, CheckCircle2, XCircle,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { sucursalesApi, Sucursal } from '@/api/sucursales.api';
 import { useSucursalStore } from '@/store/sucursalStore';
@@ -72,7 +69,7 @@ export default function SucursalesPage() {
       >
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Building2 className="text-[#2e9e9b]" size={24} />
+            <Icon name="business" size={24} className="text-[#2e9e9b]" />
             Sucursales
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -83,7 +80,7 @@ export default function SucursalesPage() {
           onClick={() => { setEditando(null); setModalOpen(true); }}
           className="h-9 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap self-start sm:self-auto"
         >
-          <Plus className="mr-1.5 h-4 w-4" />
+          <Icon name="add" size={16} className="mr-1.5" />
           Nueva sucursal
         </Button>
       </motion.div>
@@ -115,7 +112,7 @@ export default function SucursalesPage() {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#2e9e9b]/30 bg-[#2e9e9b]/5"
         >
-          <Building2 size={15} className="text-[#2e9e9b] shrink-0" />
+          <Icon name="business" size={15} className="text-[#2e9e9b] shrink-0" />
           <span className="text-sm text-muted-foreground">
             Sucursal activa: <strong className="text-[#2e9e9b]">{sucursalActiva.nombre}</strong>
           </span>
@@ -125,11 +122,11 @@ export default function SucursalesPage() {
       {/* CARDS GRID */}
       {isLoading ? (
         <div className="flex items-center justify-center h-48">
-          <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
+          <Icon name="hourglass_top" size={24} className="animate-spin text-[#2e9e9b]" />
         </div>
       ) : sucursales.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-3">
-          <Building2 size={40} className="opacity-20" />
+          <Icon name="business" size={40} className="opacity-20" />
           <p>No hay sucursales registradas.</p>
         </div>
       ) : (
@@ -153,11 +150,11 @@ export default function SucursalesPage() {
                   <div className="absolute top-4 right-4">
                     {s.activa ? (
                       <Badge className="bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30 text-[10px] gap-1 border">
-                        <CheckCircle2 size={9} /> Activa
+                        <Icon name="check_circle" size={9} /> Activa
                       </Badge>
                     ) : (
                       <Badge className="bg-red-500/10 text-red-400 border-red-500/30 text-[10px] gap-1 border">
-                        <XCircle size={9} /> Inactiva
+                        <Icon name="cancel" size={9} /> Inactiva
                       </Badge>
                     )}
                   </div>
@@ -169,7 +166,7 @@ export default function SucursalesPage() {
                         ? 'bg-[#2e9e9b]/15 border border-[#2e9e9b]/30'
                         : 'bg-white/5 border border-border'
                     }`}>
-                      <Building2 size={18} className={isActiva ? 'text-[#2e9e9b]' : 'text-muted-foreground'} />
+                      <Icon name="business" size={18} className={isActiva ? 'text-[#2e9e9b]' : 'text-muted-foreground'} />
                     </div>
                     <div>
                       <p className="font-bold text-white text-sm leading-tight">{s.nombre}</p>
@@ -181,13 +178,13 @@ export default function SucursalesPage() {
                   <div className="flex flex-col gap-1.5 min-h-[40px]">
                     {s.direccion && (
                       <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                        <MapPin size={11} className="mt-0.5 shrink-0" />
+                        <Icon name="location_on" size={11} className="mt-0.5 shrink-0" />
                         <span className="line-clamp-2">{s.direccion}</span>
                       </span>
                     )}
                     {s.telefono && (
                       <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Phone size={11} className="shrink-0" />
+                        <Icon name="phone" size={11} className="shrink-0" />
                         {s.telefono}
                       </span>
                     )}
@@ -216,14 +213,14 @@ export default function SucursalesPage() {
                       className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                       title="Editar"
                     >
-                      <Pencil size={13} />
+                      <Icon name="edit" size={13} />
                     </button>
                     <button
                       onClick={() => setEliminarItem(s)}
                       className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
                       title="Eliminar"
                     >
-                      <Trash2 size={13} />
+                      <Icon name="delete" size={13} />
                     </button>
                   </div>
                 </motion.div>
@@ -269,7 +266,7 @@ export default function SucursalesPage() {
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white gap-2"
             >
-              {isDeleting && <Loader2 size={14} className="animate-spin" />}
+              {isDeleting && <Icon name="hourglass_top" size={14} className="animate-spin" />}
               Eliminar
             </Button>
           </DialogFooter>

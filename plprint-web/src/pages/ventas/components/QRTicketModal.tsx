@@ -1,5 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { QrCode, ExternalLink } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { TicketData } from './TicketImpresion';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -28,7 +28,7 @@ export default function QRTicketModal({ data, open, onClose }: QRTicketModalProp
       <DialogContent className="max-w-sm bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <QrCode size={18} className="text-[#2e9e9b]" />
+            <Icon name="qr_code" size={18} className="text-[#2e9e9b]" />
             Compartir ticket
           </DialogTitle>
         </DialogHeader>
@@ -61,7 +61,7 @@ export default function QRTicketModal({ data, open, onClose }: QRTicketModalProp
             className="gap-2 border-border text-muted-foreground hover:text-white"
             onClick={() => window.open(url, '_blank')}
           >
-            <ExternalLink size={13} />
+            <Icon name="open_in_new" size={13} />
             Abrir en nueva pestaña
           </Button>
         </div>

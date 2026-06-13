@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Boxes, Search, Loader2, Image as ImageIcon,
-  SlidersHorizontal, History, AlertTriangle, Package,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { inventarioApi } from '@/api/inventario.api';
 import { useSucursalStore } from '@/store/sucursalStore';
@@ -99,7 +96,7 @@ export default function InventarioPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Boxes className="text-[#2e9e9b]" size={32} />
+            <Icon name="inventory_2" size={32} className="text-[#2e9e9b]" />
             Inventario
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -115,8 +112,8 @@ export default function InventarioPage() {
         >
           <div className="relative w-full sm:w-64">
             {isSearching
-              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
-              : <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />}
+              ? <Icon name="hourglass_top" size={16} className="absolute left-2.5 top-2.5 text-[#2e9e9b] animate-spin" />
+              : <Icon name="search" size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" />}
             <Input
               placeholder="Buscar producto..."
               className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#2e9e9b]"
@@ -129,7 +126,7 @@ export default function InventarioPage() {
             onClick={() => setSoloStockBajo((p) => !p)}
             className={`h-10 whitespace-nowrap border-border ${soloStockBajo ? 'bg-yellow-400/20 text-yellow-400 border-yellow-400/40 hover:bg-yellow-400/30' : 'text-muted-foreground hover:text-white'}`}
           >
-            <AlertTriangle size={14} className="mr-2" />
+            <Icon name="warning" size={14} className="mr-2" />
             Stock bajo
           </Button>
         </motion.div>
@@ -196,21 +193,21 @@ export default function InventarioPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                    <Icon name="hourglass_top" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando inventario...</p>
                   </td>
                 </tr>
               ) : !sucursalEfectiva ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                    <Package size={36} className="mx-auto mb-3 opacity-20" />
+                    <Icon name="inventory" size={36} className="mx-auto mb-3 opacity-20" />
                     <p>No hay sucursal activa. Inicia sesión nuevamente.</p>
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                    <Boxes size={36} className="mx-auto mb-3 opacity-20" />
+                    <Icon name="inventory_2" size={36} className="mx-auto mb-3 opacity-20" />
                     <p>No se encontraron productos en el inventario.</p>
                   </td>
                 </tr>
@@ -238,7 +235,7 @@ export default function InventarioPage() {
                             </div>
                           ) : (
                             <div className="w-12 h-12 rounded-md bg-background/80 border border-border flex items-center justify-center text-muted-foreground/30">
-                              <ImageIcon size={20} />
+                              <Icon name="image" size={20} />
                             </div>
                           )}
                         </td>
@@ -288,14 +285,14 @@ export default function InventarioPage() {
                               title="Ajustar stock"
                               className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                             >
-                              <SlidersHorizontal size={16} />
+                              <Icon name="tune" size={16} />
                             </button>
                             <button
                               onClick={() => { setKardexItem(item); setKardexOpen(true); }}
                               title="Ver kardex"
                               className="p-2 rounded-md text-muted-foreground hover:text-white hover:bg-white/10 transition-colors"
                             >
-                              <History size={16} />
+                              <Icon name="history" size={16} />
                             </button>
                           </div>
                         </td>

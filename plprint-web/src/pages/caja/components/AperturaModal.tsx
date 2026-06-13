@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Check, X, Wallet } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -38,7 +38,7 @@ export default function AperturaModal({ open, onClose, onConfirm }: Props) {
       <DialogContent className="max-w-sm bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-[#2e9e9b] text-xl font-bold flex items-center gap-2">
-            <Wallet size={22} /> Apertura de Caja
+            <Icon name="account_balance_wallet" size={22} /> Apertura de Caja
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Ingresa el monto de efectivo con el que se apertura la caja.
@@ -60,10 +60,10 @@ export default function AperturaModal({ open, onClose, onConfirm }: Props) {
         </div>
         <DialogFooter className="gap-2 flex justify-end">
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            <X size={14} className="mr-1" /> Cancelar
+            <Icon name="close" size={14} className="mr-1" /> Cancelar
           </Button>
           <Button onClick={handleConfirm} disabled={isSaving} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold">
-            {isSaving ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Check size={14} className="mr-1" />}
+            {isSaving ? <Icon name="progress_activity" size={14} className="mr-1 animate-spin" /> : <Icon name="check" size={14} className="mr-1" />}
             Iniciar Caja
           </Button>
         </DialogFooter>

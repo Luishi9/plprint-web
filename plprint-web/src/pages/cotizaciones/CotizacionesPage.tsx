@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import {
-  FileText, Plus, Search, Loader2, Filter, Send, X, Check, Ban, Pencil, ArrowRight, Download,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { cotizacionesApi, Cotizacion } from '@/api/cotizaciones.api';
 import { clientesApi } from '@/api/clientes.api';
@@ -291,7 +289,7 @@ export default function CotizacionesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <FileText className="text-[#2e9e9b]" size={32} />
+            <Icon name="description" size={32} className="text-[#2e9e9b]" />
             Cotizaciones
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -300,7 +298,7 @@ export default function CotizacionesPage() {
         </motion.div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar folio o cliente..."
               value={search}
@@ -313,14 +311,14 @@ export default function CotizacionesPage() {
               onClick={abrirCrear}
               className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
-              <Plus className="mr-2 h-4 w-4" /> Nueva
+              <Icon name="add" size={16} className="mr-2" /> Nueva
             </Button>
           </RequirePermission>
         </div>
       </div>
 
       <div className="flex items-center gap-2 text-sm">
-        <Filter size={14} className="text-muted-foreground" />
+        <Icon name="filter_list" size={14} className="text-muted-foreground" />
         {[
           { v: 'pendiente' as const,  label: 'Pendientes' },
           { v: 'convertida' as const, label: 'Convertidas' },
@@ -361,11 +359,11 @@ export default function CotizacionesPage() {
           <tbody>
             {isLoading ? (
               <tr><td colSpan={7} className="px-6 py-8 text-center">
-                <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                <Icon name="hourglass_top" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
               </td></tr>
             ) : cotizaciones.length === 0 ? (
               <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                <FileText size={32} className="mx-auto mb-2 opacity-20" />
+                <Icon name="description" size={32} className="mx-auto mb-2 opacity-20" />
                 <p>{search || filtroEstado !== 'todas' ? 'Sin resultados.' : 'No hay cotizaciones.'}</p>
               </td></tr>
             ) : (
@@ -400,7 +398,7 @@ export default function CotizacionesPage() {
                             title="Descargar PDF"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
                           >
-                            <Download size={14} />
+                            <Icon name="download" size={14} />
                           </button>
                         </RequirePermission>
                         {c.estado === 'pendiente' && (
@@ -411,7 +409,7 @@ export default function CotizacionesPage() {
                                 title="Editar"
                                 className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
                               >
-                                <Pencil size={14} />
+                                <Icon name="edit" size={14} />
                               </button>
                             </RequirePermission>
                             <RequirePermission modulo="cotizaciones" accion="convertir_venta">
@@ -420,7 +418,7 @@ export default function CotizacionesPage() {
                                 title="Convertir a venta"
                                 className="p-1.5 rounded-md text-muted-foreground hover:text-green-400 hover:bg-green-500/10"
                               >
-                                <Send size={14} />
+                                <Icon name="send" size={14} />
                               </button>
                             </RequirePermission>
                             <RequirePermission modulo="cotizaciones" accion="cancelar">
@@ -429,14 +427,14 @@ export default function CotizacionesPage() {
                                 title="Cancelar"
                                 className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
                               >
-                                <Ban size={14} />
+                                <Icon name="block" size={14} />
                               </button>
                             </RequirePermission>
                           </>
                         )}
                         {c.estado === 'convertida' && c.venta_id && (
                           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            <ArrowRight size={10} /> Venta #{c.venta_id}
+                            <Icon name="arrow_forward" size={10} /> Venta #{c.venta_id}
                           </span>
                         )}
                       </div>
@@ -512,7 +510,7 @@ export default function CotizacionesPage() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium">Productos</label>
                 <Button size="sm" variant="outline" onClick={agregarItem} type="button">
-                  <Plus size={14} className="mr-1" /> Agregar
+                  <Icon name="add" size={14} className="mr-1" /> Agregar
                 </Button>
               </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -558,7 +556,7 @@ export default function CotizacionesPage() {
                           className="p-1 text-muted-foreground hover:text-red-400"
                           type="button"
                         >
-                          <X size={14} />
+                          <Icon name="close" size={14} />
                         </button>
                       </div>
                       {it.esMedida && (
@@ -631,7 +629,7 @@ export default function CotizacionesPage() {
               disabled={isSaving || items.length === 0}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
-              {isSaving ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Check size={14} className="mr-1" />}
+              {isSaving ? <Icon name="hourglass_top" size={14} className="mr-1 animate-spin" /> : <Icon name="check" size={14} className="mr-1" />}
               {editando ? 'Guardar' : 'Crear cotización'}
             </Button>
           </DialogFooter>
@@ -643,7 +641,7 @@ export default function CotizacionesPage() {
         <DialogContent className="max-w-sm bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <Send className="text-[#2e9e9b]" size={20} /> ¿Convertir a venta?
+              <Icon name="send" size={20} className="text-[#2e9e9b]" /> ¿Convertir a venta?
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Se convertirá la cotización <span className="text-white font-semibold">{convertirItem?.folio}</span>{' '}
@@ -659,7 +657,7 @@ export default function CotizacionesPage() {
               disabled={isConverting}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
-              {isConverting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+              {isConverting ? <Icon name="hourglass_top" size={16} className="animate-spin mr-1" /> : <Icon name="check" size={16} className="mr-1" />}
               Convertir
             </Button>
           </DialogFooter>
@@ -671,7 +669,7 @@ export default function CotizacionesPage() {
         <DialogContent className="max-w-sm bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <Ban className="text-red-400" size={20} /> ¿Cancelar cotización?
+              <Icon name="block" size={20} className="text-red-400" /> ¿Cancelar cotización?
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Se cancelará <span className="text-white font-semibold">{cancelarItem?.folio}</span>.
@@ -686,7 +684,7 @@ export default function CotizacionesPage() {
               disabled={isCanceling}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold"
             >
-              {isCanceling ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+              {isCanceling ? <Icon name="hourglass_top" size={16} className="animate-spin mr-1" /> : <Icon name="check" size={16} className="mr-1" />}
               Sí, cancelar
             </Button>
           </DialogFooter>

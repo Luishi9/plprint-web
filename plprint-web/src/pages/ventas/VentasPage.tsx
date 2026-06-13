@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState, Fragment } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import {
-  ShoppingCart, Plus, Search, Loader2, Receipt,
-  ChevronDown, ChevronUp, BadgeCheck, XCircle, Clock, Printer, QrCode, Ban, Check, DollarSign, AlertCircle, FileText,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { buildTicketHtml, TicketData } from './components/TicketImpresion';
 import QRTicketModal from './components/QRTicketModal';
+import VentasDateFilter from './components/VentasDateFilter';
+import ExportarVentasButton from './components/ExportarVentasButton';
 
 import { ventasApi } from '@/api/ventas.api';
+import { usuariosApi } from '@/api/usuarios.api';
 import { Venta } from '@/types/venta.types';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
 import { useMetodosPago } from '@/hooks/useMetodosPago';
 import { useMoney } from '@/hooks/useMoney';
+import { usePermisos } from '@/hooks/usePermisos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
@@ -23,13 +24,13 @@ import {
 import AbonosModal from '@/components/forms/AbonosModal';
 
 const ESTADO_PAGO_CONFIG: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
-  pagada:    { label: 'Pagada',    icon: <BadgeCheck size={12} />,   cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30' },
-  parcial:   { label: 'Parcial',   icon: <Clock size={12} />,        cls: 'bg-orange-500/10 text-orange-400 border-orange-500/30' },
-  pendiente: { label: 'Pendiente', icon: <AlertCircle size={12} />,  cls: 'bg-orange-500/10 text-orange-400 border-orange-500/30' },
+  pagada:    { label: 'Pagada',    icon: <Icon name="verified" size={12} />,   cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30' },
+  parcial:   { label: 'Parcial',   icon: <Icon name="schedule" size={12} />,        cls: 'bg-orange-500/10 text-orange-400 border-orange-500/30' },
+  pendiente: { label: 'Pendiente', icon: <Icon name="error" size={12} />,  cls: 'bg-orange-500/10 text-orange-400 border-orange-500/30' },
 };
 
 const ESTADO_VENTA_CONFIG: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
-  cancelada: { label: 'Cancelada', icon: <XCircle size={12} />, cls: 'bg-red-500/10 text-red-400 border-red-500/30' },
+  cancelada: { label: 'Cancelada', icon: <Icon name="cancel" size={12} />, cls: 'bg-red-500/10 text-red-400 border-red-500/30' },
 };
 
 export default function VentasPage() {
@@ -43,8 +44,13 @@ export default function VentasPage() {
   const [ventaACancelar, setVentaACancelar] = useState<Venta | null>(null);
   const [isCanceling, setIsCanceling] = useState(false);
   const [ventaAbonos, setVentaAbonos] = useState<Venta | null>(null);
+  const [desde, setDesde] = useState(new Date().toISOString().split('T')[0]);
+  const [hasta, setHasta] = useState(new Date().toISOString().split('T')[0]);
+  const [usuarioId, setUsuarioId] = useState<number | undefined>(undefined);
+  const [usuarios, setUsuarios] = useState<{ id: number; nombre: string }[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const { sucursalActiva } = useSucursalStore();
+  const { isAdmin } = usePermisos();
   const { src: logoSrc } = useEmpresaLogo();
   const { getLabel: getMetodoLabel } = useMetodosPago();
   const { format: money } = useMoney();
@@ -182,6 +188,7 @@ export default function VentasPage() {
   function buildTicketData(venta: Venta, subtotal: number): TicketData {
     return {
       ventaId: venta.id,
+      folio: venta.folio,
       fecha: new Date(venta.created_at),
       sucursal: venta.sucursales?.nombre ?? sucursalActiva?.nombre ?? 'PLPrint',
       cajero: venta.usuarios?.nombre ?? 'Cajero',
@@ -218,17 +225,12 @@ export default function VentasPage() {
         params.estadoPago = 'pendiente,parcial';
         params.estado = 'completada';
       }
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      params.desde = desde;
+      params.hasta = hasta;
+      if (usuarioId) params.usuarioId = usuarioId;
       const res = await ventasApi.getAll(params);
-      let data: Venta[] = res.data?.data || [];
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        data = data.filter(
-          (v) =>
-            String(v.id).includes(q) ||
-            v.clientes?.nombre?.toLowerCase().includes(q) ||
-            v.usuarios?.nombre?.toLowerCase().includes(q),
-        );
-      }
+      const data: Venta[] = res.data?.data || [];
       setVentas(data);
     } catch (err: any) {
       if (err?.code !== 'ERR_CANCELED') console.error(err);
@@ -238,12 +240,21 @@ export default function VentasPage() {
     }
   };
 
-  useEffect(() => { fetchVentas(true); }, [sucursalActiva, filtroEstado]);
+  useEffect(() => { fetchVentas(true); }, [sucursalActiva, filtroEstado, desde, hasta, usuarioId]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchVentas(), 300);
     return () => clearTimeout(t);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      usuariosApi.getAll({ limit: 100 }).then((res) => {
+        const data = res.data?.data || [];
+        setUsuarios(data.map((u: { id: number; nombre: string }) => ({ id: u.id, nombre: u.nombre })));
+      }).catch(() => {});
+    }
+  }, [isAdmin]);
 
   const totales = ventas.reduce(
     (acc, v) => ({
@@ -259,7 +270,7 @@ export default function VentasPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <ShoppingCart className="text-[#2e9e9b]" size={32} />
+            <Icon name="shopping_cart" size={32} className="text-[#2e9e9b]" />
             Historial de Ventas
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -275,48 +286,68 @@ export default function VentasPage() {
         >
           <div className="relative w-full sm:w-64">
             {isSearching
-              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
-              : <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />}
+              ? <Icon name="progress_activity" size={16} className="absolute left-2.5 top-2.5 text-[#2e9e9b] animate-spin" />
+              : <Icon name="search" size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" />}
             <Input
-              placeholder="Buscar por # o cliente..."
+              placeholder="Buscar por folio, #, cliente, producto..."
               className="pl-9 bg-card border-border h-10 w-full focus-visible:ring-[#2e9e9b]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <ExportarVentasButton ventas={ventas} desde={desde} hasta={hasta} />
           <RequirePermission modulo="ventas" accion="crear">
             <Button
               onClick={() => navigate('/ventas/nueva')}
               className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" size={16} className="mr-2" />
               Nueva Venta
             </Button>
           </RequirePermission>
         </motion.div>
       </div>
 
-      {/* FILTRO ESTADO */}
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground text-xs">Mostrar:</span>
-        {[
-          { v: 'completada' as const,     label: 'Completadas',  color: 'bg-[#2e9e9b]' },
-          { v: 'pendiente_pago' as const, label: 'Pend. de pago', color: 'bg-orange-500' },
-          { v: 'cancelada' as const,      label: 'Canceladas',   color: 'bg-red-500' },
-          { v: 'todas' as const,          label: 'Todas',        color: 'bg-zinc-500' },
-        ].map((opt) => (
-          <button
-            key={opt.v}
-            onClick={() => setFiltroEstado(opt.v)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              filtroEstado === opt.v
-                ? `${opt.color} text-black`
-                : 'bg-background border border-border text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      {/* FILTROS: Mostrar / Fechas / Vendedor */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 text-sm">
+          <label className="text-muted-foreground text-xs">Mostrar:</label>
+          <div className="relative">
+            <select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value as any)}
+              className="appearance-none bg-card border border-border rounded-md px-3 py-1.5 pr-8 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2e9e9b]"
+              aria-label="Filtrar estado de ventas"
+            >
+              <option value="completada">Completadas</option>
+              <option value="pendiente_pago">Pend. de pago</option>
+              <option value="cancelada">Canceladas</option>
+              <option value="todas">Todas</option>
+            </select>
+            <Icon name="expand_more" size={18} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          </div>
+        </div>
+
+        <VentasDateFilter desde={desde} hasta={hasta} onChange={(d, h) => { setDesde(d); setHasta(h); }} />
+
+        {isAdmin && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground text-xs">Vendedor:</span>
+            <div className="relative">
+              <select
+                value={usuarioId ?? ''}
+                onChange={(e) => setUsuarioId(e.target.value ? Number(e.target.value) : undefined)}
+                className="appearance-none bg-card border border-border rounded-md px-3 py-1.5 pr-8 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2e9e9b]"
+              >
+                <option value="">Todos los vendedores</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.id}>{u.nombre}</option>
+                ))}
+              </select>
+              <Icon name="expand_more" size={18} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* STAT CARDS */}
@@ -369,14 +400,14 @@ export default function VentasPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                    <Icon name="progress_activity" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando ventas...</p>
                   </td>
                 </tr>
               ) : ventas.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                    <Receipt size={36} className="mx-auto mb-3 opacity-20" />
+                    <Icon name="receipt" size={36} className="mx-auto mb-3 opacity-20" />
                     <p>No se encontraron ventas.</p>
                   </td>
                 </tr>
@@ -399,7 +430,12 @@ export default function VentasPage() {
                           className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors cursor-pointer"
                           onClick={() => setExpandedId(isExpanded ? null : venta.id)}
                         >
-                          <td className="px-4 py-4 font-mono text-xs text-muted-foreground">#{venta.id}</td>
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-mono text-xs text-muted-foreground">#{venta.id}</span>
+                              <span className="font-mono text-[10px] text-[#2e9e9b]">{venta.folio}</span>
+                            </div>
+                          </td>
                           <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
                             {new Date(venta.created_at).toLocaleDateString('es-MX', {
                               day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -430,14 +466,14 @@ export default function VentasPage() {
                                 className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                                 title="Reimprimir ticket"
                               >
-                                <Printer size={16} />
+                                <Icon name="print" size={16} />
                               </button>
                               <button
                                 onClick={(e) => handleShowQR(venta, e)}
                                 className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                                 title="QR para cliente"
                               >
-                                <QrCode size={16} />
+                                <Icon name="qr_code" size={16} />
                               </button>
                               {venta.estado_pago && venta.estado_pago !== 'pagada' && (
                                 <RequirePermission modulo="abonos" accion="ver">
@@ -446,7 +482,7 @@ export default function VentasPage() {
                                     className="p-2 rounded hover:bg-[#2e9e9b]/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                                     title="Gestionar abonos"
                                   >
-                                    <DollarSign size={16} />
+                                    <Icon name="attach_money" size={16} />
                                   </button>
                                 </RequirePermission>
                               )}
@@ -456,7 +492,7 @@ export default function VentasPage() {
                                   className="p-2 rounded hover:bg-orange-500/10 text-muted-foreground hover:text-orange-400 transition-colors"
                                   title="Imprimir ticket de abonos"
                                 >
-                                  <FileText size={16} />
+                                  <Icon name="description" size={16} />
                                 </button>
                               )}
                               {venta.estado === 'completada' && !isCancelada && (
@@ -466,13 +502,13 @@ export default function VentasPage() {
                                     className="p-2 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
                                     title="Cancelar venta"
                                   >
-                                    <Ban size={16} />
+                                    <Icon name="block" size={16} />
                                   </button>
                                 </RequirePermission>
                               )}
                               {isExpanded
-                                ? <ChevronUp size={16} className="text-muted-foreground" />
-                                : <ChevronDown size={16} className="text-muted-foreground" />}
+                                ? <Icon name="expand_less" size={16} className="text-muted-foreground" />
+                                : <Icon name="expand_more" size={16} className="text-muted-foreground" />}
                             </div>
                           </td>
                         </motion.tr>
@@ -520,7 +556,7 @@ export default function VentasPage() {
                                         onClick={(e) => { e.stopPropagation(); handleReprintAbonos(venta); }}
                                         className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1"
                                       >
-                                        <FileText size={12} /> Imprimir ticket
+                                        <Icon name="description" size={12} /> Imprimir ticket
                                       </button>
                                     </div>
                                     <table className="w-full text-sm">
@@ -583,7 +619,7 @@ export default function VentasPage() {
         open={!!ventaAbonos}
         onOpenChange={(v) => { if (!v) setVentaAbonos(null); }}
         ventaId={ventaAbonos?.id || 0}
-        ventaFolio={`#${ventaAbonos?.id || ''}`}
+        ventaFolio={ventaAbonos?.folio || `#${ventaAbonos?.id || ''}`}
         ventaTotal={Number(ventaAbonos?.total || 0)}
         onAbonoRegistrado={() => fetchVentas(true)}
       />
@@ -593,7 +629,7 @@ export default function VentasPage() {
         <DialogContent className="max-w-sm bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <Ban className="text-red-400" size={20} /> ¿Cancelar venta?
+              <Icon name="block" size={20} className="text-red-400" /> ¿Cancelar venta?
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Se cancelará la venta <span className="text-white font-semibold">#{ventaACancelar?.id}</span> de{' '}
@@ -611,7 +647,7 @@ export default function VentasPage() {
               disabled={isCanceling}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold"
             >
-              {isCanceling ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+              {isCanceling ? <Icon name="progress_activity" size={16} className="animate-spin mr-1" /> : <Icon name="check" size={16} className="mr-1" />}
               Sí, cancelar
             </Button>
           </DialogFooter>

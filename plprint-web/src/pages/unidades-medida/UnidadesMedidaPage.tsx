@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Ruler, Plus, Pencil, Trash2, Loader2, Check, X } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { unidadesMedidaApi, UnidadMedida, TipoMedida } from '@/api/unidadesMedida.api';
 import { Button } from '@/components/ui/button';
@@ -105,7 +105,7 @@ export default function UnidadesMedidaPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Ruler className="text-[#2e9e9b]" size={32} />
+            <Icon name="straighten" size={32} className="text-[#2e9e9b]" />
             Unidades de Medida
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -119,7 +119,7 @@ export default function UnidadesMedidaPage() {
               onClick={abrirCrear}
               className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" size={16} className="mr-2" />
               Nueva Unidad
             </Button>
           </RequirePermission>
@@ -146,13 +146,13 @@ export default function UnidadesMedidaPage() {
             {isLoading ? (
               <tr>
                 <td colSpan={4} className="px-6 py-8 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                  <Icon name="hourglass_top" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
                 </td>
               </tr>
             ) : unidades.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                  <Ruler size={32} className="mx-auto mb-2 opacity-20" />
+                  <Icon name="straighten" size={32} className="mx-auto mb-2 opacity-20" />
                   <p>No hay unidades de medida registradas.</p>
                 </td>
               </tr>
@@ -186,14 +186,14 @@ export default function UnidadesMedidaPage() {
                             title="Editar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                           >
-                            <Pencil size={14} />
+                            <Icon name="edit" size={14} />
                           </button>
                           <button
                             onClick={() => setEliminarItem(u)}
                             title="Eliminar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <Icon name="delete" size={14} />
                           </button>
                         </RequirePermission>
                       </div>
@@ -276,7 +276,7 @@ export default function UnidadesMedidaPage() {
           </div>
           <DialogFooter className="gap-2 flex justify-end">
             <Button variant="outline" onClick={() => setModalOpen(false)} disabled={isSaving}>
-              <X size={14} className="mr-1" /> Cancelar
+              <Icon name="close" size={14} className="mr-1" /> Cancelar
             </Button>
             <Button
               onClick={handleGuardar}
@@ -284,8 +284,8 @@ export default function UnidadesMedidaPage() {
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
               {isSaving
-                ? <Loader2 size={14} className="mr-1 animate-spin" />
-                : <Check size={14} className="mr-1" />}
+                ? <Icon name="hourglass_top" size={14} className="mr-1 animate-spin" />
+                : <Icon name="check" size={14} className="mr-1" />}
               {editando ? 'Guardar' : 'Crear'}
             </Button>
           </DialogFooter>
@@ -309,7 +309,7 @@ export default function UnidadesMedidaPage() {
               disabled={isDeleting}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold"
             >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              {isDeleting ? <Icon name="hourglass_top" size={16} className="animate-spin" /> : <Icon name="delete" size={16} className="mr-1" />}
               Eliminar
             </Button>
           </DialogFooter>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ScrollText, Loader2, RefreshCw, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -90,18 +90,18 @@ export default function AuditLogTab() {
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <ScrollText size={16} /> Bitácora de auditoría
+              <Icon name="article" size={16} /> Bitácora de auditoría
             </CardTitle>
             <CardDescription>Registro de todas las acciones del sistema</CardDescription>
           </div>
           <Button variant="ghost" size="icon" onClick={() => fetchData(meta.page)}>
-            <RefreshCw size={15} />
+            <Icon name="refresh" size={15} />
           </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
+              <Icon name="search" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
               <Input
                 placeholder="Filtrar..."
                 value={search}
@@ -132,7 +132,7 @@ export default function AuditLogTab() {
           <div className="space-y-1.5">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="animate-spin" size={20} />
+                <Icon name="progress_activity" className="animate-spin" size={20} />
               </div>
             ) : filtrados.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-6">Sin registros</p>
@@ -180,10 +180,10 @@ export default function AuditLogTab() {
               </p>
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm" disabled={meta.page === 1} onClick={() => fetchData(meta.page - 1)}>
-                  <ChevronLeft size={14} />
+                  <Icon name="chevron_left" size={14} />
                 </Button>
                 <Button variant="ghost" size="sm" disabled={meta.page >= meta.totalPages} onClick={() => fetchData(meta.page + 1)}>
-                  <ChevronRight size={14} />
+                  <Icon name="chevron_right" size={14} />
                 </Button>
               </div>
             </div>

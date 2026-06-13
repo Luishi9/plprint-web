@@ -1,8 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard, Package, ShoppingCart, Users,
-  Boxes, UserCog, Building2, LogOut, PanelLeftClose, Tag, Settings, Truck, Ruler, Receipt, FolderTree, FileText, Trash2, Factory, Wallet,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import {
   Sidebar,
   SidebarContent,
@@ -20,25 +17,25 @@ import { usePermisos } from '@/hooks/usePermisos';
 import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
 
 const navItems = [
-  { to: '/dashboard',  label: 'Dashboard',   icon: LayoutDashboard, modulo: 'dashboard' },
-  { to: '/productos',  label: 'Productos',   icon: Package,         modulo: 'productos' },
-  { to: '/insumos',    label: 'Insumos',     icon: Boxes,           modulo: 'insumos' },
-  { to: '/ventas',     label: 'Ventas',      icon: ShoppingCart,    modulo: 'ventas' },
-  { to: '/clientes',   label: 'Clientes',    icon: Users,           modulo: 'clientes' },
-  { to: '/cotizaciones', label: 'Cotizaciones', icon: FileText,        modulo: 'cotizaciones' },
-  { to: '/produccion', label: 'Producción',  icon: Factory,         modulo: 'produccion' },
-  { to: '/mermas',     label: 'Mermas',      icon: Trash2,          modulo: 'mermas' },
-  { to: '/gastos',     label: 'Gastos',      icon: Receipt,         modulo: 'gastos' },
-  { to: '/caja',       label: 'Caja',        icon: Wallet,          modulo: 'caja' },
+  { to: '/dashboard',  label: 'Dashboard',   icon: 'dashboard', modulo: 'dashboard' },
+  { to: '/productos',  label: 'Productos',   icon: 'inventory_2',         modulo: 'productos' },
+  { to: '/insumos',    label: 'Insumos',     icon: 'inventory',           modulo: 'insumos' },
+  { to: '/ventas',     label: 'Ventas',      icon: 'shopping_cart',    modulo: 'ventas' },
+  { to: '/clientes',   label: 'Clientes',    icon: 'group',           modulo: 'clientes' },
+  { to: '/cotizaciones', label: 'Cotizaciones', icon: 'description',        modulo: 'cotizaciones' },
+  { to: '/produccion', label: 'Producción',  icon: 'factory',         modulo: 'produccion' },
+  { to: '/mermas',     label: 'Mermas',      icon: 'delete',          modulo: 'mermas' },
+  { to: '/gastos',     label: 'Gastos',      icon: 'receipt',         modulo: 'gastos' },
+  { to: '/caja',       label: 'Caja',        icon: 'account_balance_wallet',          modulo: 'caja' },
 ];
 
 const adminItems = [
-  { to: '/usuarios',             label: 'Usuarios',              icon: UserCog,    modulo: 'usuarios' },
-  { to: '/categorias',           label: 'Categorías',            icon: Tag,        modulo: 'categorias' },
-  { to: '/categorias-gastos',    label: 'Cat. de Gastos',        icon: FolderTree, modulo: 'gastos' },
-  { to: '/proveedores',          label: 'Proveedores',           icon: Truck,      modulo: 'proveedores' },
-  { to: '/unidades-medida',      label: 'Unidades de Medida',    icon: Ruler,      modulo: 'unidades_medida' },
-  { to: '/sucursales',           label: 'Sucursales',            icon: Building2,  modulo: 'sucursales' },
+  { to: '/usuarios',             label: 'Usuarios',              icon: 'manage_accounts',    modulo: 'usuarios' },
+  { to: '/categorias',           label: 'Categorías',            icon: 'sell',        modulo: 'categorias' },
+  { to: '/categorias-gastos',    label: 'Cat. de Gastos',        icon: 'account_tree', modulo: 'gastos' },
+  { to: '/proveedores',          label: 'Proveedores',           icon: 'local_shipping',      modulo: 'proveedores' },
+  { to: '/unidades-medida',      label: 'Unidades de Medida',    icon: 'straighten',      modulo: 'unidades_medida' },
+  { to: '/sucursales',           label: 'Sucursales',            icon: 'apartment',  modulo: 'sucursales' },
 ];
 
 export function AppSidebar() {
@@ -84,7 +81,7 @@ export function AppSidebar() {
           className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
           title="Ocultar menú"
         >
-          <PanelLeftClose size={20} />
+          <Icon name="dock_to_left" size={20} />
         </button>
       </SidebarHeader>
 
@@ -96,7 +93,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {visibleNavItems.map(({ to, label, icon: Icon }) => (
+              {visibleNavItems.map(({ to, label, icon }) => (
                 <SidebarMenuItem key={to}>
                   <NavLink
                     to={to}
@@ -109,7 +106,7 @@ export function AppSidebar() {
                       }`
                     }
                   >
-                    <Icon size={17} />
+                    <Icon name={icon} size={17} />
                     <span>{label}</span>
                   </NavLink>
                 </SidebarMenuItem>
@@ -126,7 +123,7 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {visibleAdminItems.map(({ to, label, icon: Icon }) => (
+                {visibleAdminItems.map(({ to, label, icon }) => (
                   <SidebarMenuItem key={to}>
                     <NavLink
                       to={to}
@@ -139,7 +136,7 @@ export function AppSidebar() {
                         }`
                       }
                     >
-                      <Icon size={17} />
+                      <Icon name={icon} size={17} />
                       <span>{label}</span>
                     </NavLink>
                   </SidebarMenuItem>
@@ -164,7 +161,7 @@ export function AppSidebar() {
               }`
             }
           >
-            <Settings size={17} />
+            <Icon name="settings" size={17} />
             <span>Configuración</span>
           </NavLink>
         </div>
@@ -184,7 +181,7 @@ export function AppSidebar() {
                 className="text-sidebar-foreground/50 hover:text-red-400 transition-colors p-1 rounded cursor-pointer border-0 bg-transparent shrink-0"
                 title="Cerrar sesión"
               >
-                <LogOut size={16} />
+                <Icon name="logout" size={16} />
               </button>
             </div>
           </SidebarMenuItem>

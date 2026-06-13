@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  TrendingUp, ShoppingCart, DollarSign, AlertTriangle,
-  Package, Users, ArrowUpRight, Zap, BarChart3,
-  RefreshCw, Building2, CalendarDays, ChevronLeft, ChevronRight,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar,
@@ -161,15 +157,15 @@ function KpiCard({ kpi }: { kpi: KPI }) {
     <Card className="relative overflow-hidden group hover:border-[#2e9e9b]/30 transition-colors duration-300">
       <div className="absolute inset-0 bg-gradient-to-br from-[#2e9e9b]/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-start justify-between mb-3">
           <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">{kpi.label}</span>
-          <div className="p-2 rounded-lg bg-[#2e9e9b]/10 text-[#2e9e9b]">{kpi.icon}</div>
+          <div className="p-2 rounded-lg bg-[#2e9e9b]/10 text-[#2e9e9b] flex items-center justify-center">{kpi.icon}</div>
         </div>
         <div className="flex items-end gap-2">
           <span className="text-3xl font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>{kpi.value}</span>
           {kpi.trend === 'up' && (
             <span className="flex items-center gap-0.5 text-emerald-400 text-xs font-semibold mb-1">
-              <ArrowUpRight size={13} /> Live
+              <Icon name="arrow_outward" size={13} /> Live
             </span>
           )}
         </div>
@@ -232,10 +228,10 @@ export default function DashboardPage() {
   };
 
   const kpis: KPI[] = data ? [
-    { label: `Ventas · ${labelDia}`, value: String(data.ventasHoy), sub: 'Transacciones completadas', icon: <ShoppingCart size={16} />, trend: esHoy ? 'up' : undefined },
-    { label: `Ingresos · ${labelDia}`, value: fmt(simbolo, data.totalHoy), sub: 'Total facturado', icon: <DollarSign size={16} />, trend: data.totalHoy > 0 ? 'up' : 'neutral' },
-    { label: 'Ticket Promedio', value: fmt(simbolo, data.ticketPromedio), sub: 'Promedio por venta', icon: <TrendingUp size={16} /> },
-    { label: 'Productos', value: String(data.productosCount), sub: 'En catálogo', icon: <Package size={16} /> },
+    { label: `Ventas · ${labelDia}`, value: String(data.ventasHoy), sub: 'Transacciones completadas', icon: <Icon name="shopping_cart" size={24} />, trend: esHoy ? 'up' : undefined },
+    { label: `Ingresos · ${labelDia}`, value: fmt(simbolo, data.totalHoy), sub: 'Total facturado', icon: <Icon name="attach_money" size={24} />, trend: data.totalHoy > 0 ? 'up' : 'neutral' },
+    { label: 'Ticket Promedio', value: fmt(simbolo, data.ticketPromedio), sub: 'Promedio por venta', icon: <Icon name="trending_up" size={24} /> },
+    { label: 'Productos', value: String(data.productosCount), sub: 'En catálogo', icon: <Icon name="inventory_2" size={24} /> },
   ] : [];
 
   return (
@@ -254,11 +250,11 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3 flex-wrap">
           {sucursalActiva && (
             <Badge variant="lime" className="gap-1.5">
-              <Building2 size={12} /> {sucursalActiva.nombre}
+              <Icon name="apartment" size={12} /> {sucursalActiva.nombre}
             </Badge>
           )}
           <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-            <Users size={12} /> {usuario?.nombre}
+            <Icon name="group" size={12} /> {usuario?.nombre}
           </Badge>
 
           {/* Selector de fecha */}
@@ -268,10 +264,10 @@ export default function DashboardPage() {
               className="p-1 rounded hover:bg-white/10 text-muted-foreground hover:text-white transition-colors"
               title="Día anterior"
             >
-              <ChevronLeft size={14} />
+              <Icon name="chevron_left" size={14} />
             </button>
             <div className="relative flex items-center">
-              <CalendarDays size={13} className="absolute left-2 text-[#2e9e9b] pointer-events-none" />
+              <Icon name="calendar_month" size={13} className="absolute left-2 text-[#2e9e9b] pointer-events-none" />
               <input
                 type="date"
                 value={fechaVer}
@@ -286,14 +282,14 @@ export default function DashboardPage() {
               className="p-1 rounded hover:bg-white/10 text-muted-foreground hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Día siguiente"
             >
-              <ChevronRight size={14} />
+              <Icon name="chevron_right" size={14} />
             </button>
           </div>
 
           <Button size="icon" variant="ghost" onClick={refresh} disabled={loading}
             className="text-muted-foreground hover:text-[#2e9e9b]" title="Actualizar"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <Icon name="refresh" size={16} className={loading ? 'animate-spin' : ''} />
           </Button>
         </div>
       </div>
@@ -315,7 +311,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <BarChart3 size={16} className="text-[#2e9e9b]" /> Actividad · {labelDia}
+                  <Icon name="bar_chart" size={16} className="text-[#2e9e9b]" /> Actividad · {labelDia}
                 </CardTitle>
                 <CardDescription>Ventas por hora</CardDescription>
               </div>
@@ -362,7 +358,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle size={16} className="text-amber-400" /> Stock Crítico
+              <Icon name="warning" size={16} className="text-amber-400" /> Stock Crítico
             </CardTitle>
             <CardDescription>
               {sucursalActiva ? `Sucursal: ${sucursalActiva.nombre}` : 'Selecciona una sucursal'}
@@ -373,12 +369,12 @@ export default function DashboardPage() {
               <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
             ) : !sucursalActiva ? (
               <div className="text-center py-6">
-                <Building2 size={28} className="mx-auto text-muted-foreground mb-2" />
+                <Icon name="apartment" size={28} className="mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Sin sucursal activa</p>
               </div>
             ) : data?.stockAlertas?.length === 0 ? (
               <div className="text-center py-6">
-                <Package size={28} className="mx-auto text-emerald-400 mb-2" />
+                <Icon name="inventory_2" size={28} className="mx-auto text-emerald-400 mb-2" />
                 <p className="text-sm text-muted-foreground">Sin alertas de stock</p>
               </div>
             ) : (
@@ -406,7 +402,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <ShoppingCart size={16} className="text-[#2e9e9b]" /> Ventas Recientes
+                <Icon name="shopping_cart" size={16} className="text-[#2e9e9b]" /> Ventas Recientes
               </CardTitle>
               <Button size="sm" variant="ghost" className="text-xs text-muted-foreground h-7 px-2" onClick={() => navigate('/ventas')}>
                 Ver todas
@@ -418,10 +414,10 @@ export default function DashboardPage() {
               <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-11 w-full" />)}</div>
             ) : data?.ventasRecientes?.length === 0 ? (
               <div className="text-center py-8">
-                <ShoppingCart size={32} className="mx-auto text-muted-foreground mb-2" />
+                <Icon name="shopping_cart" size={32} className="mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Sin ventas registradas{esHoy ? ' hoy' : ` el ${labelDia}`}</p>
                 <Button size="sm" variant="lime" className="mt-3 gap-1.5" onClick={() => navigate('/ventas')}>
-                  <Zap size={13} /> Nueva Venta
+                  <Icon name="bolt" size={13} /> Nueva Venta
                 </Button>
               </div>
             ) : (
@@ -451,22 +447,22 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Zap size={16} className="text-[#2e9e9b]" /> Acciones Rápidas
+              <Icon name="bolt" size={16} className="text-[#2e9e9b]" /> Acciones Rápidas
             </CardTitle>
             <CardDescription>Acceso directo a funciones clave</CardDescription>
           </CardHeader>
           <CardContent className="pt-2 space-y-2">
             <Button variant="lime" className="w-full justify-start gap-3 font-semibold" onClick={() => navigate('/ventas/nueva')}>
-              <ShoppingCart size={16} /> Nueva Venta
+              <Icon name="shopping_cart" size={16} /> Nueva Venta
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3" onClick={() => navigate('/productos')}>
-              <Package size={16} /> Gestionar Productos
+              <Icon name="inventory_2" size={16} /> Gestionar Productos
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3" onClick={() => navigate('/inventario')}>
-              <BarChart3 size={16} /> Ver Inventario
+              <Icon name="bar_chart" size={16} /> Ver Inventario
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3" onClick={() => navigate('/clientes')}>
-              <Users size={16} /> Clientes
+              <Icon name="group" size={16} /> Clientes
             </Button>
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Sistema</p>

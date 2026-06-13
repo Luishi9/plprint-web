@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Shield, Plus, Pencil, Trash2, Loader2, Search, Check, AlertCircle,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,7 +84,7 @@ export default function RolesTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin" size={24} />
+        <Icon name="progress_activity" className="animate-spin" size={24} />
       </div>
     );
   }
@@ -97,17 +95,17 @@ export default function RolesTab() {
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <Shield size={16} /> Roles y permisos
+              <Icon name="shield" size={16} /> Roles y permisos
             </CardTitle>
             <CardDescription>Gestiona los roles del sistema y sus permisos</CardDescription>
           </div>
           <Button onClick={() => { setEditando(null); setModalOpen(true); }} className="bg-[#2e9e9b] hover:bg-[#48b9b4]">
-            <Plus className="mr-2" size={16} /> Nuevo rol
+            <Icon name="add" className="mr-2" size={16} /> Nuevo rol
           </Button>
         </CardHeader>
         <CardContent>
           <div className="relative mb-4">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+            <Icon name="search" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
             <Input
               placeholder="Buscar rol..."
               value={search}
@@ -119,7 +117,7 @@ export default function RolesTab() {
           <div className="space-y-2">
             {toggleError && (
               <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">
-                <AlertCircle size={14} />
+                <Icon name="error" size={14} />
                 {toggleError}
               </div>
             )}
@@ -145,7 +143,7 @@ export default function RolesTab() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {togglingId === r.id ? (
-                    <Loader2 size={16} className="animate-spin text-[#2e9e9b]" />
+                    <Icon name="progress_activity" size={16} className="animate-spin text-[#2e9e9b]" />
                   ) : (
                     <Switch
                       checked={r.activo}
@@ -154,11 +152,11 @@ export default function RolesTab() {
                     />
                   )}
                   <Button variant="ghost" size="icon" onClick={() => { setEditando(r); setModalOpen(true); }}>
-                    <Pencil size={15} />
+                    <Icon name="edit" size={15} />
                   </Button>
                   {!r.es_sistema && (
                     <Button variant="ghost" size="icon" onClick={() => setEliminarItem(r)}>
-                      <Trash2 size={15} className="text-red-500" />
+                      <Icon name="delete" size={15} className="text-red-500" />
                     </Button>
                   )}
                 </div>
@@ -188,7 +186,7 @@ export default function RolesTab() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEliminarItem(null)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleEliminar} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              {isDeleting ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} /> : null}
               Eliminar
             </Button>
           </DialogFooter>
@@ -319,7 +317,7 @@ function RolFormModal({ open, onOpenChange, rol, permisosPorModulo, onSaved }: R
                       className="flex items-center gap-2 w-full text-left text-sm font-medium capitalize cursor-pointer"
                     >
                       <div className={`w-4 h-4 rounded border flex items-center justify-center ${todos ? 'bg-[#2e9e9b] border-[#2e9e9b]' : algunos ? 'border-[#2e9e9b]' : 'border-input'}`}>
-                        {todos && <Check size={11} className="text-white" />}
+                        {todos && <Icon name="check" size={11} className="text-white" />}
                         {algunos && <div className="w-1.5 h-1.5 bg-[#2e9e9b] rounded-sm" />}
                       </div>
                       {modulo}
@@ -333,7 +331,7 @@ function RolFormModal({ open, onOpenChange, rol, permisosPorModulo, onSaved }: R
                             onClick={() => togglePermiso(p.id)}
                             className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${seleccionados.has(p.id) ? 'bg-[#2e9e9b] border-[#2e9e9b]' : 'border-input'}`}
                           >
-                            {seleccionados.has(p.id) && <Check size={9} className="text-white" />}
+                            {seleccionados.has(p.id) && <Icon name="check" size={9} className="text-white" />}
                           </button>
                           <span>{p.accion}</span>
                         </label>
@@ -348,7 +346,7 @@ function RolFormModal({ open, onOpenChange, rol, permisosPorModulo, onSaved }: R
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={isSaving} className="bg-[#2e9e9b] hover:bg-[#48b9b4]">
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              {isSaving ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} /> : null}
               {rol ? 'Guardar' : 'Crear'}
             </Button>
           </DialogFooter>

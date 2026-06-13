@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, User, Mail, Lock, ShieldCheck } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { usuariosApi, sucursalesApi, Usuario } from '@/api/usuarios.api';
 import { rolesApi, Rol } from '@/api/roles.api';
 import { Button } from '@/components/ui/button';
@@ -132,7 +132,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <ShieldCheck size={18} className="text-[#2e9e9b]" />
+            <Icon name="shield_person" size={18} className="text-[#2e9e9b]" />
             {isEdit ? 'Editar usuario' : 'Nuevo usuario'}
           </DialogTitle>
         </DialogHeader>
@@ -148,7 +148,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
           <div className="flex flex-col gap-1.5">
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Nombre</Label>
             <div className="relative">
-              <User size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Icon name="person" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
@@ -163,7 +163,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
           <div className="flex flex-col gap-1.5">
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Correo electrónico</Label>
             <div className="relative">
-              <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Icon name="mail" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="email"
                 value={email}
@@ -181,7 +181,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
               {isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña'}
             </Label>
             <div className="relative">
-              <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Icon name="lock" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="password"
                 value={password}
@@ -198,7 +198,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Rol</Label>
             {loadingRoles ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 size={12} className="animate-spin" /> Cargando roles…
+                <Icon name="progress_activity" size={12} className="animate-spin" /> Cargando roles…
               </div>
             ) : (
               <Select value={rolId} onValueChange={setRolId}>
@@ -219,7 +219,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Sucursales asignadas</Label>
             {loadingSucursales ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 size={12} className="animate-spin" /> Cargando…
+                <Icon name="progress_activity" size={12} className="animate-spin" /> Cargando…
               </div>
             ) : sucursales.length === 0 ? (
               <p className="text-xs text-muted-foreground">No hay sucursales disponibles</p>
@@ -256,7 +256,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
               disabled={isSaving}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
             >
-              {isSaving && <Loader2 size={14} className="animate-spin" />}
+              {isSaving && <Icon name="progress_activity" size={14} className="animate-spin" />}
               {isEdit ? 'Guardar cambios' : 'Crear usuario'}
             </Button>
           </div>

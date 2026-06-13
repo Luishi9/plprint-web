@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, SlidersHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { 
   Dialog, 
@@ -98,7 +98,7 @@ export function AjusteInsumoModal({ open, insumo, onClose, onSaved }: AjusteInsu
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-[#2e9e9b] flex items-center gap-2">
-            <SlidersHorizontal size={20} />
+            <Icon name="tune" size={20} />
             Ajuste de Inventario
           </DialogTitle>
           <DialogDescription>
@@ -123,13 +123,13 @@ export function AjusteInsumoModal({ open, insumo, onClose, onSaved }: AjusteInsu
                     <SelectContent className="bg-card border-border">
                       <SelectItem value="entrada">
                         <div className="flex items-center gap-2">
-                          <TrendingUp size={14} className="text-[#2e9e9b]" />
+                          <Icon name="trending_up" size={14} className="text-[#2e9e9b]" />
                           Entrada (agregar stock)
                         </div>
                       </SelectItem>
                       <SelectItem value="salida">
                         <div className="flex items-center gap-2">
-                          <TrendingDown size={14} className="text-red-400" />
+                          <Icon name="trending_down" size={14} className="text-red-400" />
                           Salida (retirar stock)
                         </div>
                       </SelectItem>
@@ -176,7 +176,7 @@ export function AjusteInsumoModal({ open, insumo, onClose, onSaved }: AjusteInsu
                 disabled={isSubmitting}
                 className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
               >
-                {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                {isSubmitting && <Icon name="progress_activity" size={14} className="animate-spin" />}
                 Ajustar stock
               </Button>
             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, Printer, FileDown } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cajaApi, CorteCaja, MovimientoCaja, ResumenCaja } from '@/api/caja.api';
@@ -71,7 +71,7 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
       <DialogContent className="max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[#2e9e9b] text-xl font-bold flex items-center gap-2">
-            <Printer size={22} /> Reimprimir Corte
+            <Icon name="print" size={22} /> Reimprimir Corte
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Selecciona un corte cerrado para reimprimir.
@@ -98,7 +98,7 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
 
           {loading && (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
+              <Icon name="progress_activity" size={24} className="animate-spin text-[#2e9e9b]" />
             </div>
           )}
 
@@ -109,10 +109,10 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
               </div>
               <div className="flex gap-2">
                 <Button onClick={handlePrint} variant="outline" className="h-10 px-4 whitespace-nowrap">
-                  <Printer size={14} className="mr-2" /> Imprimir Ticket
+                  <Icon name="print" size={14} className="mr-2" /> Imprimir Ticket
                 </Button>
                 <Button onClick={handleDescargarPdf} className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap">
-                  <FileDown size={14} className="mr-2" /> Descargar PDF
+                  <Icon name="file_download" size={14} className="mr-2" /> Descargar PDF
                 </Button>
               </div>
             </>

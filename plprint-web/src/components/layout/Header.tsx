@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/store/authStore';
 import { useSucursalStore } from '@/store/sucursalStore';
-import { Building2 } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -17,7 +17,7 @@ export const Header = () => {
 
         {sucursalActiva ? (
           <Badge variant="lime" className="gap-1.5">
-            <Building2 size={11} />
+            <Icon name="apartment" size={11} />
             {sucursalActiva.nombre}
           </Badge>
         ) : (

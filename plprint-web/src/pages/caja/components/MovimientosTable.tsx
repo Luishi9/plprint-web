@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Wallet, ArrowUpRight, ArrowDownRight, ShoppingCart, Banknote } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { useMoney } from '@/hooks/useMoney';
 import type { MovimientoCaja } from '@/api/caja.api';
 
@@ -8,12 +8,12 @@ interface Props {
   isLoading: boolean;
 }
 
-const TIPO_CONFIG: Record<string, { label: string; color: string; icon: typeof Wallet }> = {
-  venta:   { label: 'Venta',   color: 'text-green-400',  icon: ShoppingCart },
-  ingreso: { label: 'Ingreso', color: 'text-emerald-400', icon: ArrowUpRight },
-  gasto:   { label: 'Gasto',   color: 'text-red-400',    icon: ArrowDownRight },
-  retiro:  { label: 'Retiro',  color: 'text-orange-400',  icon: Wallet },
-  abono:   { label: 'Abono',   color: 'text-blue-400',    icon: Banknote },
+const TIPO_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
+  venta:   { label: 'Venta',   color: 'text-green-400',  icon: 'shopping_cart' },
+  ingreso: { label: 'Ingreso', color: 'text-emerald-400', icon: 'arrow_outward' },
+  gasto:   { label: 'Gasto',   color: 'text-red-400',    icon: 'south_east' },
+  retiro:  { label: 'Retiro',  color: 'text-orange-400',  icon: 'account_balance_wallet' },
+  abono:   { label: 'Abono',   color: 'text-blue-400',    icon: 'payments' },
 };
 
 export default function MovimientosTable({ movimientos, isLoading }: Props) {
@@ -37,13 +37,13 @@ export default function MovimientosTable({ movimientos, isLoading }: Props) {
           {isLoading ? (
             <tr>
               <td colSpan={7} className="px-6 py-8 text-center">
-                <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                <Icon name="progress_activity" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
               </td>
             </tr>
           ) : movimientos.length === 0 ? (
             <tr>
               <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                <ShoppingCart size={32} className="mx-auto mb-2 opacity-20" />
+                <Icon name="shopping_cart" size={32} className="mx-auto mb-2 opacity-20" />
                 <p>No hay movimientos en este periodo.</p>
               </td>
             </tr>
@@ -51,7 +51,6 @@ export default function MovimientosTable({ movimientos, isLoading }: Props) {
             <AnimatePresence>
               {movimientos.map((m, i) => {
                 const cfg = TIPO_CONFIG[m.tipo] || TIPO_CONFIG.gasto;
-                const Icon = cfg.icon;
                 return (
                   <motion.tr
                     key={`${m.referencia_tipo}-${m.referencia_id}`}
@@ -66,7 +65,7 @@ export default function MovimientosTable({ movimientos, isLoading }: Props) {
                     <td className="px-6 py-4 text-foreground text-xs">{m.usuario}</td>
                     <td className="px-6 py-4">
                       <span className={`flex items-center gap-1.5 text-xs font-medium ${cfg.color}`}>
-                        <Icon size={12} /> {cfg.label}
+                        <Icon name={cfg.icon} size={12} /> {cfg.label}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-foreground text-xs">{m.concepto || '—'}</td>

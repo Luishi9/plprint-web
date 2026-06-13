@@ -1,4 +1,4 @@
-import { Filter } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 interface Props {
   cortes: Array<{ id: number; fecha_apertura: string; estado: string }>;
@@ -21,7 +21,7 @@ export default function FiltrosBar({
 }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3 text-sm">
-      <Filter size={14} className="text-muted-foreground" />
+      <Icon name="filter_list" size={14} className="text-muted-foreground" />
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">Corte:</span>
         <select

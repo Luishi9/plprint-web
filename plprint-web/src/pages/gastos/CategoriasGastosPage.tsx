@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FolderTree, Plus, Pencil, Trash2, Loader2, Check, X } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { categoriasGastosApi, CategoriaGasto } from '@/api/gastos.api';
 import { Button } from '@/components/ui/button';
@@ -94,7 +94,7 @@ export default function CategoriasGastosPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <FolderTree className="text-[#2e9e9b]" size={32} />
+            <Icon name="account_tree" className="text-[#2e9e9b]" size={32} />
             Categorías de Gastos
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -107,7 +107,7 @@ export default function CategoriasGastosPage() {
             onClick={abrirCrear}
             className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Icon name="add" className="mr-2" size={16} />
             Nueva Categoría
           </Button>
         </RequirePermission>
@@ -132,11 +132,11 @@ export default function CategoriasGastosPage() {
           <tbody>
             {isLoading ? (
               <tr><td colSpan={5} className="px-6 py-8 text-center">
-                <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                <Icon name="progress_activity" className="mx-auto animate-spin text-[#2e9e9b]" size={24} />
               </td></tr>
             ) : categorias.length === 0 ? (
               <tr><td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                <FolderTree size={32} className="mx-auto mb-2 opacity-20" />
+                <Icon name="account_tree" size={32} className="mx-auto mb-2 opacity-20" />
                 <p>No hay categorías de gastos.</p>
               </td></tr>
             ) : (
@@ -165,14 +165,14 @@ export default function CategoriasGastosPage() {
                             title="Editar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                           >
-                            <Pencil size={14} />
+                            <Icon name="edit" size={14} />
                           </button>
                           <button
                             onClick={() => setEliminarItem(c)}
                             title="Eliminar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <Icon name="delete" size={14} />
                           </button>
                         </RequirePermission>
                       </div>
@@ -216,7 +216,7 @@ export default function CategoriasGastosPage() {
           </div>
           <DialogFooter className="gap-2 flex justify-end">
             <Button variant="outline" onClick={() => setModalOpen(false)} disabled={isSaving}>
-              <X size={14} className="mr-1" /> Cancelar
+              <Icon name="close" size={14} className="mr-1" /> Cancelar
             </Button>
             <Button
               onClick={handleGuardar}
@@ -224,8 +224,8 @@ export default function CategoriasGastosPage() {
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
             >
               {isSaving
-                ? <Loader2 size={14} className="mr-1 animate-spin" />
-                : <Check size={14} className="mr-1" />}
+                ? <Icon name="progress_activity" size={14} className="mr-1 animate-spin" />
+                : <Icon name="check" size={14} className="mr-1" />}
               {editando ? 'Guardar' : 'Crear'}
             </Button>
           </DialogFooter>
@@ -249,7 +249,7 @@ export default function CategoriasGastosPage() {
               disabled={isDeleting}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold"
             >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              {isDeleting ? <Icon name="progress_activity" className="animate-spin" size={16} /> : <Icon name="delete" className="mr-1" size={16} />}
               Eliminar
             </Button>
           </DialogFooter>

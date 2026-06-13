@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, X, Package, Boxes, Plus, Trash2, Tag } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import {
   Dialog,
@@ -451,7 +451,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
                 <div className="rounded-lg border border-border bg-card/30 p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <Tag size={14} className="text-[#2e9e9b]" />
+                    <Icon name="sell" size={14} className="text-[#2e9e9b]" />
                     <p className="text-sm font-medium text-foreground">Precios por volumen</p>
                     <span className="text-xs text-muted-foreground">(opcional)</span>
                   </div>
@@ -563,7 +563,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                       className="w-4 h-4 accent-[#2e9e9b] cursor-pointer"
                     />
                     <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                      <Package size={14} className="text-[#2e9e9b]" />
+                      <Icon name="inventory_2" size={14} className="text-[#2e9e9b]" />
                       {isEditing ? 'Registrar movimiento de stock' : 'Este producto tiene existencias (inventario)'}
                     </span>
                   </label>
@@ -623,7 +623,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                 {/* ── Insumos requeridos ── */}
                 <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
                   <div className="flex items-center gap-2">
-                    <Boxes size={14} className="text-[#2e9e9b]" />
+                    <Icon name="inventory" size={14} className="text-[#2e9e9b]" />
                     <span className="text-sm font-medium text-foreground">
                       Insumos requeridos
                     </span>
@@ -664,7 +664,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                             onClick={() => quitarInsumo(insumoId)}
                             className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <Icon name="delete" size={14} />
                           </button>
                         </div>
                       ))}
@@ -689,7 +689,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                         .map((insumo) => (
                           <SelectItem key={insumo.id} value={String(insumo.id)}>
                             <div className="flex items-center gap-2">
-                              <Plus size={12} />
+                              <Icon name="add" size={12} />
                               <span>{insumo.nombre}</span>
                               <span className="text-xs text-muted-foreground">
                                 ({insumo.codigo || 'Sin código'})
@@ -735,12 +735,12 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                           onClick={removeImage}
                           className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-colors"
                         >
-                          <X size={16} />
+                          <Icon name="close" size={16} />
                         </button>
                       </>
                     ) : (
                       <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-white transition-colors">
-                        <Upload size={28} className="mb-2 opacity-50" />
+                        <Icon name="upload" size={28} className="mb-2 opacity-50" />
                         <span className="text-sm font-medium">Subir imagen</span>
                         <input
                           type="file"
@@ -777,7 +777,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
               <Button type="submit" disabled={isSubmitting} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)]">
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Icon name="progress_activity" className="mr-2 animate-spin" size={16} />
                     Guardando...
                   </>
                 ) : (

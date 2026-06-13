@@ -1,32 +1,28 @@
 import { useEffect, useMemo } from 'react';
-import {
-  Banknote, CreditCard, Landmark, Wallet, Bitcoin, Smartphone, CircleDollarSign,
-  type LucideIcon,
-} from 'lucide-react';
 import { useMetodosPagoStore } from '@/store/metodosPagoStore';
 import type { MetodoPago } from '@/api/metodosPago.api';
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  efectivo: Banknote,
-  cash: Banknote,
-  banknote: Banknote,
-  tarjeta: CreditCard,
-  card: CreditCard,
-  credito: CreditCard,
-  debito: CreditCard,
-  transferencia: Landmark,
-  transfer: Landmark,
-  billetera: Wallet,
-  wallet: Wallet,
-  crypto: Bitcoin,
-  bitcoin: Bitcoin,
-  movil: Smartphone,
-  mobile: Smartphone,
+const ICON_MAP: Record<string, string> = {
+  efectivo: 'payments',
+  cash: 'payments',
+  banknote: 'payments',
+  tarjeta: 'credit_card',
+  card: 'credit_card',
+  credito: 'credit_card',
+  debito: 'credit_card',
+  transferencia: 'account_balance',
+  transfer: 'account_balance',
+  billetera: 'account_balance_wallet',
+  wallet: 'account_balance_wallet',
+  crypto: 'currency_bitcoin',
+  bitcoin: 'currency_bitcoin',
+  movil: 'smartphone',
+  mobile: 'smartphone',
 };
 
-const resolveIcon = (icono: string | null | undefined, nombre: string): LucideIcon => {
+const resolveIcon = (icono: string | null | undefined, nombre: string): string => {
   const key = (icono || nombre || '').toLowerCase();
-  return ICON_MAP[key] ?? CircleDollarSign;
+  return ICON_MAP[key] ?? 'paid';
 };
 
 const fallbackLabel = (raw: string): string => {
@@ -60,8 +56,8 @@ export function useMetodosPago() {
     return m?.nombre ?? fallbackLabel(raw);
   };
 
-  const getIcon = (raw: string): LucideIcon => {
-    if (!raw) return CircleDollarSign;
+  const getIcon = (raw: string): string => {
+    if (!raw) return 'paid';
     const m = getByNombre(raw);
     return resolveIcon(m?.icono, m?.nombre ?? raw);
   };

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Loader2, Package, Image as ImageIcon, Pencil, Trash2 } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { productosApi } from '@/api/productos.api';
 import { Producto } from '@/types/producto.types';
@@ -97,7 +97,7 @@ export default function ProductosPage() {
           className="flex flex-col"
         >
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Package className="text-[#2e9e9b]" size={32} />
+            <Icon name="inventory_2" className="text-[#2e9e9b]" size={32} />
             Catálogo Estelar
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -113,8 +113,8 @@ export default function ProductosPage() {
         >
           <div className="relative w-full sm:w-64">
             {isSearching
-              ? <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
-              : <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              ? <Icon name="progress_activity" className="absolute left-2.5 top-2.5 text-[#2e9e9b] animate-spin" size={16} />
+              : <Icon name="search" className="absolute left-2.5 top-2.5 text-muted-foreground" size={16} />
             }
             <Input
               type="text"
@@ -130,7 +130,7 @@ export default function ProductosPage() {
               onClick={() => setIsModalOpen(true)}
               className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" className="mr-2" size={16} />
               Nuevo Producto
             </Button>
           </RequirePermission>
@@ -185,7 +185,7 @@ export default function ProductosPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                    <Icon name="progress_activity" className="mx-auto animate-spin text-[#2e9e9b]" size={24} />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando catálogo...</p>
                   </td>
                 </tr>
@@ -217,7 +217,7 @@ export default function ProductosPage() {
                           </div>
                         ) : (
                           <div className="w-12 h-12 rounded-md bg-background/80 border border-border flex items-center justify-center text-muted-foreground/30 shadow-inner">
-                            <ImageIcon size={20} />
+                            <Icon name="image" size={20} />
                           </div>
                         )}
                       </td>
@@ -255,7 +255,7 @@ export default function ProductosPage() {
                               title="Editar"
                               className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                             >
-                              <Pencil size={16} />
+                              <Icon name="edit" size={16} />
                             </button>
                           </RequirePermission>
                           <RequirePermission modulo="productos" accion="eliminar">
@@ -264,7 +264,7 @@ export default function ProductosPage() {
                               title="Eliminar"
                               className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
                             >
-                              <Trash2 size={16} />
+                              <Icon name="delete" size={16} />
                             </button>
                           </RequirePermission>
                         </div>
@@ -296,7 +296,7 @@ export default function ProductosPage() {
               disabled={isDeleting}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold"
             >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              {isDeleting ? <Icon name="progress_activity" className="animate-spin" size={16} /> : <Icon name="delete" className="mr-1" size={16} />}
               Eliminar
             </Button>
           </DialogFooter>

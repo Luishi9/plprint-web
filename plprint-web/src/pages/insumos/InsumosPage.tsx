@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Loader2, Boxes, Pencil, Trash2, SlidersHorizontal, ShoppingCart } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { insumosApi } from '@/api/insumos.api';
 import { Insumo } from '@/types/insumo.types';
@@ -133,7 +133,7 @@ export default function InsumosPage() {
           className="flex flex-col"
         >
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Boxes className="text-[#2e9e9b]" size={32} />
+            <Icon name="inventory" className="text-[#2e9e9b]" size={32} />
             Insumos
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -147,7 +147,7 @@ export default function InsumosPage() {
           className="flex items-center gap-3 w-full sm:w-auto"
         >
           <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input
               placeholder="Buscar insumo..."
               value={searchQuery}
@@ -155,14 +155,14 @@ export default function InsumosPage() {
               className="pl-9 bg-card border-border h-10 w-full sm:w-64 focus-visible:ring-[#2e9e9b]"
             />
             {isSearching && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2e9e9b] animate-spin" />
+              <Icon name="progress_activity" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2e9e9b] animate-spin" size={16} />
             )}
           </div>
           <Button
             onClick={() => { setInsumoAEditar(null); setIsModalOpen(true); }}
             className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
           >
-            <Plus className="mr-1.5 h-4 w-4" />
+            <Icon name="add" className="mr-1.5" size={16} />
             Nuevo insumo
           </Button>
         </motion.div>
@@ -172,11 +172,11 @@ export default function InsumosPage() {
       <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border bg-card/50 backdrop-blur-sm">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-[#2e9e9b]" />
+            <Icon name="progress_activity" className="animate-spin text-[#2e9e9b]" size={32} />
           </div>
         ) : insumos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-muted-foreground gap-3">
-            <Boxes size={48} className="opacity-20" />
+            <Icon name="inventory" size={48} className="opacity-20" />
             <p>{searchQuery ? 'No se encontraron insumos.' : 'No hay insumos registrados.'}</p>
           </div>
         ) : (
@@ -234,28 +234,28 @@ export default function InsumosPage() {
                             className="p-2 rounded-md text-muted-foreground hover:text-green-400 hover:bg-green-500/10 transition-colors"
                             title="Registrar compra"
                           >
-                            <ShoppingCart size={16} />
+                            <Icon name="shopping_cart" size={16} />
                           </button>
                           <button
                             onClick={() => setInsumoAAjustar(insumo)}
                             className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                             title="Ajustar stock"
                           >
-                            <SlidersHorizontal size={16} />
+                            <Icon name="tune" size={16} />
                           </button>
                           <button
                             onClick={() => handleEditar(insumo)}
                             className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                             title="Editar"
                           >
-                            <Pencil size={16} />
+                            <Icon name="edit" size={16} />
                           </button>
                           <button
                             onClick={() => setInsumoAEliminar(insumo)}
                             className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
                             title="Eliminar"
                           >
-                            <Trash2 size={16} />
+                            <Icon name="delete" size={16} />
                           </button>
                         </div>
                       </td>
@@ -323,7 +323,7 @@ export default function InsumosPage() {
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white gap-2"
             >
-              {isDeleting && <Loader2 size={14} className="animate-spin" />}
+              {isDeleting && <Icon name="progress_activity" size={14} className="animate-spin" />}
               Eliminar
             </Button>
           </DialogFooter>

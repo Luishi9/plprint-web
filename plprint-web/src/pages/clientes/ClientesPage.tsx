@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Users, Plus, Pencil, Trash2, Loader2, Search,
-  Phone, Mail, MapPin, History,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { clientesApi } from '@/api/clientes.api';
 import { Button } from '@/components/ui/button';
@@ -103,7 +100,7 @@ export default function ClientesPage() {
       >
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Users className="text-[#2e9e9b]" size={24} />
+            <Icon name="group" size={24} className="text-[#2e9e9b]" />
             Clientes
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -112,7 +109,7 @@ export default function ClientesPage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Icon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="h-9 pl-8 w-52 bg-background/50 border-border text-sm"
               placeholder="Buscar cliente…"
@@ -124,7 +121,7 @@ export default function ClientesPage() {
             onClick={() => { setEditando(null); setModalOpen(true); }}
             className="h-9 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
           >
-            <Plus className="mr-1.5 h-4 w-4" />
+            <Icon name="add" size={16} className="mr-1.5" />
             Nuevo cliente
           </Button>
         </div>
@@ -171,14 +168,14 @@ export default function ClientesPage() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-48 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                  <Icon name="hourglass_top" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
                   <p className="mt-2 text-xs text-muted-foreground">Cargando clientes…</p>
                 </TableCell>
               </TableRow>
             ) : clientes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
-                  <Users size={36} className="mx-auto mb-3 opacity-20" />
+                  <Icon name="group" size={36} className="mx-auto mb-3 opacity-20" />
                   <p>{search ? 'Sin resultados.' : 'Aún no hay clientes registrados.'}</p>
                 </TableCell>
               </TableRow>
@@ -204,7 +201,7 @@ export default function ClientesPage() {
                     <TableCell className="text-sm text-muted-foreground">
                       {c.telefono ? (
                         <span className="flex items-center gap-1.5">
-                          <Phone size={11} className="text-muted-foreground/50" />
+                          <Icon name="phone" size={11} className="text-muted-foreground/50" />
                           {c.telefono}
                         </span>
                       ) : (
@@ -214,7 +211,7 @@ export default function ClientesPage() {
                     <TableCell className="text-sm text-muted-foreground">
                       {c.email ? (
                         <span className="flex items-center gap-1.5">
-                          <Mail size={11} className="text-muted-foreground/50" />
+                          <Icon name="mail" size={11} className="text-muted-foreground/50" />
                           {c.email}
                         </span>
                       ) : (
@@ -224,7 +221,7 @@ export default function ClientesPage() {
                     <TableCell className="text-sm text-muted-foreground max-w-[180px] truncate">
                       {c.direccion ? (
                         <span className="flex items-center gap-1.5 truncate">
-                          <MapPin size={11} className="text-muted-foreground/50 shrink-0" />
+                          <Icon name="location_on" size={11} className="text-muted-foreground/50 shrink-0" />
                           <span className="truncate">{c.direccion}</span>
                         </span>
                       ) : (
@@ -243,21 +240,21 @@ export default function ClientesPage() {
                           className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-blue-400 transition-colors"
                           title="Ver historial de compras"
                         >
-                          <History size={13} />
+                          <Icon name="history" size={13} />
                         </button>
                         <button
                           onClick={() => { setEditando(c); setModalOpen(true); }}
                           className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                           title="Editar"
                         >
-                          <Pencil size={13} />
+                          <Icon name="edit" size={13} />
                         </button>
                         <button
                           onClick={() => setEliminarItem(c)}
                           className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
                           title="Eliminar"
                         >
-                          <Trash2 size={13} />
+                          <Icon name="delete" size={13} />
                         </button>
                       </div>
                     </TableCell>
@@ -327,7 +324,7 @@ export default function ClientesPage() {
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white gap-2"
             >
-              {isDeleting && <Loader2 size={14} className="animate-spin" />}
+              {isDeleting && <Icon name="hourglass_top" size={14} className="animate-spin" />}
               Eliminar
             </Button>
           </DialogFooter>

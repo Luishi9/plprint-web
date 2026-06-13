@@ -1,6 +1,6 @@
 import { useState, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { useAuthStore } from '@/store/authStore';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import logoImage from '@/assets/logo.png';
@@ -155,7 +155,7 @@ export default function LoginPage(props: LoginViewProps) {
                 <label className="text-xs font-semibold text-[#041f21] dark:text-[#b9eced]" htmlFor="email">Correo electrónico</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#99a3a9]">
-                    <Mail className="w-5 h-5" />
+                    <Icon name="mail" size={20} />
                   </span>
                   <input
                     className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#05080b] border border-[#bcc9c8] dark:border-[#1a2528] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006765]/15 dark:focus:ring-[#2e9e9b]/25 focus:border-[#006765] dark:focus:border-[#2e9e9b] transition-all text-sm text-[#041f21] dark:text-[#f3f6f4] placeholder:text-gray-400 dark:placeholder:text-[#99a3a9]"
@@ -176,7 +176,7 @@ export default function LoginPage(props: LoginViewProps) {
                 </div>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#99a3a9]">
-                    <Lock className="w-5 h-5" />
+                    <Icon name="lock" size={20} />
                   </span>
                   <input
                     className="w-full pl-10 pr-12 py-3 bg-white dark:bg-[#05080b] border border-[#bcc9c8] dark:border-[#1a2528] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006765]/15 dark:focus:ring-[#2e9e9b]/25 focus:border-[#006765] dark:focus:border-[#2e9e9b] transition-all text-sm text-[#041f21] dark:text-[#f3f6f4] placeholder:text-gray-400 dark:placeholder:text-[#99a3a9]"
@@ -191,7 +191,7 @@ export default function LoginPage(props: LoginViewProps) {
                     onClick={() => setShowPassword(!showPassword)}
                     type="button"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <Icon name="visibility_off" size={16} /> : <Icon name="visibility" size={16} />}
                   </button>
                 </div>
               </div>
@@ -222,7 +222,7 @@ export default function LoginPage(props: LoginViewProps) {
                 ) : (
                   <>
                     Ingresar al sistema
-                    <ArrowRight className="w-5 h-5" />
+                    <Icon name="arrow_forward" size={20} />
                   </>
                 )}
               </button>

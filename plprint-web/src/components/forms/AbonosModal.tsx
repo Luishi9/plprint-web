@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DollarSign, ChevronDown, Check, Loader2, Trash2, Wallet, StickyNote, X } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { abonosApi, Abono } from '@/api/abonos.api';
 import { useMetodosPago } from '@/hooks/useMetodosPago';
@@ -106,7 +106,7 @@ export default function AbonosModal({
       <DialogContent className="max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[#2e9e9b] text-xl font-bold flex items-center gap-2">
-            <DollarSign size={20} /> Abonos · Venta {ventaFolio}
+            <Icon name="attach_money" size={20} /> Abonos · Venta {ventaFolio}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Gestiona los abonos parciales a esta venta.
@@ -192,7 +192,7 @@ export default function AbonosModal({
               >
                 {formOpen ? (
                   <>
-                    <X size={16} className="mr-2" /> Cancelar
+                    <Icon name="close" size={16} className="mr-2" /> Cancelar
                   </>
                 ) : (
                   <>
@@ -201,7 +201,7 @@ export default function AbonosModal({
                       transition={{ duration: 0.3 }}
                       className="inline-flex"
                     >
-                      <ChevronDown size={16} className="mr-2" />
+                      <Icon name="keyboard_arrow_down" size={16} className="mr-2" />
                     </motion.span>
                     Registrar Abono
                   </>
@@ -234,7 +234,7 @@ export default function AbonosModal({
                 <div className="bg-background/40 border border-[#2e9e9b]/30 rounded-md p-4 flex flex-col gap-3 mt-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[#2e9e9b] font-semibold flex items-center gap-1.5">
-                      <Wallet size={13} /> Saldo actual
+                      <Icon name="account_balance_wallet" size={13} /> Saldo actual
                     </span>
                     <motion.span
                       key={saldoActual}
@@ -248,7 +248,7 @@ export default function AbonosModal({
 
                   <div>
                     <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
-                      <DollarSign size={12} /> Monto *
+                      <Icon name="attach_money" size={12} /> Monto *
                     </label>
                     <Input
                       type="number"
@@ -328,7 +328,7 @@ export default function AbonosModal({
 
                   <div>
                     <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
-                      <Wallet size={12} /> Método de pago
+                      <Icon name="account_balance_wallet" size={12} /> Método de pago
                     </label>
                     <select
                       value={metodoPagoNombre}
@@ -343,7 +343,7 @@ export default function AbonosModal({
 
                   <div>
                     <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
-                      <StickyNote size={12} /> Notas
+                      <Icon name="sticky_note_2" size={12} /> Notas
                     </label>
                     <Textarea
                       value={notas}
@@ -362,8 +362,8 @@ export default function AbonosModal({
                       className="w-full bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold disabled:opacity-40"
                     >
                       {isSaving
-                        ? <Loader2 size={16} className="mr-2 animate-spin" />
-                        : <Check size={16} className="mr-2" />}
+                        ? <Icon name="hourglass_top" size={16} className="mr-2 animate-spin" />
+                        : <Icon name="check" size={16} className="mr-2" />}
                       {completa ? 'Registrar y completar pago' : 'Registrar Abono'}
                     </Button>
                   </RequirePermission>
@@ -376,7 +376,7 @@ export default function AbonosModal({
           <div>
             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Historial de abonos</h4>
             {isLoading ? (
-              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-[#2e9e9b]" /></div>
+              <div className="flex justify-center py-6"><Icon name="hourglass_top" size={20} className="animate-spin text-[#2e9e9b]" /></div>
             ) : abonos.length === 0 ? (
               <div className="text-center py-6 text-xs text-muted-foreground">Sin abonos aún.</div>
             ) : (
@@ -408,7 +408,7 @@ export default function AbonosModal({
                           title="Eliminar"
                           className="p-1.5 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded"
                         >
-                          <Trash2 size={13} />
+                          <Icon name="delete" size={13} />
                         </button>
                       </RequirePermission>
                     </motion.div>

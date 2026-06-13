@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X, Package, Check } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -41,7 +41,7 @@ export default function StockInsuficienteModal({
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-orange-500/15 border border-orange-500/40 flex items-center justify-center shrink-0">
-              <AlertTriangle className="text-orange-400" size={20} />
+              <Icon name="warning" size={20} className="text-orange-400" />
             </div>
             <div>
               <DialogTitle className="text-white text-lg">Stock insuficiente</DialogTitle>
@@ -54,7 +54,7 @@ export default function StockInsuficienteModal({
 
         <div className="py-2 flex flex-col gap-3">
           <div className="bg-background/50 border border-border rounded-md p-3 flex items-center gap-2">
-            <Package size={16} className="text-[#2e9e9b] shrink-0" />
+            <Icon name="inventory" size={16} className="text-[#2e9e9b] shrink-0" />
             <div className="flex-1">
               <div className="text-sm font-medium text-foreground">{productoNombre}</div>
               <div className="text-xs text-muted-foreground">Cantidad solicitada: <span className="font-mono font-bold text-foreground">{cantidadSolicitada}</span></div>
@@ -96,7 +96,7 @@ export default function StockInsuficienteModal({
 
         <DialogFooter className="gap-2 flex justify-end">
           <Button variant="outline" onClick={handleCancelar}>
-            <X size={14} className="mr-1" /> Cancelar
+            <Icon name="close" size={14} className="mr-1" /> Cancelar
           </Button>
           {onContinuar && (
             <Button
@@ -104,7 +104,7 @@ export default function StockInsuficienteModal({
               variant="outline"
               className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
             >
-              <Check size={14} className="mr-1" /> Agregar de todos modos
+              <Icon name="check" size={14} className="mr-1" /> Agregar de todos modos
             </Button>
           )}
         </DialogFooter>

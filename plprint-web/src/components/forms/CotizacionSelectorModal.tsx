@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Loader2, ArrowRight } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { cotizacionesApi, Cotizacion } from '@/api/cotizaciones.api';
 import { useMoney } from '@/hooks/useMoney';
@@ -78,7 +78,7 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
       <DialogContent className="max-w-3xl bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[#2e9e9b] text-xl font-bold flex items-center gap-2">
-            <FileText size={20} /> Seleccionar Cotización
+            <Icon name="description" size={20} /> Seleccionar Cotización
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Busca y selecciona una cotización pendiente para convertirla en venta.
@@ -137,11 +137,11 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
         <div className="rounded-lg border border-border overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center h-40">
-              <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
+              <Icon name="hourglass_top" size={24} className="animate-spin text-[#2e9e9b]" />
             </div>
           ) : filtradas.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm">
-              <FileText size={28} className="opacity-20 mb-2" />
+              <Icon name="description" size={28} className="opacity-20 mb-2" />
               {cotizaciones.length === 0
                 ? 'No hay cotizaciones pendientes.'
                 : 'Ninguna cotización coincide con los filtros.'}
@@ -188,7 +188,7 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
                             onClick={() => { onSeleccionar(c); onOpenChange(false); }}
                             className="h-7 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black text-xs px-2"
                           >
-                            <ArrowRight size={12} className="mr-1" /> Cargar
+                            <Icon name="arrow_forward" size={12} className="mr-1" /> Cargar
                           </Button>
                         </td>
                       </motion.tr>

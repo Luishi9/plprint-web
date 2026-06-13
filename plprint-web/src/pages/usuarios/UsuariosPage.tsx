@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Users, Plus, Pencil, Trash2, Loader2, ShieldCheck,
-  ShoppingBag, Settings2, Search,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { usuariosApi, Usuario } from '@/api/usuarios.api';
 import { Button } from '@/components/ui/button';
@@ -16,17 +13,17 @@ import UsuarioFormModal from './components/UsuarioFormModal';
 const ROL_CONFIG: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
   admin: {
     label: 'Admin',
-    icon: <ShieldCheck size={11} />,
+    icon: <Icon name="verified" size={11} />,
     cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30',
   },
   vendedor: {
     label: 'Vendedor',
-    icon: <ShoppingBag size={11} />,
+    icon: <Icon name="shopping_bag" size={11} />,
     cls: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
   },
   operador: {
     label: 'Operador',
-    icon: <Settings2 size={11} />,
+    icon: <Icon name="settings" size={11} />,
     cls: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
   },
 };
@@ -97,7 +94,7 @@ export default function UsuariosPage() {
       >
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Users className="text-[#2e9e9b]" size={24} />
+            <Icon name="group" size={24} className="text-[#2e9e9b]" />
             Usuarios
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -106,7 +103,7 @@ export default function UsuariosPage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Icon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="h-9 pl-8 w-48 bg-background/50 border-border text-sm"
               placeholder="Buscar usuario…"
@@ -118,7 +115,7 @@ export default function UsuariosPage() {
             onClick={() => { setEditando(null); setModalOpen(true); }}
             className="h-9 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
           >
-            <Plus className="mr-1.5 h-4 w-4" />
+            <Icon name="add" size={16} className="mr-1.5" />
             Nuevo usuario
           </Button>
         </div>
@@ -169,14 +166,14 @@ export default function UsuariosPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#2e9e9b]" />
+                    <Icon name="hourglass_top" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
                     <p className="mt-2 text-xs text-muted-foreground">Cargando usuarios…</p>
                   </td>
                 </tr>
               ) : filtrados.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                    <Users size={36} className="mx-auto mb-3 opacity-20" />
+                    <Icon name="group" size={36} className="mx-auto mb-3 opacity-20" />
                     <p>{search ? 'Sin resultados.' : 'Aún no hay usuarios registrados.'}</p>
                   </td>
                 </tr>
@@ -234,14 +231,14 @@ export default function UsuariosPage() {
                               className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                               title="Editar"
                             >
-                              <Pencil size={13} />
+                              <Icon name="edit" size={13} />
                             </button>
                             <button
                               onClick={() => setEliminarItem(u)}
                               className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
                               title="Eliminar"
                             >
-                              <Trash2 size={13} />
+                              <Icon name="delete" size={13} />
                             </button>
                           </div>
                         </td>
@@ -281,7 +278,7 @@ export default function UsuariosPage() {
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white gap-2"
             >
-              {isDeleting && <Loader2 size={14} className="animate-spin" />}
+              {isDeleting && <Icon name="hourglass_top" size={14} className="animate-spin" />}
               Eliminar
             </Button>
           </DialogFooter>

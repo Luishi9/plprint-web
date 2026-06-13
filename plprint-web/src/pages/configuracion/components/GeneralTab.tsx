@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Building2, Receipt, Banknote, FileText,
-  Save, Loader2, Image as ImageIcon, Upload,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,27 +20,27 @@ type MetaGrupo = {
 
 const GRUPOS_META: MetaGrupo[] = [
   {
-    label: 'Empresa', icon: <Building2 size={16} />, desc: 'Datos de la empresa que aparecen en tickets y reportes',
+    label: 'Empresa', icon: <Icon name="apartment" size={16} />, desc: 'Datos de la empresa que aparecen en tickets y reportes',
     grupo: 'empresa',
     campos: ['empresa_nombre', 'empresa_rfc', 'empresa_telefono', 'empresa_email', 'empresa_direccion'],
   },
   {
-    label: 'Impuestos', icon: <Receipt size={16} />, desc: 'Configuración de IVA y facturación',
+    label: 'Impuestos', icon: <Icon name="receipt" size={16} />, desc: 'Configuración de IVA y facturación',
     grupo: 'impuestos',
     campos: ['iva_porcentaje', 'iva_activo'],
   },
   {
-    label: 'Moneda', icon: <Banknote size={16} />, desc: 'Formato y símbolo de la moneda',
+    label: 'Moneda', icon: <Icon name="payments" size={16} />, desc: 'Formato y símbolo de la moneda',
     grupo: 'moneda',
     campos: ['moneda_simbolo', 'moneda_codigo', 'moneda_decimales', 'moneda_separador_decimal', 'moneda_separador_miles'],
   },
   {
-    label: 'Reportes', icon: <FileText size={16} />, desc: 'Formato de los reportes generados',
+    label: 'Reportes', icon: <Icon name="description" size={16} />, desc: 'Formato de los reportes generados',
     grupo: 'reportes',
     campos: ['reportes_formato', 'reportes_incluir_logo'],
   },
   {
-    label: 'Ticket', icon: <Receipt size={16} />, desc: 'Personalización del ticket de venta',
+    label: 'Ticket', icon: <Icon name="receipt" size={16} />, desc: 'Personalización del ticket de venta',
     grupo: 'ticket',
     campos: ['ticket_encabezado', 'ticket_subtitulo', 'ticket_mensaje_pie', 'ticket_mostrar_logo', 'ticket_mostrar_direccion', 'ticket_mostrar_telefono', 'ticket_mostrar_rfc', 'ticket_formato_fecha', 'ticket_formato_hora'],
   },
@@ -270,7 +267,7 @@ export default function GeneralTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin" size={24} />
+        <Icon name="progress_activity" className="animate-spin" size={24} />
       </div>
     );
   }
@@ -282,7 +279,7 @@ export default function GeneralTab() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <ImageIcon size={16} /> Logo de la empresa
+            <Icon name="image" size={16} /> Logo de la empresa
           </CardTitle>
           <CardDescription>Aparece en tickets, login y reportes</CardDescription>
         </CardHeader>
@@ -291,13 +288,13 @@ export default function GeneralTab() {
             {logoUrl ? (
               <img src={logoUrl} alt="logo" className="w-full h-full object-contain" />
             ) : (
-              <ImageIcon size={28} className="text-muted-foreground" />
+              <Icon name="image" size={28} className="text-muted-foreground" />
             )}
           </div>
           <div className="flex-1">
             <Label htmlFor="logo-upload" className="cursor-pointer">
               <div className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background hover:bg-accent text-sm">
-                {isUploadingLogo ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
+                {isUploadingLogo ? <Icon name="progress_activity" className="animate-spin" size={14} /> : <Icon name="upload" size={14} />}
                 {isUploadingLogo ? 'Subiendo...' : 'Subir logo'}
               </div>
               <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={isUploadingLogo} />
@@ -328,7 +325,7 @@ export default function GeneralTab() {
         <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-background border border-border rounded-lg shadow-lg p-3">
           <span className="text-sm font-medium">{totalPending} cambio(s)</span>
           <Button onClick={handleSave} disabled={isSaving} size="sm" className="bg-[#2e9e9b] hover:bg-[#48b9b4]">
-            {isSaving ? <Loader2 className="animate-spin mr-2" size={14} /> : <Save className="mr-2" size={14} />}
+            {isSaving ? <Icon name="progress_activity" className="animate-spin mr-2" size={14} /> : <Icon name="save" className="mr-2" size={14} />}
             Guardar
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setPending({})}>

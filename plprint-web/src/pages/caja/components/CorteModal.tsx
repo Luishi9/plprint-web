@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Check, X, Wallet } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,7 +48,7 @@ export default function CorteModal({ open, onClose, onConfirm, corte, resumen }:
       <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-[#2e9e9b] text-xl font-bold flex items-center gap-2">
-            <Wallet size={22} /> Corte de Caja
+            <Icon name="account_balance_wallet" size={22} /> Corte de Caja
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Revisa el resumen antes de cerrar la caja.
@@ -122,10 +122,10 @@ export default function CorteModal({ open, onClose, onConfirm, corte, resumen }:
         </div>
         <DialogFooter className="gap-2 flex justify-end">
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            <X size={14} className="mr-1" /> Cancelar
+            <Icon name="close" size={14} className="mr-1" /> Cancelar
           </Button>
           <Button onClick={handleConfirm} disabled={isSaving} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold">
-            {isSaving ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Check size={14} className="mr-1" />}
+            {isSaving ? <Icon name="progress_activity" size={14} className="mr-1 animate-spin" /> : <Icon name="check" size={14} className="mr-1" />}
             Confirmar Corte
           </Button>
         </DialogFooter>

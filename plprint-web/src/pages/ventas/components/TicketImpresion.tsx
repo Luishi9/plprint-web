@@ -5,6 +5,7 @@ const DEFAULT_LOGO_URL = `${typeof window !== 'undefined' ? window.location.orig
 
 export interface TicketData {
   ventaId: number;
+  folio?: string;
   fecha: Date;
   sucursal: string;
   cajero: string;
@@ -102,6 +103,7 @@ export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO
   <hr class="divider" />
 
   <div class="row"><strong>TICKET #${String(data.ventaId).padStart(6, '0')}</strong></div>
+  ${data.folio ? `<div class="row" style="font-size:10px;color:#555;"><span>Folio:</span><span>${data.folio}</span></div>` : ''}
   <div style="color:#333;">${fecha}</div>
   <div class="row" style="margin-top:2px;"><span>Cajero:</span><span>${data.cajero}</span></div>
   <div class="row"><span>Cliente:</span><span>${data.cliente}</span></div>

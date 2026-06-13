@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Boxes } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { 
   Dialog, 
@@ -117,7 +117,7 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight text-[#2e9e9b] flex items-center gap-2">
-            <Boxes size={24} />
+            <Icon name="inventory" size={24} />
             {isEditing ? 'Editar insumo' : 'Nuevo insumo'}
           </DialogTitle>
           <DialogDescription>
@@ -255,7 +255,7 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
                 disabled={isSubmitting}
                 className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
               >
-                {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                {isSubmitting && <Icon name="progress_activity" size={14} className="animate-spin" />}
                 {isEditing ? 'Guardar cambios' : 'Crear insumo'}
               </Button>
             </div>

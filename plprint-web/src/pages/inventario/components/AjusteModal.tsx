@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, TrendingUp, TrendingDown, SlidersHorizontal } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { inventarioApi } from '@/api/inventario.api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,9 @@ interface AjusteModalProps {
 }
 
 const TIPOS = [
-  { value: 'entrada', label: 'Entrada', icon: TrendingUp, cls: 'border-[#2e9e9b] bg-[#2e9e9b]/10 text-[#2e9e9b]' },
-  { value: 'salida', label: 'Salida', icon: TrendingDown, cls: 'border-red-500 bg-red-500/10 text-red-400' },
-  { value: 'ajuste', label: 'Ajuste directo', icon: SlidersHorizontal, cls: 'border-yellow-400 bg-yellow-400/10 text-yellow-400' },
+  { value: 'entrada', label: 'Entrada', icon: 'login', cls: 'border-[#2e9e9b] bg-[#2e9e9b]/10 text-[#2e9e9b]' },
+  { value: 'salida', label: 'Salida', icon: 'logout', cls: 'border-red-500 bg-red-500/10 text-red-400' },
+  { value: 'ajuste', label: 'Ajuste directo', icon: 'tune', cls: 'border-yellow-400 bg-yellow-400/10 text-yellow-400' },
 ] as const;
 
 type TipoAjuste = 'entrada' | 'salida' | 'ajuste';
@@ -89,15 +89,15 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Tipo de movimiento</p>
             <div className="grid grid-cols-3 gap-2">
-              {TIPOS.map(({ value, label, icon: Icon, cls }) => (
-                <button
-                  key={value}
-                  onClick={() => setTipo(value)}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-xs font-medium transition-all ${
-                    tipo === value ? cls : 'border-border text-muted-foreground hover:bg-white/5'
-                  }`}
-                >
-                  <Icon size={16} />
+                {TIPOS.map(({ value, label, icon, cls }) => (
+                  <button
+                    key={value}
+                    onClick={() => setTipo(value)}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-xs font-medium transition-all ${
+                      tipo === value ? cls : 'border-border text-muted-foreground hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon name={icon} size={16} />
                   {label}
                 </button>
               ))}
@@ -145,7 +145,7 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
             onClick={handleSubmit}
             className="w-full bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-bold disabled:opacity-40"
           >
-            {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar ajuste'}
+            {isSubmitting ? <Icon name="hourglass_top" size={16} className="animate-spin" /> : 'Confirmar ajuste'}
           </Button>
         </div>
       </DialogContent>

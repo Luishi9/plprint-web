@@ -332,7 +332,7 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 
 5. [x] cambiar la categoria de impresion a produccion a los productos que entran a produccion
 
-6. [] unidades de medida, jalar las que se dan de alta no las que estan fijas
+6. [x] unidades de medida, jalar las que se dan de alta no las que estan fijas
 
 ## Sistema de Niveles de Precios por Volumen (medio mayoreo, mayoreo, super mayoreo) — IMPLEMENTADO 2026-06-06
 
@@ -796,7 +796,284 @@ Nuevos permisos a agregar en `seed.ts`:
 - **Historial**: Los cortes cerrados se conservan para consulta y reimprimir en cualquier momento
 - **Integración con tabla gastos**: Los ingresos/gastos/retiros registrados desde caja se crean en la tabla `gastos` existente, reutilizando el modelo y las categorías ya definidas
 
----
+
+---------------------------------------------------------------
+
+## AJUSTES A HISTORIAL DE VENTAS
+
+- a las ventas, cuandos e realice una se generara un Num. de folio aparte del numero de venta que ya se tiene, para tener un control mejor
+- a la barra de busqueda agregar el poder buscar por folio una venta
+- agregar busqueda por producto a la barra de busqueda
+- agregar filtro componente de rango de fecha para tener el listado de ventas de una fecha a otra
+- agregar otro componente de un select con el listado de usuarios del sistema para seleccionarlo y ver las ventas que hizo el (UNICAMENTE DISPONIBLE PARA UN USUARIO ADMIN, VALIDAR ESO CUANDO SE ENTRA O RECARGA LA VISTA DE VENTAS)
+- agregar filtro para mostrar historial de ventas del dia, o por rango de fecha
+- Agregar boton que nos permita exportar el historial de ventas, este tendra los detalles de las ventas realizadas, para esto se podra descargar el historial de ventas que se tenga en la tabla, ya sea las del dia o por rango de fecha, el archivo que exportara sera la opcion de excel o pdf, donde se tendra detallado el historial de ventas
+
+Plan Final: Mejoras al Historial de Ventas
+
+1. Folio de ventas
+   - Backend — Prisma schema: agregar campo `folio String? @unique @db.VarChar(20)` a modelo `ventas`
+   - Backend — Service (`ventas.service.ts`):
+     - Método privado `generarFolio()`: busca el folio más reciente del día, extrae secuencia e incrementa. Formato: `VEN-{YYYYMMDD}-{XXXX}`
+     - En `create()`, asignar `folio: await this.generarFolio()`
+     - Incluir `folio` en `findAll()` y `findById()`
+   - Frontend — Types (`venta.types.ts`): agregar `folio?: string`
+   - Frontend — `VentasPage.tsx`: columna `#` muestra ID y folio; `AbonosModal` y tickets usan folio
+
+2. Búsqueda por folio y producto (server-side)
+   - Backend — Service: agregar `search?: string` a `FindAllParams`; en `findAll()`, OR search sobre `id`, `folio`, `clientes.nombre`, `usuarios.nombre`, `venta_detalle.productos.nombre`
+   - Backend — Controller: leer `req.query.search`
+   - Frontend — `VentasPage.tsx`: eliminar filtro client-side, pasar `search` a API
+
+3. Rango de fechas (default: hoy)
+   - Frontend — Componente nuevo `VentasDateFilter.tsx`: botones `Hoy | Este mes | Personalizado` + inputs date
+   - Frontend — `VentasPage.tsx`: estado `desde`/`hasta` inicializado a hoy, pasar a API
+
+4. Filtro por usuario (admin-only)
+   - Frontend — `VentasPage.tsx`: select de usuarios condicionado a `isAdmin`
+   - Backend — Controller: leer `req.query.usuarioId`
+   - Backend — Service: agregar `usuarioIdFiltro?: number` a `FindAllParams`
+
+5. Exportar historial (Excel + PDF)
+   - Dep: `npm install xlsx`
+   - Frontend — Componente nuevo `ExportarVentasButton.tsx`: dropdown Excel/PDF
+   - Excel: fila por detalle de producto, workbook con `XLSX.utils.json_to_sheet()`
+   - PDF: HTML con tabla estilizada, `window.open()` + `window.print()`
+
+Archivos a modificar/crear:
+| Archivo | Acción |
+|---------|--------|
+| `plprint-api/prisma/schema.prisma` | +folio en modelo ventas |
+| `plprint-api/src/services/ventas.service.ts` | Generar folio + search param |
+| `plprint-api/src/controllers/ventas.controller.ts` | Leer search y usuarioId |
+| `plprint-web/src/types/venta.types.ts` | +folio: string |
+| `plprint-web/src/pages/ventas/VentasPage.tsx` | Folio, search server-side, date filter, user filter, export |
+| `plprint-web/src/pages/ventas/components/VentasDateFilter.tsx` | Nuevo |
+| `plprint-web/src/pages/ventas/components/ExportarVentasButton.tsx` | Nuevo |
+| `plprint-web/package.json` | +xlsx |
 
 
-- agregar que al imprimir el corte de caja, este esa opcion de ticket y la opcion del documento pdf detallado
+-----------------------------------------------------------------
+
+### RESUMEN DE LAS CARACTERISTICAS DEL SISTEMA
+
+Qué hace el sistema
+Es una aplicación web integral de gestión de inventario, ventas y producción (POS + ERP) diseñada para pymes con múltiples sucursales. Permite gestionar productos, inventario, ventas, clientes, usuarios, producción y caja de manera centralizada y escalable.
+
+Módulos Principales Implementados
+1. ✅ GESTIÓN DE PRODUCTOS
+Crear, editar, eliminar productos (soft delete)
+Asociar imágenes, precios de venta/compra
+Categorías de productos (venta y producción)
+Unidades de medida personalizadas (unidades, m², ml, etc.)
+Sistema de precios por volumen (medio mayoreo, mayoreo, super mayoreo)
+Productos por medidas (m² / ml) con cálculo automático de precios
+Búsqueda, filtrado y paginación
+2. INVENTARIO POR SUCURSAL
+Stock independiente por producto y sucursal
+Niveles de stock mínimo y máximo
+Kardex de movimientos (historial completo de entradas/salidas)
+Gestión de mermas (desperdicio de productos e insumos)
+Alertas de inventario bajo
+3. VENTAS
+Crear ventas rápidas (cliente "Público General" o registrado)
+Carrito de compra dinámico con múltiples productos
+Cálculo automático de totales, descuentos
+Reducción automática de inventario
+Ventas con pago completo o pendiente (con abonos)
+Devoluciones desde ventas completadas
+Descuentos por cliente o categoría (global o por producto)
+Estados de venta: completada, cancelada, devuelta
+Historial filtrable por cliente, usuario, fecha, estado
+Generación de tickets/facturas (impresión)
+Exportación a Excel/PDF
+4. COTIZACIONES
+Guardar ventas como cotizaciones pendientes
+Buscar y aplicar cotizaciones anteriores
+Filtrar por cliente, fecha, usuario, folio
+Convertir cotización a venta
+Exportar cotización como PDF
+5. ABONOS / PAGOS PENDIENTES
+Registrar abonos a ventas con saldo pendiente
+Visualizar ventas con pendiente de pago
+Métodos de pago personalizados
+Control de pagos parciales
+6. GESTIÓN DE CLIENTES
+CRUD de clientes
+Datos básicos (nombre, teléfono, email, dirección)
+Descuentos globales por cliente
+Historial de compras por cliente
+7. GESTIÓN DE USUARIOS Y ROLES
+CRUD de usuarios
+Asignación a sucursales (uno o múltiples)
+Roles: Admin, Vendedor, Operador
+RBAC (Control de acceso basado en roles) con permisos granulares por módulo y acción
+Hash de contraseñas (bcrypt)
+JWT con token_version para invalidar sesiones
+Autenticación segura
+8. GESTIÓN DE SUCURSALES
+Crear, editar, activar/inactivar sucursales
+Asignar usuarios a sucursales
+Inventario independiente por sucursal
+Datos por sucursal (nombre, dirección, teléfono)
+Soporte multi-sucursal (arquitectura lista para multi-empresa)
+9. CAJA Y CORTE DE CAJA ✅
+Apertura de caja con monto inicial
+Registro de movimientos diarios (ventas, ingresos, gastos, retiros)
+Corte de caja con arqueo (monto esperado vs. real)
+Cálculo automático de diferencias
+Registro de observaciones
+Historial de cortes con reimpresas
+Botones rápidos: registrar ingreso, gasto, retiro
+10. INSUMOS Y COMPRAS
+Gestión de insumos (componentes para producción)
+Inventario de insumos por sucursal
+Compras de insumos a proveedores
+Registro automático de compras al aumentar inventario
+Asociación de insumos con productos (BOM - Bill of Materials)
+Gestión de mermas de insumos
+11. PROVEEDORES
+CRUD de proveedores
+Datos: nombre, contacto, teléfono, email, RFC, dirección
+Asociación con productos e insumos
+Historial de compras por proveedor
+12. PRODUCCIÓN / ÓRDENES DE PRODUCCIÓN
+Crear órdenes de producción para productos con categoría "producción"
+Estados: pendiente, en diseño, en producción, acabados, terminados, entregados
+Asignación de órdenes a usuarios
+Notas/comentarios por cada estado
+Historial de cambios de estado
+Control de BOM (Bill of Materials)
+13. MÁQUINAS E IMPRESIONES
+Registro de máquinas de impresión por sucursal
+Contador de impresiones diarias/totales
+Asociación de máquinas con productos
+Registro automático de impresiones desde ventas
+Tracking de impresiones para mermas
+14. GASTOS / INGRESOS / RETIROS
+Categorías de gastos personalizables
+Tipos: gasto, ingreso, retiro
+Registro con concepto, monto, notas
+Autorización de retiros (autorizado_por)
+Comprobantes adjuntables (URL)
+Filtrado por fecha, tipo, categoría
+Historial completo con exportación
+15. MÉTODOS DE PAGO
+Métodos personalizables (efectivo, tarjeta, transferencia, etc.)
+Configuración por empresa
+16. AUDITORÍA (AUDIT LOG)
+Registro de todas las acciones de usuarios
+Tracking: quién, qué, cuándo, cambios realizados
+Filtrado por usuario, fecha, entidad, acción
+Exportación de logs para auditoría
+17. CONFIGURACIÓN GLOBAL
+Datos de empresa (nombre, logo, información)
+IVA global único
+Formato de moneda
+Tipos de pago personalizados
+Información de tickets (logo, mensaje, formato de fecha/hora)
+Configuración general del sistema
+18. RESPALDO DE DATOS
+Funcionalidad de backup/restore de base de datos
+Exportación segura de datos
+19. NOTIFICACIONES
+Sistema de notificaciones configurable
+Alertas de inventario bajo
+Notificaciones por evento
+20. REPORTES
+Reporte de ventas (diarias, mensuales)
+Reporte de ingresos vs. gastos
+Reporte de cuentas por cobrar
+Reporte de utilidades/márgenes por ventas
+Exportación a Excel/PDF
+Filtrado por fecha, sucursal, usuario, categoría
+21. DASHBOARD
+Métricas de ventas
+Stock disponible
+Información resumida del negocio
+Funciones Clave Transversales
+✅ Autenticación y Seguridad
+
+Login con usuario/contraseña
+JWT + token_version para invalidación de sesiones
+Hash de contraseñas con bcrypt
+Rate limiting
+✅ Paginación y Búsqueda
+
+En todas las listas (productos, ventas, clientes, usuarios, etc.)
+Filtros avanzados por múltiples criterios
+Exportación a Excel/PDF
+✅ Multi-sucursal
+
+Inventario independiente por sucursal
+Usuarios asignados a sucursales
+Datos operacionales segregados por sucursal
+Admin global con acceso a todas
+✅ Kardex / Historial
+
+Movimientos de inventario por sucursal
+Trazabilidad completa de entradas/salidas
+Mermas registradas
+✅ Validación
+
+Backend: Zod schemas
+Frontend: React Hook Form
+Validación en tiempo real
+✅ Escalabilidad
+
+Índices en base de datos
+Paginación
+Lazy loading en frontend
+Preparado para miles de productos
+Arquitectura Técnica
+Frontend: React + Vite + TypeScript (Netlify)
+Backend: Node.js + Express + TypeScript (VPS)
+Base de datos: MySQL 8.0+ con Prisma ORM
+Estado: Zustand
+Formularios: React Hook Form
+UI: TailwindCSS + shadcn/ui
+Validación: Zod
+
+Estructura Backend:
+
+Controllers (27 módulos)
+Services (lógica de negocio)
+Routes (rutas con RBAC)
+Middleware (validación, autenticación, autorización)
+Estructura Frontend:
+
+Páginas por módulo (18 secciones)
+Componentes reutilizables
+API client centralizado
+Store de estado global
+Utilidades y hooks
+
+### TEXTO PARA PUBLICACIONES 
+Hola grupo buen día.
+Pongo a disposición el siguiente sistema a la venta, es desarrollo propio, con la adquisición se pueden adjuntar mejoras o editar ciertas cosas del diseño para que quede mas a tus gustos y necesidades, esta es la URL para la demo: https://plprint.netlify.app/login
+las credenciales se las paso por inbox en caso de estar interesados.
+características: 
+✅ DASHBOARD
+✅ AUTENTICACION Y SEGURIDAD
+✅ PAGINACION Y BUSQUEDA
+✅ GESTIÓN DE PRODUCTOS
+✅ INVENTARIO POR SUCURSAL
+✅ VENTAS
+✅ COTIZACIONES
+✅ ABONOS / PAGOS PENDIENTES
+✅ GESTION DE CLIENTES
+✅ GESTION DE USUARIOS Y ROLES
+✅ GESTION DE SUCURSALES
+✅ CAJA Y CORTE DE CAJA
+✅ INSUMOS Y COMPRAS
+✅ PROVEEDORES
+✅ PRODUCCION - ORDENES DE PRODUCCION
+✅ MAQUINAS E IMPRESIONES
+✅ GASTOS / INGRESOS / RETIROS
+✅ METODOS DE PAGO
+✅ AUDITORIA (AUDIT LOG) registro de todas las acciones de usuarios
+✅ CONFIGURACION GLOBAL
+✅ RESPALDO DE DATOS
+✅ NOTIFICACIONES
+✅ REPORTES
+Cualquier duda podemos checarlo por inbox.

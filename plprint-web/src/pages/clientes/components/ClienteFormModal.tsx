@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, User, Phone, Mail, MapPin } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { clientesApi } from '@/api/clientes.api';
 import { Cliente } from '../ClientesPage';
 import { Button } from '@/components/ui/button';
@@ -72,7 +72,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <User size={18} className="text-[#2e9e9b]" />
+            <Icon name="person" size={18} className="text-[#2e9e9b]" />
             {isEdit ? 'Editar cliente' : 'Nuevo cliente'}
           </DialogTitle>
         </DialogHeader>
@@ -90,7 +90,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
               Nombre <span className="text-red-400">*</span>
             </Label>
             <div className="relative">
-              <User size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Icon name="person" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
@@ -105,7 +105,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
           <div className="flex flex-col gap-1.5">
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Teléfono</Label>
             <div className="relative">
-              <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Icon name="phone" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
@@ -119,7 +119,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
           <div className="flex flex-col gap-1.5">
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Correo electrónico</Label>
             <div className="relative">
-              <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Icon name="mail" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="email"
                 value={email}
@@ -135,7 +135,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
           <div className="flex flex-col gap-1.5">
             <Label className="text-muted-foreground text-xs uppercase tracking-wider">Dirección</Label>
             <div className="relative">
-              <MapPin size={13} className="absolute left-3 top-3 text-muted-foreground" />
+              <Icon name="location_on" size={13} className="absolute left-3 top-3 text-muted-foreground" />
               <textarea
                 value={direccion}
                 onChange={(e) => setDireccion(e.target.value)}
@@ -155,7 +155,7 @@ export default function ClienteFormModal({ open, cliente, onClose, onSaved }: Pr
               disabled={isSaving}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
             >
-              {isSaving && <Loader2 size={14} className="animate-spin" />}
+              {isSaving && <Icon name="progress_activity" size={14} className="animate-spin" />}
               {isEdit ? 'Guardar cambios' : 'Crear cliente'}
             </Button>
           </div>

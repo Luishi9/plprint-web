@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Database, Download, Trash2, Loader2, RefreshCw, FileDown,
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,7 +89,7 @@ export default function RespaldoTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin" size={24} />
+        <Icon name="progress_activity" className="animate-spin" size={24} />
       </div>
     );
   }
@@ -102,12 +100,12 @@ export default function RespaldoTab() {
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <Database size={16} /> Respaldo de base de datos
+              <Icon name="database" size={16} /> Respaldo de base de datos
             </CardTitle>
             <CardDescription>Genera, descarga y administra respaldos SQL</CardDescription>
           </div>
           <Button onClick={handleGenerate} disabled={isGenerating} className="bg-[#2e9e9b] hover:bg-[#48b9b4]">
-            {isGenerating ? <Loader2 className="animate-spin mr-2" size={16} /> : <FileDown className="mr-2" size={16} />}
+            {isGenerating ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} /> : <Icon name="file_download" className="mr-2" size={16} />}
             Generar respaldo
           </Button>
         </CardHeader>
@@ -148,7 +146,7 @@ export default function RespaldoTab() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">Respaldos disponibles</h3>
               <Button variant="ghost" size="sm" onClick={fetchData}>
-                <RefreshCw size={13} className="mr-1" /> Actualizar
+                <Icon name="refresh" size={13} className="mr-1" /> Actualizar
               </Button>
             </div>
             {backups.length === 0 ? (
@@ -157,7 +155,7 @@ export default function RespaldoTab() {
               backups.map((b) => (
                 <div key={b.filename} className="flex items-center justify-between gap-3 p-3 border border-border rounded-lg">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Database size={18} className="text-[#2e9e9b] shrink-0" />
+                    <Icon name="database" size={18} className="text-[#2e9e9b] shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="font-mono text-sm truncate">{b.filename}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(b.created_at)} · {b.size_mb} MB</p>
@@ -165,10 +163,10 @@ export default function RespaldoTab() {
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Button variant="ghost" size="icon" onClick={() => handleDownload(b.filename)} title="Descargar">
-                      <Download size={15} />
+                      <Icon name="download" size={15} />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => setEliminarItem(b)} title="Eliminar">
-                      <Trash2 size={15} className="text-red-500" />
+                      <Icon name="delete" size={15} className="text-red-500" />
                     </Button>
                   </div>
                 </div>
@@ -189,7 +187,7 @@ export default function RespaldoTab() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEliminarItem(null)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleEliminar} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              {isDeleting ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} /> : null}
               Eliminar
             </Button>
           </DialogFooter>

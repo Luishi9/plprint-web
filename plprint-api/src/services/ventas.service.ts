@@ -34,10 +34,12 @@ interface FindAllParams {
   sucursalesPermitidas: number[];
   estado?: 'completada' | 'cancelada';
   estadoPago?: 'pendiente' | 'parcial';
+  search?: string;
+  usuarioIdFiltro?: number;
 }
 
 export class VentasService {
-  async findAll({ page, limit, sucursalId, desde, hasta, sucursalesPermitidas, estado, estadoPago }: FindAllParams) {
+  async findAll({ page, limit, sucursalId, desde, hasta, sucursalesPermitidas, estado, estadoPago, search, usuarioIdFiltro }: FindAllParams) {
     const skip = (page - 1) * limit;
     const where: Record<string, unknown> = {
       sucursal_id: {
@@ -53,6 +55,18 @@ export class VentasService {
         : {}),
       ...(estado ? { estado } : {}),
       ...(estadoPago ? { estado_pago: { in: estadoPago.split(',') } } : {}),
+      ...(usuarioIdFiltro ? { usuario_id: usuarioIdFiltro } : {}),
+      ...(search
+        ? {
+            OR: [
+              { id: { equals: parseInt(search) || 0 } },
+              { folio: { contains: search } },
+              { clientes: { nombre: { contains: search } } },
+              { usuarios: { nombre: { contains: search } } },
+              { venta_detalle: { some: { productos: { nombre: { contains: search } } } } },
+            ],
+          }
+        : {}),
     };
 
     const [data, total] = await Promise.all([
@@ -95,6 +109,28 @@ export class VentasService {
     return venta;
   }
 
+  private async generarFolio(): Promise<string> {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear().toString();
+    const mm = (hoy.getMonth() + 1).toString().padStart(2, '0');
+    const dd = hoy.getDate().toString().padStart(2, '0');
+    const prefix = `VEN-${yyyy}${mm}${dd}-`;
+
+    const ultimo = await prisma.ventas.findFirst({
+      where: { folio: { startsWith: prefix } },
+      orderBy: { folio: 'desc' },
+      select: { folio: true },
+    });
+
+    let seq = 1;
+    if (ultimo?.folio) {
+      const partes = ultimo.folio.split('-');
+      seq = parseInt(partes[3], 10) + 1;
+    }
+
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
+  }
+
   async create(dto: CreateVentaDTO) {
     // Validar stock antes de crear la venta
     for (const item of dto.items) {
@@ -122,8 +158,10 @@ export class VentasService {
       const estadoPago = dto.estadoPago || 'pagada';
       const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
 
+      const folio = await this.generarFolio();
       const venta = await tx.ventas.create({
         data: {
+          folio,
           sucursal_id: dto.sucursalId,
           cliente_id: dto.clienteId ?? null,
           usuario_id: dto.usuarioId,

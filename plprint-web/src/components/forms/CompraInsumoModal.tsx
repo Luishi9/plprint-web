@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { ShoppingCart, Loader2, Check, X, Package, Truck, FileText, Hash } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 import { comprasApi } from '@/api/compras.api';
 import { insumosApi } from '@/api/insumos.api';
@@ -111,7 +111,7 @@ export default function CompraInsumoModal({
       <DialogContent className="max-w-lg bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[#2e9e9b] text-xl font-bold flex items-center gap-2">
-            <ShoppingCart size={20} /> Registrar Compra de Insumo
+            <Icon name="shopping_cart" size={20} /> Registrar Compra de Insumo
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Registra una entrada de insumo. Se actualizará el inventario y el último precio de compra.
@@ -120,13 +120,13 @@ export default function CompraInsumoModal({
 
         {loadingCatalogos ? (
           <div className="py-8 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-[#2e9e9b]" />
+            <Icon name="hourglass_top" size={24} className="animate-spin text-[#2e9e9b]" />
           </div>
         ) : (
           <div className="py-2 flex flex-col gap-3">
             <div>
               <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
-                <Package size={13} /> Insumo *
+                <Icon name="inventory" size={13} /> Insumo *
               </label>
               <select
                 value={form.insumo_id}
@@ -153,7 +153,7 @@ export default function CompraInsumoModal({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
-                  <Hash size={13} /> Cantidad *
+                  <Icon name="tag" size={13} /> Cantidad *
                 </label>
                 <Input
                   type="number"
@@ -193,7 +193,7 @@ export default function CompraInsumoModal({
 
             <div>
               <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
-                <Truck size={13} /> Proveedor
+                <Icon name="local_shipping" size={13} /> Proveedor
               </label>
               <select
                 value={form.proveedor_id}
@@ -209,7 +209,7 @@ export default function CompraInsumoModal({
 
             <div>
               <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
-                <FileText size={13} /> Notas
+                <Icon name="description" size={13} /> Notas
               </label>
               <Textarea
                 placeholder="Ej. Factura #123, lote, observaciones..."
@@ -231,7 +231,7 @@ export default function CompraInsumoModal({
 
         <DialogFooter className="gap-2 flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            <X size={14} className="mr-1" /> Cancelar
+            <Icon name="close" size={14} className="mr-1" /> Cancelar
           </Button>
           <Button
             onClick={handleSubmit}
@@ -239,8 +239,8 @@ export default function CompraInsumoModal({
             className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
           >
             {isSaving
-              ? <Loader2 size={14} className="mr-1 animate-spin" />
-              : <Check size={14} className="mr-1" />}
+              ? <Icon name="hourglass_top" size={14} className="mr-1 animate-spin" />
+              : <Icon name="check" size={14} className="mr-1" />}
             Registrar Compra
           </Button>
         </DialogFooter>

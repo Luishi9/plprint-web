@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Check, X, ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -89,7 +89,7 @@ export default function MovimientoModal({ open, onClose, onConfirm, tipo, sucurs
       <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className={`text-xl font-bold flex items-center gap-2 ${cfg.color.split(' ')[0]}`}>
-            {tipo === 'ingreso' ? <ArrowUpRight size={22} /> : tipo === 'gasto' ? <ArrowDownRight size={22} /> : <Wallet size={22} />}
+            {tipo === 'ingreso' ? <Icon name="arrow_outward" size={22} /> : tipo === 'gasto' ? <Icon name="south_east" size={22} /> : <Icon name="account_balance_wallet" size={22} />}
             Registrar {cfg.label}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -150,10 +150,10 @@ export default function MovimientoModal({ open, onClose, onConfirm, tipo, sucurs
         </div>
         <DialogFooter className="gap-2 flex justify-end">
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            <X size={14} className="mr-1" /> Cancelar
+            <Icon name="close" size={14} className="mr-1" /> Cancelar
           </Button>
           <Button onClick={handleConfirm} disabled={isSaving} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold">
-            {isSaving ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Check size={14} className="mr-1" />}
+            {isSaving ? <Icon name="progress_activity" size={14} className="mr-1 animate-spin" /> : <Icon name="check" size={14} className="mr-1" />}
             Registrar
           </Button>
         </DialogFooter>
