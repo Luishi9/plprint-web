@@ -129,21 +129,20 @@ export class VentasService {
     const dd = hoy.getDate().toString().padStart(2, '0');
     const prefix = `VEN-${yyyy}${mm}${dd}-`;
 
-    const ultimo = await client.ventas.findFirst({
-      where: { folio: { startsWith: prefix } },
-      orderBy: { folio: 'desc' },
-      select: { folio: true },
-    });
+    const fechaStr = `${yyyy}-${mm}-${dd}`;
 
-    let seq = 1;
-    if (ultimo?.folio) {
-      const partes = ultimo.folio.split('-');
-      seq = parseInt(partes[3], 10) + 1;
-    }
+    await client.$executeRaw`
+      INSERT INTO folio_counter (fecha, seq)
+      VALUES (CAST(${fechaStr} AS DATE), 1)
+      ON DUPLICATE KEY UPDATE seq = LAST_INSERT_ID(seq) + 1
+    `;
 
-    const folio = `${prefix}${seq.toString().padStart(4, '0')}`;
-    console.log(`[generarFolio] Generando folio: ${folio} | Ultimo encontrado: ${ultimo?.folio ?? 'ninguno'}`);
-    return folio;
+    const row = await client.$queryRaw<[{ seq: bigint }]>`
+      SELECT LAST_INSERT_ID() AS seq
+    `;
+
+    const seq = Number(row[0].seq);
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 
   async create(dto: CreateVentaDTO) {
@@ -176,15 +175,12 @@ export class VentasService {
     });
     const total = subtotales.reduce((acc, i) => acc + i.subtotal, 0) - (dto.descuento ?? 0);
 
-    const MAX_FOLIO_RETRIES = 5;
-    for (let attempt = 1; attempt <= MAX_FOLIO_RETRIES; attempt++) {
-      try {
-        return await prisma.$transaction(async (tx) => {
-          const estadoPago = dto.estadoPago || 'pagada';
-          const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
+    return prisma.$transaction(async (tx) => {
+      const estadoPago = dto.estadoPago || 'pagada';
+      const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
 
-          const folio = await this.generarFolio(tx);
-          const venta = await tx.ventas.create({
+      const folio = await this.generarFolio(tx);
+      const venta = await tx.ventas.create({
         data: {
           folio,
           sucursal_id: dto.sucursalId,
@@ -227,7 +223,6 @@ export class VentasService {
           }),
         ]);
 
-        // Solo descontar inventario si existe registro en inventario y no tiene insumos enlazados
         if (invRecord && productoInsumos.length === 0) {
           await tx.inventario.update({
             where: {
@@ -240,7 +235,6 @@ export class VentasService {
           });
         }
 
-        // Crear impresión automática si el producto tiene máquina asignada
         const producto = await tx.productos.findUnique({
           where: { id: item.productoId },
           select: { maquina_id: true },
@@ -272,11 +266,8 @@ export class VentasService {
           },
         });
 
-        // Descontar insumos automáticamente (BOM)
         for (const pi of productoInsumos) {
           const cantidadDescontar = Number(pi.cantidad_requerida) * item.cantidad;
-
-          // Descontar del inventario de insumos
           await tx.insumos_inventario.update({
             where: {
               insumo_id_sucursal_id: {
@@ -290,19 +281,7 @@ export class VentasService {
       }
 
       return venta;
-        });
-      } catch (err) {
-        const isUniqueError =
-          typeof err === 'object' && err !== null && 'code' in err &&
-          (err as { code: string }).code === 'P2002';
-        console.log(`[generarFolio] Intento ${attempt} falló con error P2002: folio duplicado`);
-        if (isUniqueError && attempt < MAX_FOLIO_RETRIES) {
-          continue;
-        }
-        throw err;
-      }
-    }
-    throw new Error('No se pudo generar un folio único después de varios intentos');
+    });
   }
 
   async cancel(id: number, usuarioId: number) {

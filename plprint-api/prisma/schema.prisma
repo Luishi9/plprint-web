@@ -650,3 +650,11 @@ model cortes_caja {
   @@index([fecha_apertura])
   @@index([estado])
 }
+
+model folio_counter {
+  id        Int      @id @default(autoincrement())
+  fecha     DateTime @db.Date @unique
+  seq       Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+}
