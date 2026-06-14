@@ -159,12 +159,7 @@ export class VentasService {
         }),
       ]);
 
-      // Si el producto tiene insumos enlazados (producción), salta la validación
-      // de stock de producto — el stock se valida a nivel de insumos
       if (insumos.length > 0) continue;
-
-      // Si el producto NO tiene registro en inventario, se vende sin validar stock
-      // (productos digitales, servicios o sin tracking de stock)
       if (!inv) continue;
 
       if (inv.cantidad < item.cantidad) {
@@ -179,12 +174,15 @@ export class VentasService {
     });
     const total = subtotales.reduce((acc, i) => acc + i.subtotal, 0) - (dto.descuento ?? 0);
 
-    return prisma.$transaction(async (tx) => {
-      const estadoPago = dto.estadoPago || 'pagada';
-      const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
+    const MAX_FOLIO_RETRIES = 5;
+    for (let attempt = 1; attempt <= MAX_FOLIO_RETRIES; attempt++) {
+      try {
+        return await prisma.$transaction(async (tx) => {
+          const estadoPago = dto.estadoPago || 'pagada';
+          const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
 
-      const folio = await this.generarFolio(tx);
-      const venta = await tx.ventas.create({
+          const folio = await this.generarFolio(tx);
+          const venta = await tx.ventas.create({
         data: {
           folio,
           sucursal_id: dto.sucursalId,
@@ -290,7 +288,18 @@ export class VentasService {
       }
 
       return venta;
-    });
+        });
+      } catch (err) {
+        const isUniqueError =
+          typeof err === 'object' && err !== null && 'code' in err &&
+          (err as { code: string }).code === 'P2002';
+        if (isUniqueError && attempt < MAX_FOLIO_RETRIES) {
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw new Error('No se pudo generar un folio único después de varios intentos');
   }
 
   async cancel(id: number, usuarioId: number) {
