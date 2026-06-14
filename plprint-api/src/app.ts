@@ -12,6 +12,9 @@ import router from './routes';
 
 const app = express();
 
+// --- Confiar en el proxy (nginx) para obtener IP real del cliente ---
+app.set('trust proxy', 1);
+
 // --- Seguridad ---
 app.use(helmet());
 app.use(cors({
