@@ -72,6 +72,7 @@ export default function NuevaVentaPage() {
 
   // Carrito
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [qtyInputs, setQtyInputs] = useState<Record<number, string>>({});
   const [descuentoGlobal, setDescuentoGlobal] = useState(0);
   const [descuentoMotivo, setDescuentoMotivo] = useState('');
 
@@ -305,7 +306,39 @@ export default function NuevaVentaPage() {
     );
   };
 
-  const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.productoId !== id));
+  const removeItem = (id: number) => {
+    setCart((prev) => prev.filter((i) => i.productoId !== id));
+    setQtyInputs((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const handleQtyInputChange = (id: number, value: string) => {
+    setQtyInputs((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleQtyInputBlur = (id: number) => {
+    const raw = qtyInputs[id];
+    if (raw === undefined || raw === '') {
+      setQtyInputs((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      return;
+    }
+    const val = parseInt(raw, 10);
+    if (!isNaN(val) && val >= 1) {
+      setQty(id, val);
+    }
+    setQtyInputs((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
 
   const setMedidas = (id: number, medidas: { ancho_m: number; alto_m: number }) => {
     setCart((prev) =>
@@ -349,6 +382,11 @@ export default function NuevaVentaPage() {
   const handleSubmit = async () => {
     if (!cart.length) return;
     if (!sucursalEfectiva) { alert('No hay sucursal activa.'); return; }
+    const invalidItem = cart.find((i) => !Number.isInteger(i.cantidad) || i.cantidad < 1);
+    if (invalidItem) {
+      alert(`Cantidad inválida para "${invalidItem.nombre}". Ingresa un número entero mayor a 0.`);
+      return;
+    }
     if (descuentoGlobal > 0 && descuentoMotivo.trim().length < 3) {
       alert('Debes indicar el motivo del descuento (mínimo 3 caracteres).');
       return;
@@ -906,12 +944,17 @@ export default function NuevaVentaPage() {
                         <Icon name="remove" size={10} />
                       </button>
                       <input
-                        type="number"
-                        min={1}
-                        value={item.cantidad}
+                        type="text"
+                        inputMode="numeric"
+                        value={qtyInputs[item.productoId] ?? item.cantidad}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) setQty(item.productoId, val);
+                          handleQtyInputChange(item.productoId, e.target.value);
+                        }}
+                        onBlur={() => handleQtyInputBlur(item.productoId)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.currentTarget.blur();
+                          }
                         }}
                         className="w-10 text-center text-sm font-mono bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                       />

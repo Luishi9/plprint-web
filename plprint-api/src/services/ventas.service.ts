@@ -134,22 +134,27 @@ export class VentasService {
   async create(dto: CreateVentaDTO) {
     // Validar stock antes de crear la venta
     for (const item of dto.items) {
+      const [insumos, inv] = await Promise.all([
+        prisma.producto_insumos.findMany({ where: { producto_id: item.productoId } }),
+        prisma.inventario.findUnique({
+          where: {
+            producto_id_sucursal_id: {
+              producto_id: item.productoId,
+              sucursal_id: dto.sucursalId,
+            },
+          },
+        }),
+      ]);
+
       // Si el producto tiene insumos enlazados (producción), salta la validación
       // de stock de producto — el stock se valida a nivel de insumos
-      const insumos = await prisma.producto_insumos.findMany({
-        where: { producto_id: item.productoId },
-      });
       if (insumos.length > 0) continue;
 
-      const inv = await prisma.inventario.findUnique({
-        where: {
-          producto_id_sucursal_id: {
-            producto_id: item.productoId,
-            sucursal_id: dto.sucursalId,
-          },
-        },
-      });
-      if (!inv || inv.cantidad < item.cantidad) {
+      // Si el producto NO tiene registro en inventario, se vende sin validar stock
+      // (productos digitales, servicios o sin tracking de stock)
+      if (!inv) continue;
+
+      if (inv.cantidad < item.cantidad) {
         const prod = await prisma.productos.findUnique({ where: { id: item.productoId }, select: { nombre: true } });
         throw new ValidationError(`Stock insuficiente para "${prod?.nombre}"`);
       }
@@ -197,15 +202,30 @@ export class VentasService {
 
       // Descontar inventario, registrar kardex e impresiones
       for (const item of subtotales) {
-        await tx.inventario.update({
-          where: {
-            producto_id_sucursal_id: {
-              producto_id: item.productoId,
-              sucursal_id: dto.sucursalId,
+        const [productoInsumos, invRecord] = await Promise.all([
+          tx.producto_insumos.findMany({ where: { producto_id: item.productoId } }),
+          tx.inventario.findUnique({
+            where: {
+              producto_id_sucursal_id: {
+                producto_id: item.productoId,
+                sucursal_id: dto.sucursalId,
+              },
             },
-          },
-          data: { cantidad: { decrement: item.cantidad } },
-        });
+          }),
+        ]);
+
+        // Solo descontar inventario si existe registro en inventario y no tiene insumos enlazados
+        if (invRecord && productoInsumos.length === 0) {
+          await tx.inventario.update({
+            where: {
+              producto_id_sucursal_id: {
+                producto_id: item.productoId,
+                sucursal_id: dto.sucursalId,
+              },
+            },
+            data: { cantidad: { decrement: item.cantidad } },
+          });
+        }
 
         // Crear impresión automática si el producto tiene máquina asignada
         const producto = await tx.productos.findUnique({
@@ -240,10 +260,6 @@ export class VentasService {
         });
 
         // Descontar insumos automáticamente (BOM)
-        const productoInsumos = await tx.producto_insumos.findMany({
-          where: { producto_id: item.productoId },
-        });
-
         for (const pi of productoInsumos) {
           const cantidadDescontar = Number(pi.cantidad_requerida) * item.cantidad;
 
