@@ -1,5 +1,6 @@
 import { prisma } from '../config/database';
 import { NotFoundError, ValidationError } from '../utils/errors';
+import { Prisma } from '@prisma/client';
 
 interface VentaItem {
   productoId: number;
@@ -120,14 +121,15 @@ export class VentasService {
     return venta;
   }
 
-  private async generarFolio(): Promise<string> {
+  private async generarFolio(tx?: Prisma.TransactionClient): Promise<string> {
+    const client = tx ?? prisma;
     const hoy = new Date();
     const yyyy = hoy.getFullYear().toString();
     const mm = (hoy.getMonth() + 1).toString().padStart(2, '0');
     const dd = hoy.getDate().toString().padStart(2, '0');
     const prefix = `VEN-${yyyy}${mm}${dd}-`;
 
-    const ultimo = await prisma.ventas.findFirst({
+    const ultimo = await client.ventas.findFirst({
       where: { folio: { startsWith: prefix } },
       orderBy: { folio: 'desc' },
       select: { folio: true },
@@ -181,7 +183,7 @@ export class VentasService {
       const estadoPago = dto.estadoPago || 'pagada';
       const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
 
-      const folio = await this.generarFolio();
+      const folio = await this.generarFolio(tx);
       const venta = await tx.ventas.create({
         data: {
           folio,
