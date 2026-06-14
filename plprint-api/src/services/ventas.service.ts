@@ -38,18 +38,29 @@ interface FindAllParams {
   usuarioIdFiltro?: number;
 }
 
+const buildLocalDate = (dateStr: string, endOfDay: boolean): Date => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  if (endOfDay) date.setHours(23, 59, 59, 999);
+  return date;
+};
+
 export class VentasService {
   async findAll({ page, limit, sucursalId, desde, hasta, sucursalesPermitidas, estado, estadoPago, search, usuarioIdFiltro }: FindAllParams) {
     const skip = (page - 1) * limit;
+
+    const desdeDate = desde ? buildLocalDate(desde, false) : undefined;
+    const hastaDate = hasta ? buildLocalDate(hasta, true) : undefined;
+
     const where: Record<string, unknown> = {
       sucursal_id: {
         in: sucursalId ? [sucursalId] : sucursalesPermitidas,
       },
-      ...(desde || hasta
+      ...(desdeDate || hastaDate
         ? {
             created_at: {
-              ...(desde && { gte: new Date(desde) }),
-              ...(hasta && { lte: new Date(hasta) }),
+              ...(desdeDate && { gte: desdeDate }),
+              ...(hastaDate && { lte: hastaDate }),
             },
           }
         : {}),
