@@ -134,6 +134,13 @@ export class VentasService {
   async create(dto: CreateVentaDTO) {
     // Validar stock antes de crear la venta
     for (const item of dto.items) {
+      // Si el producto tiene insumos enlazados (producción), salta la validación
+      // de stock de producto — el stock se valida a nivel de insumos
+      const insumos = await prisma.producto_insumos.findMany({
+        where: { producto_id: item.productoId },
+      });
+      if (insumos.length > 0) continue;
+
       const inv = await prisma.inventario.findUnique({
         where: {
           producto_id_sucursal_id: {

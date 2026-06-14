@@ -334,6 +334,42 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 
 6. [x] unidades de medida, jalar las que se dan de alta no las que estan fijas
 
+#### -------------------------------------------------------------------------------------------
+
+* Almacen:
+  - agregar compra cambiarlo como esta en docu
+
+* [] agregar ancho fijo del rojo
+* [] ML calculo de cobro (ancho no tomar en cuenta) - largo x cantidad = cobro total
+  - si al colocar la medida de largo es menor a 1mtr tomarlo como metro completo y asi hacer el
+    calculo del cobro
+* [] M2 calculo de cobro = ancho x largo x cantidad = cobro total
+  - si al colocar la medida de largo es menor a 1mtr tomarlo como metro completo y asi hacer el
+    calculo del cobro
+
+* en ventas, cuando se busca un producto, agregar que se muestre la listab de los que concuerden con lo que escribo
+* cambiar el card de los productos en ventas para tener mas a la vista el nombre de los productos
+
+
+
+
+
+
+
+
+* Checar si tenemos TOAST para el manejo de notificaciones
+* checar si tenemos instalado Untitled UI para aplicar estilos
+* estilo para las notificaciones
+
+
+
+
+
+
+
+
+
+
 ## Sistema de Niveles de Precios por Volumen (medio mayoreo, mayoreo, super mayoreo) — IMPLEMENTADO 2026-06-06
 
 ### Tabla nueva `producto_precios`

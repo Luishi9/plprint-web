@@ -170,7 +170,13 @@ export default function NuevaVentaPage() {
         );
         return prev.map((i) =>
           i.productoId === p.id
-            ? { ...i, cantidad: nuevaCantidad, precioUnitario: calcMedida.precioUnitario || calcPrecio.precio, nivelAplicado: calcPrecio.nivel, labelUnidad: calcMedida.labelUnidad }
+            ? {
+                ...i,
+                cantidad: nuevaCantidad,
+                precioUnitario: i.esMedida && i.tipoMedida ? (calcMedida.precioUnitario || calcPrecio.precio) : calcPrecio.precio,
+                nivelAplicado: calcPrecio.nivel,
+                labelUnidad: calcMedida.labelUnidad,
+              }
             : i,
         );
       }
@@ -187,7 +193,7 @@ export default function NuevaVentaPage() {
         productoId: p.id,
         nombre: p.nombre,
         precioBase: Number(p.precio_venta),
-        precioUnitario: calcMedida.precioUnitario || calcPrecio.precio,
+        precioUnitario: esMedida && tipoMedida ? (calcMedida.precioUnitario || calcPrecio.precio) : calcPrecio.precio,
         cantidad: 1,
         descuento: 0,
         niveles,
@@ -242,7 +248,7 @@ export default function NuevaVentaPage() {
           return {
             ...i,
             cantidad,
-            precioUnitario: calcMedida.precioUnitario || calcPrecio.precio,
+            precioUnitario: i.esMedida && i.tipoMedida ? (calcMedida.precioUnitario || calcPrecio.precio) : calcPrecio.precio,
             nivelAplicado: calcPrecio.nivel,
             labelUnidad: calcMedida.labelUnidad,
           };
@@ -291,7 +297,7 @@ export default function NuevaVentaPage() {
         return {
           ...i,
           cantidad,
-          precioUnitario: calcMedida.precioUnitario || calcPrecio.precio,
+          precioUnitario: i.esMedida && i.tipoMedida ? (calcMedida.precioUnitario || calcPrecio.precio) : calcPrecio.precio,
           nivelAplicado: calcPrecio.nivel,
           labelUnidad: calcMedida.labelUnidad,
         };
@@ -316,7 +322,7 @@ export default function NuevaVentaPage() {
           ...i,
           ancho_m: medidas.ancho_m,
           alto_m: medidas.alto_m,
-          precioUnitario: calcMedida.precioUnitario || calcPrecio.precio,
+          precioUnitario: i.esMedida && i.tipoMedida ? (calcMedida.precioUnitario || calcPrecio.precio) : calcPrecio.precio,
           labelUnidad: calcMedida.labelUnidad,
         };
       }),
@@ -1149,7 +1155,7 @@ export default function NuevaVentaPage() {
                   productoId: p.id,
                   nombre: p.nombre,
                   precioBase: Number(p.precio_venta),
-                  precioUnitario: calcMedida.precioUnitario || calc.precio,
+                  precioUnitario: esMedida && tipoMedida ? (calcMedida.precioUnitario || calc.precio) : calc.precio,
                   cantidad: 1,
                   descuento: 0,
                   niveles,
