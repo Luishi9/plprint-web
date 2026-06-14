@@ -141,7 +141,9 @@ export class VentasService {
       seq = parseInt(partes[3], 10) + 1;
     }
 
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    const folio = `${prefix}${seq.toString().padStart(4, '0')}`;
+    console.log(`[generarFolio] Generando folio: ${folio} | Ultimo encontrado: ${ultimo?.folio ?? 'ninguno'}`);
+    return folio;
   }
 
   async create(dto: CreateVentaDTO) {
@@ -293,6 +295,7 @@ export class VentasService {
         const isUniqueError =
           typeof err === 'object' && err !== null && 'code' in err &&
           (err as { code: string }).code === 'P2002';
+        console.log(`[generarFolio] Intento ${attempt} falló con error P2002: folio duplicado`);
         if (isUniqueError && attempt < MAX_FOLIO_RETRIES) {
           continue;
         }

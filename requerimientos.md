@@ -351,6 +351,11 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 * cambiar el card de los productos en ventas para tener mas a la vista el nombre de los productos
 
 
+* correccion de folios
+* correcion de la medida de los planos, que no es el ancho, es el alto, y que haga el calculo bien
+  largo x cantidad = costo total
+
+
 
 
 
