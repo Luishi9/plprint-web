@@ -172,12 +172,12 @@ export default function NuevaVentaPage() {
         return prev.map((i) =>
           i.productoId === p.id
             ? {
-                ...i,
-                cantidad: nuevaCantidad,
-                precioUnitario: i.esMedida && i.tipoMedida ? (calcMedida.precioUnitario || calcPrecio.precio) : calcPrecio.precio,
-                nivelAplicado: calcPrecio.nivel,
-                labelUnidad: calcMedida.labelUnidad,
-              }
+              ...i,
+              cantidad: nuevaCantidad,
+              precioUnitario: i.esMedida && i.tipoMedida ? (calcMedida.precioUnitario || calcPrecio.precio) : calcPrecio.precio,
+              nivelAplicado: calcPrecio.nivel,
+              labelUnidad: calcMedida.labelUnidad,
+            }
             : i,
         );
       }
@@ -801,15 +801,44 @@ export default function NuevaVentaPage() {
         <div className="flex flex-col gap-3 flex-1 min-w-0 h-full">
           <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
             <div className="relative">
-              {isSearching
-                ? <Icon name="progress_activity" className="absolute left-3 top-2.5 h-4 w-4 text-[#2e9e9b] animate-spin" />
-                : <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />}
+              <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
+                {isSearching
+                  ? <Icon name="progress_activity" className="h-4 w-4 text-[#2e9e9b] animate-spin" />
+                  : <Icon name="search" className="h-4 w-4 text-muted-foreground" />}
+              </div>
               <Input
                 placeholder="Buscar producto por nombre o código..."
                 className="pl-9 bg-card border-border focus-visible:ring-[#2e9e9b]"
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
               />
+              {productSearch && productos.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-card border border-border rounded-lg shadow-xl z-10">
+                  {productos.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        addToCart(p);
+                        setProductSearch('');
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#2e9e9b]/10 transition-colors text-left border-b border-border/50 last:border-0"
+                    >
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-background/50 flex-shrink-0 flex items-center justify-center">
+                        {p.imagen_url ? (
+                          <img src={getImageUrl(p.imagen_url)} alt={p.nombre} className="w-full h-full object-cover" />
+                        ) : (
+                          <Icon name="inventory_2" size={16} className="text-muted-foreground/20" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{p.nombre}</p>
+                        <p className="text-xs text-muted-foreground">{p.codigo ? `#${p.codigo}` : 'Sin código'}</p>
+                      </div>
+                      <span className="text-sm font-bold text-[#2e9e9b]">{money(Number(p.precio_venta))}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex-1 min-h-0 overflow-y-auto">
@@ -817,163 +846,167 @@ export default function NuevaVentaPage() {
                 <AnimatePresence>
                   {productos.map((p, i) => (
                     <motion.button
-                    key={p.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    onClick={() => addToCart(p)}
-                    className="group relative flex flex-col rounded-xl border border-border bg-card/60 hover:border-[#2e9e9b]/50 hover:bg-card transition-all text-left overflow-hidden"
-                  >
-                    <div className="aspect-square bg-background/50 overflow-hidden">
-                      {p.imagen_url ? (
-                        <img src={getImageUrl(p.imagen_url)} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
-                          <Icon name="inventory_2" size={32} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-1.5">
-                      <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">{p.nombre}</p>
-                      <p className="text-sm font-bold text-[#2e9e9b] mt-0.5">
-                        {money(Number(p.precio_venta))}
-                      </p>
-                      {p.producto_precios && p.producto_precios.filter((n) => n.activo).length > 0 && (
-                        <div className="flex flex-wrap gap-0.5 mt-1">
-                          {p.producto_precios.filter((n) => n.activo).map((n) => (
-                            <span key={n.nivel} className="text-[9px] text-muted-foreground">
-                              ≥{n.cantidad_minima}: {money(Number(n.precio))}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {p.unidad_info?.es_medida && p.unidad_info.tipo_medida && (
-                        <span className="inline-block mt-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
-                          {p.unidad_info.tipo_medida === 'm2' ? 'por m²' : 'por ml'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute top-2 right-2 bg-[#2e9e9b] text-black rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(153,255,61,0.5)]">
-                      <Icon name="add" size={14} />
-                    </div>
-                  </motion.button>
-                ))}
-              </AnimatePresence>
-              {!isSearching && productos.length === 0 && (
-                <div className="col-span-full h-32 flex items-center justify-center text-muted-foreground text-sm">
-                  No se encontraron productos.
-                </div>
-              )}
-            </div>
-          </div>
+                      key={p.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      onClick={() => addToCart(p)}
+                      className="group relative flex flex-col items-stretch rounded-xl border border-border bg-card/60 hover:border-[#2e9e9b]/50 hover:bg-card transition-all text-left overflow-hidden p-3"
+                    >
 
-          {/* Carrito */}
-          <div className="rounded-xl border border-border bg-card/50 flex flex-col overflow-hidden h-[320px]">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-sm font-semibold text-white flex items-center gap-2">
-                <Icon name="shopping_cart" size={14} className="text-[#2e9e9b]" />
-                Carrito
-              </span>
-              <span className="text-xs text-muted-foreground">{cart.length} ítem(s)</span>
-            </div>
-            <div className="flex-1 flex flex-col divide-y divide-border overflow-y-auto">
-              <AnimatePresence>
-                {cart.length === 0 && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 text-center text-sm text-muted-foreground">
-                    Agrega productos del catálogo
-                  </motion.div>
+                      <div className="flex-1 min-h-0 mb-2 text-center">
+                        <p className="text-sm font-semibold text-foreground leading-tight line-clamp-2">{p.nombre}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-background/50 flex-shrink-0 flex items-center justify-center">
+                          {p.imagen_url ? (
+                            <img src={getImageUrl(p.imagen_url)} alt={p.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
+                              <Icon name="inventory_2" size={20} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-lg font-extrabold text-[#2e9e9b]">{money(Number(p.precio_venta))}</span>
+                          <span className="text-xs text-muted-foreground">{p.codigo ? `#${p.codigo}` : ''}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {p.unidad_info?.es_medida && p.unidad_info.tipo_medida && (
+                            <span className="inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
+                              {p.unidad_info.tipo_medida === 'm2' ? 'm²' : 'ml'}
+                            </span>
+                          )}
+                          {p.producto_precios && p.producto_precios.filter((n) => n.activo).length > 0 && (
+                            <span className="text-[10px] text-muted-foreground">Precios por volumen disponibles</span>
+                          )}
+                        </div>
+
+                        <button type="button" className="inline-flex items-center gap-2 bg-[#2e9e9b] text-black rounded px-2 py-1 text-sm font-semibold shadow-sm">
+                          <Icon name="add" size={14} />
+                        </button>
+                      </div>
+                    </motion.button>
+                  ))}
+                </AnimatePresence>
+                {!isSearching && productos.length === 0 && (
+                  <div className="col-span-full h-32 flex items-center justify-center text-muted-foreground text-sm">
+                    No se encontraron productos.
+                  </div>
                 )}
-                {cart.map((item) => (
-                  <motion.div
-                    key={item.productoId}
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="flex items-center gap-3 px-4 py-2.5"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate text-foreground">{item.nombre}</p>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        {item.esMedida && item.labelUnidad
-                          ? `${item.labelUnidad} × ${money(item.precioBase)} c/u`
-                          : `${money(item.precioUnitario)} c/u`}
-                      </p>
-                      {item.nivelAplicado && (
-                        <span className="inline-block mt-0.5 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
-                          {NIVELES_LABEL[item.nivelAplicado]}
-                        </span>
-                      )}
-                    </div>
-                    {item.esMedida && (
-                      <div className="flex items-center gap-1 text-xs font-mono">
-                        <span className="text-[10px] uppercase tracking-wider px-1 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
-                          {item.tipoMedida === 'm2' ? 'm²' : 'ml'}
-                        </span>
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={item.ancho_m || ''}
-                          placeholder="ancho"
-                          onChange={(e) => {
-                            const v = parseFloat(e.target.value);
-                            setMedidas(item.productoId, { ancho_m: isNaN(v) ? 0 : v, alto_m: item.alto_m });
-                          }}
-                          className="w-14 text-center bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                        />
-                        {item.tipoMedida === 'm2' && <span className="text-muted-foreground">×</span>}
-                        {item.tipoMedida === 'm2' && (
+              </div>
+            </div>
+
+            {/* Carrito */}
+            <div className="rounded-xl border border-border bg-card/50 flex flex-col overflow-hidden h-[320px]">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                <span className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Icon name="shopping_cart" size={14} className="text-[#2e9e9b]" />
+                  Carrito
+                </span>
+                <span className="text-xs text-muted-foreground">{cart.length} ítem(s)</span>
+              </div>
+              <div className="flex-1 flex flex-col divide-y divide-border overflow-y-auto">
+                <AnimatePresence>
+                  {cart.length === 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 text-center text-sm text-muted-foreground">
+                      Agrega productos del catálogo
+                    </motion.div>
+                  )}
+                  {cart.map((item) => (
+                    <motion.div
+                      key={item.productoId}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="flex items-center gap-3 px-4 py-2.5"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate text-foreground">{item.nombre}</p>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {item.esMedida && item.labelUnidad
+                            ? `${item.labelUnidad} × ${money(item.precioBase)} c/u`
+                            : `${money(item.precioUnitario)} c/u`}
+                        </p>
+                        {item.nivelAplicado && (
+                          <span className="inline-block mt-0.5 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
+                            {NIVELES_LABEL[item.nivelAplicado]}
+                          </span>
+                        )}
+                      </div>
+                      {item.esMedida && (
+                        <div className="flex items-center gap-1 text-xs font-mono">
+                          <span className="text-[10px] uppercase tracking-wider px-1 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
+                            {item.tipoMedida === 'm2' ? 'm²' : 'ml'}
+                          </span>
                           <input
                             type="number"
                             min={0}
                             step="0.01"
-                            value={item.alto_m || ''}
-                            placeholder="alto"
+                            value={item.ancho_m || ''}
+                            placeholder="ancho"
                             onChange={(e) => {
                               const v = parseFloat(e.target.value);
-                              setMedidas(item.productoId, { ancho_m: item.ancho_m, alto_m: isNaN(v) ? 0 : v });
+                              setMedidas(item.productoId, { ancho_m: isNaN(v) ? 0 : v, alto_m: item.alto_m });
                             }}
                             className="w-14 text-center bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                           />
-                        )}
-                        <span className="text-muted-foreground">m</span>
+                          {item.tipoMedida === 'm2' && <span className="text-muted-foreground">×</span>}
+                          {item.tipoMedida === 'm2' && (
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              value={item.alto_m || ''}
+                              placeholder="alto"
+                              onChange={(e) => {
+                                const v = parseFloat(e.target.value);
+                                setMedidas(item.productoId, { ancho_m: item.ancho_m, alto_m: isNaN(v) ? 0 : v });
+                              }}
+                              className="w-14 text-center bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            />
+                          )}
+                          <span className="text-muted-foreground">m</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => updateQty(item.productoId, -1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
+                          <Icon name="remove" size={10} />
+                        </button>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={qtyInputs[item.productoId] ?? item.cantidad}
+                          onChange={(e) => {
+                            handleQtyInputChange(item.productoId, e.target.value);
+                          }}
+                          onBlur={() => handleQtyInputBlur(item.productoId)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          className="w-10 text-center text-sm font-mono bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                        />
+                        <button onClick={() => updateQty(item.productoId, 1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
+                          <Icon name="add" size={10} />
+                        </button>
                       </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => updateQty(item.productoId, -1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
-                        <Icon name="remove" size={10} />
+                      <span className="text-sm font-bold text-[#2e9e9b] w-20 text-right font-mono">
+                        {money(item.precioUnitario * item.cantidad)}
+                      </span>
+                      <button onClick={() => removeItem(item.productoId)} className="text-muted-foreground/50 hover:text-red-400 transition-colors">
+                        <Icon name="delete" size={14} />
                       </button>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={qtyInputs[item.productoId] ?? item.cantidad}
-                        onChange={(e) => {
-                          handleQtyInputChange(item.productoId, e.target.value);
-                        }}
-                        onBlur={() => handleQtyInputBlur(item.productoId)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.currentTarget.blur();
-                          }
-                        }}
-                        className="w-10 text-center text-sm font-mono bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                      />
-                      <button onClick={() => updateQty(item.productoId, 1)} className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-white/5 text-muted-foreground">
-                        <Icon name="add" size={10} />
-                      </button>
-                    </div>
-                    <span className="text-sm font-bold text-[#2e9e9b] w-20 text-right font-mono">
-                      {money(item.precioUnitario * item.cantidad)}
-                    </span>
-                    <button onClick={() => removeItem(item.productoId)} className="text-muted-foreground/50 hover:text-red-400 transition-colors">
-                      <Icon name="delete" size={14} />
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
-        </div>
         </div>
         <div className="flex flex-col gap-3 w-full lg:w-[380px] shrink-0">
 
@@ -1036,8 +1069,8 @@ export default function NuevaVentaPage() {
                       key={m.id}
                       onClick={() => setMetodoPago(value)}
                       className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-all ${isActive
-                          ? 'border-[#2e9e9b] bg-[#2e9e9b]/10 text-[#2e9e9b]'
-                          : 'border-border text-muted-foreground hover:border-border/80 hover:bg-white/5'
+                        ? 'border-[#2e9e9b] bg-[#2e9e9b]/10 text-[#2e9e9b]'
+                        : 'border-border text-muted-foreground hover:border-border/80 hover:bg-white/5'
                         }`}
                     >
                       <Icon name={iconName} size={16} />

@@ -121,8 +121,7 @@ export class VentasService {
     return venta;
   }
 
-  private async generarFolio(tx?: Prisma.TransactionClient): Promise<string> {
-    const client = tx ?? prisma;
+  private async generarFolio(): Promise<string> {
     const hoy = new Date();
     const yyyy = hoy.getFullYear().toString();
     const mm = (hoy.getMonth() + 1).toString().padStart(2, '0');
@@ -131,13 +130,13 @@ export class VentasService {
 
     const fechaStr = `${yyyy}-${mm}-${dd}`;
 
-    await client.$executeRaw`
+    await prisma.$executeRaw`
       INSERT INTO folio_counter (fecha, seq)
       VALUES (CAST(${fechaStr} AS DATE), 1)
       ON DUPLICATE KEY UPDATE seq = LAST_INSERT_ID(seq) + 1
     `;
 
-    const row = await client.$queryRaw<[{ seq: bigint }]>`
+    const row = await prisma.$queryRaw<[{ seq: bigint }]>`
       SELECT LAST_INSERT_ID() AS seq
     `;
 
@@ -179,7 +178,7 @@ export class VentasService {
       const estadoPago = dto.estadoPago || 'pagada';
       const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
 
-      const folio = await this.generarFolio(tx);
+          const folio = await this.generarFolio();
       const venta = await tx.ventas.create({
         data: {
           folio,

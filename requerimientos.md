@@ -358,13 +358,10 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 
 
 
-
-
-
-
 * Checar si tenemos TOAST para el manejo de notificaciones
 * checar si tenemos instalado Untitled UI para aplicar estilos
 * estilo para las notificaciones
+* react motion
 
 
 
