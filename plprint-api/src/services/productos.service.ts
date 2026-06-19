@@ -21,12 +21,33 @@ const getUnidadInfo = async (abreviatura: string | null) => {
 
 export const clearUnidadInfoCache = () => _unidadInfoCache.clear();
 
-const attachUnidadInfo = async <T extends { unidad_medida: string | null }>(productos: T[]) => {
+const attachUnidadInfo = async <T extends { unidad_medida: string | null; id: number }>(productos: T[]) => {
   const unidades = Array.from(new Set(productos.map((p) => p.unidad_medida).filter(Boolean) as string[]));
   await Promise.all(unidades.map(getUnidadInfo));
+
+  const productoIds = productos.map((p) => p.id);
+  const insumosConRollo = await prisma.producto_insumos.findMany({
+    where: {
+      producto_id: { in: productoIds },
+      insumos: { ancho_rollo: { not: null } },
+    },
+    select: {
+      producto_id: true,
+      insumos: { select: { ancho_rollo: true } },
+    },
+  });
+
+  const rolloMap = new Map<number, number>();
+  for (const pi of insumosConRollo) {
+    if (pi.insumos.ancho_rollo && !rolloMap.has(pi.producto_id)) {
+      rolloMap.set(pi.producto_id, Number(pi.insumos.ancho_rollo));
+    }
+  }
+
   return productos.map((p) => {
     const info = p.unidad_medida ? _unidadInfoCache.get(p.unidad_medida) : null;
-    return { ...p, unidad_info: info ?? { es_medida: false, tipo_medida: null } };
+    const anchoRollo = rolloMap.get(p.id) ?? null;
+    return { ...p, unidad_info: info ?? { es_medida: false, tipo_medida: null }, ancho_rollo: anchoRollo };
   });
 };
 
@@ -43,7 +64,8 @@ interface CreateProductoDTO {
   cantidadInicial?: number;
   stockMinimo?: number;
   sucursalId?: number;
-  usuarioId?: number; // Para registrar quién hizo el movimiento si hay cantidadInicial
+  usuarioId?: number;
+  cobrarMinimo1?: boolean;
   insumos?: Array<{ insumoId: number; cantidadRequerida: number }>;
 }
 
@@ -132,6 +154,7 @@ export class ProductosService {
           proveedor_id: data.proveedorId,
           unidad_medida: data.unidadMedida,
           imagen_url: data.imagenUrl,
+          cobrar_minimo_1: data.cobrarMinimo1 ?? false,
         },
       });
 
@@ -191,6 +214,7 @@ export class ProductosService {
           ...(data.unidadMedida && { unidad_medida: data.unidadMedida }),
           ...(data.imagenUrl && { imagen_url: data.imagenUrl }),
           ...(data.codigo && { codigo: data.codigo }),
+          ...(data.cobrarMinimo1 !== undefined && { cobrar_minimo_1: data.cobrarMinimo1 }),
         },
       });
 

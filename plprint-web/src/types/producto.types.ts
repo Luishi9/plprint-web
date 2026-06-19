@@ -8,6 +8,7 @@ export interface Producto {
   unidad_medida: string;
   imagen_url?: string;
   activo: boolean;
+  cobrar_minimo_1?: boolean;
   categoria_id?: number;
   proveedor_id?: number;
   categorias?: { nombre: string };
@@ -25,6 +26,7 @@ export interface CreateProductoPayload {
   imagen?: File;
   cantidadInicial?: number;
   sucursalId?: number;
+  cobrarMinimo1?: boolean;
 }
 
 export interface ItemInventario {

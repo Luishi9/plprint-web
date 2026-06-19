@@ -26,5 +26,14 @@ export const comprasApi = {
     insumo_id: number; cantidad: number; precio_unitario: number;
     proveedor_id?: number; sucursal_id?: number; notas?: string; fecha?: string;
   }) => apiClient.post('/compras', data),
+  createBatch: (data: {
+    items: Array<{
+      insumo_id: number; cantidad: number; precio_unitario: number;
+      proveedor_id?: number; notas?: string;
+    }>;
+    sucursal_id: number;
+    factura?: string;
+    fecha?: string;
+  }) => apiClient.post('/compras/batch', data),
   remove: (id: number) => apiClient.delete(`/compras/${id}`),
 };

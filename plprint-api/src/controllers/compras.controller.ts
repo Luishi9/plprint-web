@@ -41,6 +41,14 @@ export class ComprasController {
     } catch (err) { next(err); }
   };
 
+  createBatch = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto = { ...req.body, usuario_id: req.user?.sub };
+      const result = await this.comprasService.createBatch(dto);
+      sendCreated(res, result);
+    } catch (err) { next(err); }
+  };
+
   remove = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       await this.comprasService.remove(Number(req.params.id));

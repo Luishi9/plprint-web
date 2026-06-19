@@ -336,38 +336,25 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 
 #### -------------------------------------------------------------------------------------------
 
-* Almacen:
-  - agregar compra cambiarlo como esta en docu
-
-* [] agregar ancho fijo del rojo
-* [] ML calculo de cobro (ancho no tomar en cuenta) - largo x cantidad = cobro total
-  - si al colocar la medida de largo es menor a 1mtr tomarlo como metro completo y asi hacer el
-    calculo del cobro
-* [] M2 calculo de cobro = ancho x largo x cantidad = cobro total
-  - si al colocar la medida de largo es menor a 1mtr tomarlo como metro completo y asi hacer el
-    calculo del cobro
-
-* en ventas, cuando se busca un producto, agregar que se muestre la listab de los que concuerden con lo que escribo
-* cambiar el card de los productos en ventas para tener mas a la vista el nombre de los productos
-
-
-* correccion de folios
-* correcion de la medida de los planos, que no es el ancho, es el alto, y que haga el calculo bien
+* [x] URGENTEEE!!! correcion de la medida de los planos, que no es el ancho, es el alto, y que haga el calculo bien
   largo x cantidad = costo total
 
+* Almacen:
+  [x] agregar compra cambiarlo como esta en docu
 
+* [x] ML calculo de cobro (ancho no tomar en cuenta) - largo x cantidad = cobro total
+  - si al colocar la medida de largo es menor a 1mtr tomarlo como metro completo y asi hacer el
+    calculo del cobro
+* [x] M2 calculo de cobro = ancho x largo x cantidad = cobro total
+  - si al colocar la medida de largo es menor a 1mtr tomarlo como metro completo y asi hacer el
+    calculo del cobro
 
+* [x] en ventas, cuando se busca un producto, agregar que se muestre la listab de los que concuerden con lo que escribo
+* [x] cambiar el card de los productos en ventas para tener mas a la vista el nombre de los productos
 
-* Checar si tenemos TOAST para el manejo de notificaciones
-* checar si tenemos instalado Untitled UI para aplicar estilos
-* estilo para las notificaciones
-* react motion
-
-
-
-
-
-
+* [x] correccion de folios
+* [] Checar si tenemos TOAST para el manejo de notificaciones, y cambiar a toast en lugar de alert
+* [] checar si tenemos instalado Untitled UI para aplicar estilos
 
 
 

@@ -26,7 +26,7 @@ const ESTADO_CLS: Record<string, string> = {
 };
 
 interface Cliente { id: number; nombre: string; }
-interface Producto { id: number; nombre: string; precio_venta: number | string; unidad_info?: { es_medida: boolean; tipo_medida: TipoMedida | null }; }
+interface Producto { id: number; nombre: string; precio_venta: number | string; unidad_info?: { es_medida: boolean; tipo_medida: TipoMedida | null }; ancho_rollo?: number | null; }
 
 interface ItemForm {
   producto_id: number;
@@ -37,6 +37,7 @@ interface ItemForm {
   alto_m: number;
   esMedida: boolean;
   tipoMedida: TipoMedida | null;
+  anchoRollo: number | null;
 }
 
 export default function CotizacionesPage() {
@@ -142,6 +143,7 @@ export default function CotizacionesPage() {
       alto_m: d.alto_m ? Number(d.alto_m) : 0,
       esMedida: false,
       tipoMedida: null,
+      anchoRollo: null,
     })));
     setFormError('');
     await cargarCatalogos();
@@ -152,15 +154,17 @@ export default function CotizacionesPage() {
     if (productos.length === 0) return;
     const p0 = productos[0];
     const esMedida = !!p0.unidad_info?.es_medida;
+    const anchoRollo = p0.ancho_rollo ?? null;
     setItems([...items, {
       producto_id: p0.id,
       cantidad: 1,
       precio_unitario: Number(p0.precio_venta),
       descuento: 0,
-      ancho_m: 0,
+      ancho_m: anchoRollo || 0,
       alto_m: 0,
       esMedida,
       tipoMedida: p0.unidad_info?.tipo_medida ?? null,
+      anchoRollo,
     }]);
   };
 
@@ -173,7 +177,8 @@ export default function CotizacionesPage() {
         nuevos[idx].precio_unitario = Number(p.precio_venta);
         nuevos[idx].esMedida = !!p.unidad_info?.es_medida;
         nuevos[idx].tipoMedida = p.unidad_info?.tipo_medida ?? null;
-        nuevos[idx].ancho_m = 0;
+        nuevos[idx].anchoRollo = p.ancho_rollo ?? null;
+        nuevos[idx].ancho_m = p.ancho_rollo || 0;
         nuevos[idx].alto_m = 0;
       }
     }
@@ -517,8 +522,11 @@ export default function CotizacionesPage() {
                 {items.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-4">Sin productos.</p>
                 ) : items.map((it, idx) => {
+                  const medidasCalc = it.anchoRollo
+                    ? { ancho_m: 0, alto_m: it.alto_m }
+                    : { ancho_m: it.ancho_m, alto_m: it.alto_m };
                   const calcMedida = it.esMedida
-                    ? calcularPrecioItem(it.precio_unitario, it.cantidad, { es_medida: true, tipo_medida: it.tipoMedida }, { ancho_m: it.ancho_m, alto_m: it.alto_m })
+                    ? calcularPrecioItem(it.precio_unitario, it.cantidad, { es_medida: true, tipo_medida: it.tipoMedida }, medidasCalc)
                     : { precioUnitario: 0, labelUnidad: '' };
                   const subtotal = it.esMedida
                     ? calcMedida.precioUnitario * it.cantidad - (it.descuento || 0)
@@ -564,19 +572,33 @@ export default function CotizacionesPage() {
                           <span className="text-[10px] uppercase tracking-wider px-1 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
                             {it.tipoMedida === 'm2' ? 'm²' : 'ml'}
                           </span>
-                          <span className="text-muted-foreground">ancho</span>
-                          <Input
-                            type="number" step="0.01" min="0" value={it.ancho_m || ''}
-                            onChange={(e) => {
-                              const nuevos = [...items];
-                              nuevos[idx] = { ...nuevos[idx], ancho_m: parseFloat(e.target.value) || 0 };
-                              setItems(nuevos);
-                            }}
-                            className="w-20 h-7 bg-background"
-                            placeholder="0"
-                          />
-                          {it.tipoMedida === 'm2' && (
+                          {it.anchoRollo || it.tipoMedida === 'ml' ? (
                             <>
+                              <span className="text-muted-foreground">largo</span>
+                              <Input
+                                type="number" step="0.01" min="0" value={it.alto_m || ''}
+                                onChange={(e) => {
+                                  const nuevos = [...items];
+                                  nuevos[idx] = { ...nuevos[idx], alto_m: parseFloat(e.target.value) || 0 };
+                                  setItems(nuevos);
+                                }}
+                                className="w-20 h-7 bg-background"
+                                placeholder="0"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-muted-foreground">ancho</span>
+                              <Input
+                                type="number" step="0.01" min="0" value={it.ancho_m || ''}
+                                onChange={(e) => {
+                                  const nuevos = [...items];
+                                  nuevos[idx] = { ...nuevos[idx], ancho_m: parseFloat(e.target.value) || 0 };
+                                  setItems(nuevos);
+                                }}
+                                className="w-20 h-7 bg-background"
+                                placeholder="0"
+                              />
                               <span className="text-muted-foreground">alto</span>
                               <Input
                                 type="number" step="0.01" min="0" value={it.alto_m || ''}

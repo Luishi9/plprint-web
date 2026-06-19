@@ -38,6 +38,7 @@ const formSchema = z.object({
   nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres.'),
   codigo: z.string().optional(),
   unidadMedida: z.string().default('unidad'),
+  anchoRollo: z.coerce.number().optional(),
   precioCompra: z.preprocess((val) => val ? Number(val) : undefined, z.number().positive().optional()),
   descripcion: z.string().optional(),
 });
@@ -68,18 +69,23 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
       nombre: '',
       codigo: '',
       unidadMedida: 'unidad',
+      anchoRollo: undefined,
       precioCompra: undefined,
       descripcion: '',
     },
   });
 
+  const selectedUnidad = unidades.find((u) => u.abreviatura === form.watch('unidadMedida'));
+  const esM2 = selectedUnidad?.es_medida && selectedUnidad?.tipo_medida === 'm2';
+
   useEffect(() => {
-    if (open) {
+    if (open && unidades.length > 0) {
       if (insumo) {
         form.reset({
           nombre: insumo.nombre,
           codigo: insumo.codigo || '',
           unidadMedida: insumo.unidad_medida,
+          anchoRollo: insumo.ancho_rollo ? parseFloat(insumo.ancho_rollo) : undefined,
           precioCompra: insumo.precio_compra ? parseFloat(insumo.precio_compra) : undefined,
           descripcion: insumo.descripcion || '',
         });
@@ -88,12 +94,13 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
           nombre: '',
           codigo: '',
           unidadMedida: 'unidad',
+          anchoRollo: undefined,
           precioCompra: undefined,
           descripcion: '',
         });
       }
     }
-  }, [open, insumo, form]);
+  }, [open, insumo, form, unidades]);
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
@@ -199,6 +206,29 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="anchoRollo"
+              render={({ field }) => (
+                <FormItem className={!esM2 ? 'hidden' : ''}>
+                  <FormLabel className="text-white/80">Ancho del rollo (m)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      placeholder="Ej: 1.20"
+                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ancho fijo del rollo. Se usará para calcular el consumo: ancho × largo.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

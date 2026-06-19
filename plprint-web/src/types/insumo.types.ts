@@ -4,6 +4,7 @@ export interface Insumo {
   nombre: string;
   descripcion: string | null;
   unidad_medida: string;
+  ancho_rollo: string | null;
   precio_compra: string | null;
   proveedor_id: number | null;
   activo: boolean;
@@ -52,6 +53,7 @@ export interface InsumoDTO {
   nombre: string;
   descripcion?: string;
   unidadMedida?: string;
+  anchoRollo?: number;
   precioCompra?: number;
   proveedorId?: number;
 }

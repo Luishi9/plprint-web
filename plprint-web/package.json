@@ -25,6 +25,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "flowbite": "^4.0.1",
+    "flowbite-react": "^0.12.17",
     "framer-motion": "^12.38.0",
     "material-symbols": "^0.45.1",
     "qrcode.react": "^4.2.0",

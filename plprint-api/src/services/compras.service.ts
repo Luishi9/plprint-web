@@ -132,6 +132,70 @@ export class ComprasService {
     });
   }
 
+  /**
+   * Crea múltiples compras en un solo lote (batch).
+   * Todas las compras comparten la misma sucursal, fecha, factura y usuario.
+   * Cada item puede tener su propio proveedor y notas.
+   */
+  async createBatch(dto: {
+    items: Array<{ insumo_id: number; cantidad: number; precio_unitario: number; proveedor_id?: number; notas?: string }>;
+    sucursal_id: number;
+    usuario_id?: number;
+    factura?: string;
+    fecha?: string;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const results = [];
+      for (const item of dto.items) {
+        const insumo = await tx.insumos.findUnique({ where: { id: item.insumo_id } });
+        if (!insumo) throw new NotFoundError(`Insumo id ${item.insumo_id}`);
+
+        const total = Number((item.cantidad * item.precio_unitario).toFixed(2));
+
+        const compra = await tx.compras_insumos.create({
+          data: {
+            insumo_id: item.insumo_id,
+            cantidad: new Prisma.Decimal(item.cantidad),
+            precio_unitario: new Prisma.Decimal(item.precio_unitario),
+            total: new Prisma.Decimal(total),
+            sucursal_id: dto.sucursal_id,
+            factura: dto.factura || null,
+            ...(item.proveedor_id && { proveedor_id: item.proveedor_id }),
+            ...(dto.usuario_id && { usuario_id: dto.usuario_id }),
+            ...(item.notas && { notas: item.notas }),
+            ...(dto.fecha && { fecha: new Date(dto.fecha) }),
+          },
+        });
+
+        await tx.insumos.update({
+          where: { id: item.insumo_id },
+          data: { precio_compra: new Prisma.Decimal(item.precio_unitario) },
+        });
+
+        const inv = await tx.insumos_inventario.findUnique({
+          where: { insumo_id_sucursal_id: { insumo_id: item.insumo_id, sucursal_id: dto.sucursal_id } },
+        });
+        if (inv) {
+          await tx.insumos_inventario.update({
+            where: { id: inv.id },
+            data: { cantidad: { increment: Number(item.cantidad) } },
+          });
+        } else {
+          await tx.insumos_inventario.create({
+            data: {
+              insumo_id: item.insumo_id,
+              sucursal_id: dto.sucursal_id,
+              cantidad: Number(item.cantidad),
+            },
+          });
+        }
+
+        results.push(compra);
+      }
+      return results;
+    });
+  }
+
   async remove(id: number) {
     await this.findById(id);
     // No se revierte el inventario al eliminar (es registro histórico).

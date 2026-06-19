@@ -34,6 +34,8 @@ interface ProductoCatalogo {
   codigo: string | null;
   producto_precios?: Array<{ nivel: string; cantidad_minima: number; precio: number | string; activo: boolean }>;
   unidad_info?: { es_medida: boolean; tipo_medida: TipoMedida | null };
+  ancho_rollo?: number | null;
+  cobrar_minimo_1?: boolean;
 }
 
 interface CartItem {
@@ -50,6 +52,8 @@ interface CartItem {
   ancho_m: number;
   alto_m: number;
   labelUnidad: string;
+  anchoRollo: number | null;
+  cobrarMinimo1: boolean;
 }
 
 interface Cliente {
@@ -163,11 +167,16 @@ export default function NuevaVentaPage() {
       if (ex) {
         const nuevaCantidad = ex.cantidad + 1;
         const calcPrecio = calcularPrecioPorVolumen(ex.precioBase, nuevaCantidad, ex.niveles);
+        // Si tiene ancho de rollo, solo usar largo para el cálculo
+        const medidasCalc = ex.anchoRollo
+          ? { ancho_m: 0, alto_m: ex.alto_m }
+          : { ancho_m: ex.ancho_m, alto_m: ex.alto_m };
         const calcMedida = calcularPrecioItem(
           ex.precioBase,
           nuevaCantidad,
           { es_medida: ex.esMedida, tipo_medida: ex.tipoMedida },
-          { ancho_m: ex.ancho_m, alto_m: ex.alto_m },
+          medidasCalc,
+          ex.cobrarMinimo1,
         );
         return prev.map((i) =>
           i.productoId === p.id
@@ -185,10 +194,19 @@ export default function NuevaVentaPage() {
       const calcPrecio = calcularPrecioPorVolumen(Number(p.precio_venta), 1, niveles);
       const esMedida = !!p.unidad_info?.es_medida;
       const tipoMedida = p.unidad_info?.tipo_medida ?? null;
+      const anchoRollo = p.ancho_rollo ?? null;
+      const cobrarMinimo1 = p.cobrar_minimo_1 ?? false;
+      // Si tiene ancho de rollo, auto-setear ancho_m y usar solo largo para el cálculo
+      const anchoInicial = anchoRollo || 0;
+      const medidasCalc = anchoRollo
+        ? { ancho_m: 0, alto_m: 0 }
+        : { ancho_m: 0, alto_m: 0 };
       const calcMedida = calcularPrecioItem(
         Number(p.precio_venta),
         1,
         { es_medida: esMedida, tipo_medida: tipoMedida },
+        medidasCalc,
+        cobrarMinimo1,
       );
       return [...prev, {
         productoId: p.id,
@@ -201,9 +219,11 @@ export default function NuevaVentaPage() {
         nivelAplicado: calcPrecio.nivel,
         esMedida,
         tipoMedida,
-        ancho_m: 0,
+        ancho_m: anchoInicial,
         alto_m: 0,
         labelUnidad: calcMedida.labelUnidad,
+        anchoRollo,
+        cobrarMinimo1,
       }];
     });
   };
@@ -240,11 +260,16 @@ export default function NuevaVentaPage() {
           if (i.productoId !== id) return i;
           const cantidad = Math.max(1, i.cantidad + delta);
           const calcPrecio = calcularPrecioPorVolumen(i.precioBase, cantidad, i.niveles);
+          // Si tiene ancho de rollo, solo usar largo para el cálculo
+          const medidasCalc = i.anchoRollo
+            ? { ancho_m: 0, alto_m: i.alto_m }
+            : { ancho_m: i.ancho_m, alto_m: i.alto_m };
           const calcMedida = calcularPrecioItem(
             i.precioBase,
             cantidad,
             { es_medida: i.esMedida, tipo_medida: i.tipoMedida },
-            { ancho_m: i.ancho_m, alto_m: i.alto_m },
+            medidasCalc,
+            i.cobrarMinimo1,
           );
           return {
             ...i,
@@ -289,11 +314,16 @@ export default function NuevaVentaPage() {
         if (i.productoId !== id) return i;
         const cantidad = Math.max(1, nuevaCantidad);
         const calcPrecio = calcularPrecioPorVolumen(i.precioBase, cantidad, i.niveles);
+        // Si tiene ancho de rollo, solo usar largo para el cálculo
+        const medidasCalc = i.anchoRollo
+          ? { ancho_m: 0, alto_m: i.alto_m }
+          : { ancho_m: i.ancho_m, alto_m: i.alto_m };
         const calcMedida = calcularPrecioItem(
           i.precioBase,
           cantidad,
           { es_medida: i.esMedida, tipo_medida: i.tipoMedida },
-          { ancho_m: i.ancho_m, alto_m: i.alto_m },
+          medidasCalc,
+          i.cobrarMinimo1,
         );
         return {
           ...i,
@@ -344,11 +374,16 @@ export default function NuevaVentaPage() {
     setCart((prev) =>
       prev.map((i) => {
         if (i.productoId !== id) return i;
+        // Si tiene ancho de rollo, solo usar largo para el cálculo
+        const medidasCalc = i.anchoRollo
+          ? { ancho_m: 0, alto_m: medidas.alto_m }
+          : medidas;
         const calcMedida = calcularPrecioItem(
           i.precioBase,
           i.cantidad,
           { es_medida: i.esMedida, tipo_medida: i.tipoMedida },
-          medidas,
+          medidasCalc,
+          i.cobrarMinimo1,
         );
         const calcPrecio = calcularPrecioPorVolumen(i.precioBase, i.cantidad, i.niveles);
         return {
@@ -584,6 +619,8 @@ export default function NuevaVentaPage() {
         ancho_m: d.ancho_m ? Number(d.ancho_m) : 0,
         alto_m: d.alto_m ? Number(d.alto_m) : 0,
         labelUnidad: '',
+        anchoRollo: null,
+        cobrarMinimo1: false,
       })));
       if (cot.cliente_id && cot.clientes) {
         setClienteSeleccionado({ id: cot.clientes.id, nombre: cot.clientes.nombre });
@@ -885,9 +922,9 @@ export default function NuevaVentaPage() {
                           )}
                         </div>
 
-                        <button type="button" className="inline-flex items-center gap-2 bg-[#2e9e9b] text-black rounded px-2 py-1 text-sm font-semibold shadow-sm">
+                        <span className="inline-flex items-center gap-2 bg-[#2e9e9b] text-black rounded px-2 py-1 text-sm font-semibold shadow-sm">
                           <Icon name="add" size={14} />
-                        </button>
+                        </span>
                       </div>
                     </motion.button>
                   ))}
@@ -942,32 +979,47 @@ export default function NuevaVentaPage() {
                           <span className="text-[10px] uppercase tracking-wider px-1 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
                             {item.tipoMedida === 'm2' ? 'm²' : 'ml'}
                           </span>
-                          <input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={item.ancho_m || ''}
-                            placeholder="ancho"
-                            onChange={(e) => {
-                              const v = parseFloat(e.target.value);
-                              setMedidas(item.productoId, { ancho_m: isNaN(v) ? 0 : v, alto_m: item.alto_m });
-                            }}
-                            className="w-14 text-center bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                          />
-                          {item.tipoMedida === 'm2' && <span className="text-muted-foreground">×</span>}
-                          {item.tipoMedida === 'm2' && (
+                          {item.anchoRollo || item.tipoMedida === 'ml' ? (
                             <input
                               type="number"
                               min={0}
                               step="0.01"
                               value={item.alto_m || ''}
-                              placeholder="alto"
+                              placeholder="largo"
                               onChange={(e) => {
                                 const v = parseFloat(e.target.value);
-                                setMedidas(item.productoId, { ancho_m: item.ancho_m, alto_m: isNaN(v) ? 0 : v });
+                                setMedidas(item.productoId, { ancho_m: item.anchoRollo || 0, alto_m: isNaN(v) ? 0 : v });
                               }}
                               className="w-14 text-center bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                             />
+                          ) : (
+                            <>
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={item.ancho_m || ''}
+                                placeholder="ancho"
+                                onChange={(e) => {
+                                  const v = parseFloat(e.target.value);
+                                  setMedidas(item.productoId, { ancho_m: isNaN(v) ? 0 : v, alto_m: item.alto_m });
+                                }}
+                                className="w-14 text-center bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              />
+                              <span className="text-muted-foreground">×</span>
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={item.alto_m || ''}
+                                placeholder="alto"
+                                onChange={(e) => {
+                                  const v = parseFloat(e.target.value);
+                                  setMedidas(item.productoId, { ancho_m: item.ancho_m, alto_m: isNaN(v) ? 0 : v });
+                                }}
+                                className="w-14 text-center bg-transparent border border-border rounded-md px-1 py-0.5 focus:outline-none focus:border-[#2e9e9b] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              />
+                            </>
                           )}
                           <span className="text-muted-foreground">m</span>
                         </div>
@@ -1226,6 +1278,8 @@ export default function NuevaVentaPage() {
                   Number(p.precio_venta),
                   1,
                   { es_medida: esMedida, tipo_medida: tipoMedida },
+                  undefined,
+                  p.cobrar_minimo_1 ?? false,
                 );
                 return [...prev, {
                   productoId: p.id,
@@ -1238,9 +1292,11 @@ export default function NuevaVentaPage() {
                   nivelAplicado: calc.nivel,
                   esMedida,
                   tipoMedida,
-                  ancho_m: 0,
+                  ancho_m: p.ancho_rollo || 0,
                   alto_m: 0,
                   labelUnidad: calcMedida.labelUnidad,
+                  anchoRollo: p.ancho_rollo ?? null,
+                  cobrarMinimo1: p.cobrar_minimo_1 ?? false,
                 }];
               });
             }

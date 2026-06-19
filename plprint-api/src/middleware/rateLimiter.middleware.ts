@@ -6,6 +6,9 @@ export const rateLimiter = rateLimit({
   max: env.RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: {
+    xForwardedForHeader: false,
+  },
   message: {
     success: false,
     message: 'Demasiadas peticiones. Intenta nuevamente mas tarde.',

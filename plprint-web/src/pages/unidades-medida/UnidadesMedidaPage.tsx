@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Checkbox, Label } from "flowbite-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 
@@ -238,18 +239,26 @@ export default function UnidadesMedidaPage() {
               />
             </div>
             <div className="col-span-3 mt-1">
-              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={form.es_medida}
-                  onChange={(e) => setForm({ ...form, es_medida: e.target.checked, tipo_medida: e.target.checked ? form.tipo_medida : '' })}
-                  className="accent-[#2e9e9b] h-4 w-4"
-                />
-                <span>Esta unidad se vende por medidas</span>
-              </label>
-              <p className="text-xs text-muted-foreground mt-1 ml-6">
-                El precio del producto se interpretará como precio por m² o por metro lineal.
-              </p>
+
+              <div className="flex gap-2">
+                <div className="flex h-5 items-center">
+                  <Checkbox
+                    id="es-medida"
+                    checked={form.es_medida}
+                    onChange={(e) => setForm({ ...form, es_medida: e.target.checked, tipo_medida: e.target.checked ? form.tipo_medida : '' })}
+                    color="cyan"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label htmlFor="es-medida" className="text-foreground">Esta unidad se vende por medidas</Label>
+                  <div className="text-gray-500 dark:text-gray-400">
+                    <span className="text-xs font-normal">
+                      El precio del producto se interpretará como precio por m² o por metro lineal.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
             </div>
             {form.es_medida && (
               <div className="col-span-3">
@@ -260,11 +269,10 @@ export default function UnidadesMedidaPage() {
                       key={t}
                       type="button"
                       onClick={() => setForm({ ...form, tipo_medida: t })}
-                      className={`h-9 rounded-md text-sm font-medium border transition-colors ${
-                        form.tipo_medida === t
+                      className={`h-9 rounded-md text-sm font-medium border transition-colors ${form.tipo_medida === t
                           ? 'bg-[#2e9e9b] text-black border-[#2e9e9b]'
                           : 'bg-background border-border text-muted-foreground hover:text-foreground'
-                      }`}
+                        }`}
                     >
                       {t === 'm2' ? 'm² (ancho × alto)' : 'ml (largo)'}
                     </button>

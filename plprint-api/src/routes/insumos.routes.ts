@@ -13,6 +13,7 @@ const createSchema = z.object({
   codigo: z.string().optional(),
   descripcion: z.string().optional(),
   unidadMedida: z.string().optional(),
+  anchoRollo: z.coerce.number().positive().optional(),
   precioCompra: z.coerce.number().positive().optional(),
   proveedorId: z.coerce.number().int().positive().optional(),
 });

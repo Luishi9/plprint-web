@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Checkbox, Label } from 'flowbite-react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -52,6 +53,7 @@ const formSchema = z.object({
   descripcion: z.string().optional(),
   cantidadInicial: z.preprocess((val) => val ? Number(val) : undefined, z.number().min(0).optional()),
   stockMinimo: z.preprocess((val) => val ? Number(val) : undefined, z.number().min(0).optional()),
+  cobrarMinimo1: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -122,6 +124,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       descripcion: '',
       cantidadInicial: undefined,
       stockMinimo: undefined,
+      cobrarMinimo1: false,
     },
   });
 
@@ -150,13 +153,14 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         descripcion: producto.descripcion ?? '',
         cantidadInicial: undefined,
         stockMinimo: undefined,
+        cobrarMinimo1: producto.cobrar_minimo_1 ?? false,
       });
       setTieneExistencias(false);
       setImagePreview(getImageUrl(producto.imagen_url) ?? null);
       setSelectedFile(null);
       cargarPreciosVolumen(producto.id);
     } else if (open && !producto) {
-      form.reset({ nombre: '', codigo: '', categoriaId: undefined, precioVenta: 0, precioCompra: undefined, unidadMedida: 'unidad', descripcion: '', cantidadInicial: undefined, stockMinimo: undefined });
+      form.reset({ nombre: '', codigo: '', categoriaId: undefined, precioVenta: 0, precioCompra: undefined, unidadMedida: 'unidad', descripcion: '', cantidadInicial: undefined, stockMinimo: undefined, cobrarMinimo1: false });
       setTieneExistencias(false);
       setImagePreview(null);
       setSelectedFile(null);
@@ -249,6 +253,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         formData.append('precioCompra', values.precioCompra.toString());
       }
       if (values.unidadMedida) formData.append('unidadMedida', values.unidadMedida);
+      formData.append('cobrarMinimo1', values.cobrarMinimo1 ? 'true' : 'false');
       if (values.descripcion) formData.append('descripcion', values.descripcion);
 
       if (!isEditing && tieneExistencias && values.cantidadInicial && values.cantidadInicial > 0 && sucursalEfectiva) {
@@ -342,7 +347,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border">
-      {/* <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border"> */}
+        {/* <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border"> */}
 
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight text-[#2e9e9b]">
@@ -528,9 +533,25 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                           </SelectContent>
                         </Select>
                         {esMedida && (
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-muted-foreground text-sm font-medium text-foreground text-[#2e9e9b]">
                             El precio de venta se cobrará por {tipoMedida === 'm2' ? 'metro cuadrado' : 'metro lineal'}. El cliente indicará ancho/alto al vender.
                           </p>
+                        )}
+                        {esMedida && (
+                          <div className="flex mt-2 gap-2">
+                            <Checkbox
+                              id="cobrar_minimo_1"
+                              checked={form.watch('cobrarMinimo1') ?? false}
+                              onChange={(e) => form.setValue('cobrarMinimo1', e.target.checked)}
+                            />
+                            <Label htmlFor="cobrar_minimo_1" className="flex items-center gap-1.5 cursor-pointer">
+                              <Icon name="straighten" size={14} className="text-[#2e9e9b]" />
+                              Cobrar mínimo 1 metro de largo
+                            </Label>
+                            <span className="text-[11px] text-muted-foreground">
+                              Si el largo es menor a 1m, se cobrará como 1m
+                            </span>
+                          </div>
                         )}
                         <FormMessage />
                       </FormItem>
@@ -646,6 +667,9 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {insumo.codigo || 'Sin código'} • {insumo.unidad_medida}
+                              {insumo.ancho_rollo && (
+                                <span className="ml-1 text-[#2e9e9b]">• rollo {insumo.ancho_rollo}m</span>
+                              )}
                             </p>
                           </div>
                           <Input

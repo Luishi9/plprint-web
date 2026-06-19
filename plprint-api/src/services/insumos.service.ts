@@ -63,6 +63,7 @@ interface CreateInsumoDTO {
   nombre: string;
   descripcion?: string;
   unidadMedida?: string;
+  anchoRollo?: number;
   precioCompra?: number;
   proveedorId?: number;
 }
@@ -133,6 +134,7 @@ export class InsumosService {
               nombre: data.nombre,
               descripcion: data.descripcion,
               unidad_medida: data.unidadMedida ?? 'unidad',
+              ancho_rollo: data.anchoRollo ? String(data.anchoRollo) : null,
               precio_compra: data.precioCompra,
               proveedor_id: data.proveedorId,
             },
@@ -163,16 +165,25 @@ export class InsumosService {
         codigo = trimmed;
       }
     }
+    console.log('UPDATE DATA:', JSON.stringify(data, null, 2));
+    console.log('anchoRollo value:', data.anchoRollo, 'type:', typeof data.anchoRollo);
+    const updateData: Record<string, unknown> = {};
+    if (data.nombre) updateData.nombre = data.nombre;
+    if (data.descripcion !== undefined) updateData.descripcion = data.descripcion;
+    if (data.unidadMedida) updateData.unidad_medida = data.unidadMedida;
+    if (data.anchoRollo !== undefined) {
+      updateData.ancho_rollo = data.anchoRollo ? String(data.anchoRollo) : null;
+      console.log('Setting ancho_rollo to:', updateData.ancho_rollo);
+    }
+    if (data.precioCompra !== undefined) updateData.precio_compra = data.precioCompra;
+    if (data.proveedorId !== undefined) updateData.proveedor_id = data.proveedorId;
+    if (codigo !== undefined) updateData.codigo = codigo;
+
+    console.log('Final updateData:', JSON.stringify(updateData, null, 2));
+
     return prisma.insumos.update({
       where: { id },
-      data: {
-        ...(data.nombre && { nombre: data.nombre }),
-        ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
-        ...(data.unidadMedida && { unidad_medida: data.unidadMedida }),
-        ...(data.precioCompra !== undefined && { precio_compra: data.precioCompra }),
-        ...(data.proveedorId !== undefined && { proveedor_id: data.proveedorId }),
-        ...(codigo !== undefined && { codigo }),
-      },
+      data: updateData,
     });
   }
 

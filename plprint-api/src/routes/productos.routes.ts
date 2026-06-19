@@ -38,6 +38,7 @@ const createSchema = z.object({
   unidadMedida: z.string().optional(),
   cantidadInicial: z.coerce.number().int().min(0).optional(),
   sucursalId: z.coerce.number().int().positive().optional(),
+  cobrarMinimo1: z.coerce.boolean().optional(),
   insumos: z.preprocess(
     (val) => {
       if (typeof val === 'string') {

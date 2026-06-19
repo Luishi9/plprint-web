@@ -19,6 +19,7 @@ import {
 import { InsumoFormModal } from './components/InsumoFormModal';
 import { AjusteInsumoModal } from './components/AjusteInsumoModal';
 import CompraInsumoModal from '@/components/forms/CompraInsumoModal';
+import AgregarComprasModal from '@/components/forms/AgregarComprasModal';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { useMoney } from '@/hooks/useMoney';
@@ -34,6 +35,7 @@ export default function InsumosPage() {
   const [insumoAEliminar, setInsumoAEliminar] = useState<Insumo | null>(null);
   const [insumoAAjustar, setInsumoAAjustar] = useState<Insumo | null>(null);
   const [insumoACompra, setInsumoACompra] = useState<Insumo | null>(null);
+  const [agregarComprasOpen, setAgregarComprasOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -165,6 +167,11 @@ export default function InsumosPage() {
             <Icon name="add" className="mr-1.5" size={16} />
             Nuevo insumo
           </Button>
+          
+          <Button onClick={() => setAgregarComprasOpen(true)} variant="outline" className="h-10 px-4 whitespace-nowrap">
+            <Icon name="shopping_cart" size={16} className="mr-2" /> Agregar Compra
+          </Button>
+
         </motion.div>
       </div>
 
@@ -329,6 +336,17 @@ export default function InsumosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AgregarComprasModal
+        open={agregarComprasOpen}
+        onOpenChange={(v) => { if (!v) setAgregarComprasOpen(false); }}
+        onSuccess={() => {
+          setAgregarComprasOpen(false);
+          fetchInventario();
+          fetchInsumos(searchQuery);
+        }}
+      />
+
     </div>
   );
 }
