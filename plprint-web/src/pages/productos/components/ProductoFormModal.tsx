@@ -79,6 +79,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   const [insumosDisponibles, setInsumosDisponibles] = useState<Insumo[]>([]);
   const [insumosSeleccionados, setInsumosSeleccionados] = useState<Array<{ insumoId: number; cantidadRequerida: number; insumo: Insumo }>>([]);
   const [insumoBusqueda, setInsumoBusqueda] = useState('');
+  const [showInsumosDropdown, setShowInsumosDropdown] = useState(false);
   type PrecioNivelState = { id: number | null; cantidad_minima: string; precio: string };
   const [unidadesMedida, setUnidadesMedida] = useState<UnidadMedida[]>([]);
   const [preciosVolumen, setPreciosVolumen] = useState<Record<NivelPrecio, PrecioNivelState>>({
@@ -538,17 +539,19 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                           </p>
                         )}
                         {esMedida && (
-                          <div className="flex mt-2 gap-2">
-                            <Checkbox
-                              id="cobrar_minimo_1"
-                              checked={form.watch('cobrarMinimo1') ?? false}
-                              onChange={(e) => form.setValue('cobrarMinimo1', e.target.checked)}
-                            />
-                            <Label htmlFor="cobrar_minimo_1" className="flex items-center gap-1.5 cursor-pointer">
-                              <Icon name="straighten" size={14} className="text-[#2e9e9b]" />
-                              Cobrar mínimo 1 metro de largo
-                            </Label>
-                            <span className="text-[11px] text-muted-foreground">
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id="cobrar_minimo_1"
+                                checked={form.watch('cobrarMinimo1') ?? false}
+                                onChange={(e) => form.setValue('cobrarMinimo1', e.target.checked)}
+                              />
+                              <Label htmlFor="cobrar_minimo_1" className="flex items-center gap-1.5 cursor-pointer">
+                                <Icon name="straighten" size={14} className="text-[#2e9e9b]" />
+                                Cobrar mínimo 1 metro de largo
+                              </Label>
+                            </div>
+                            <span className="block text-[11px] text-muted-foreground pl-7">
                               Si el largo es menor a 1m, se cobrará como 1m
                             </span>
                           </div>
@@ -560,8 +563,16 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                 />
 
                 {/* ── Existencias ── */}
+
+
+
+              </div>
+
+              {/* Col 2 - Imagen y Extras */}
+              <div className="space-y-4 flex flex-col">
+
                 <div className='space-y-3 '>
-                  <h2 className="flex items-center gap-2"> Caracteristicas </h2>
+                  <FormLabel>Caracteristicas</FormLabel>
                   <p className="text-sm text-muted-foreground">
                     Sección para agregar otras características del producto.
                   </p>
@@ -570,9 +581,9 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
                 <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
 
-                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="tiene_existencias"
                       checked={tieneExistencias}
                       onChange={(e) => {
                         setTieneExistencias(e.target.checked);
@@ -583,11 +594,12 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                       }}
                       className="w-4 h-4 accent-[#2e9e9b] cursor-pointer"
                     />
-                    <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
+
+                    <Label htmlFor="tiene_existencias" className="text-sm font-medium text-foreground flex items-center gap-1.5 cursor-pointer select-none">
                       <Icon name="inventory_2" size={14} className="text-[#2e9e9b]" />
                       {isEditing ? 'Registrar movimiento de stock' : 'Este producto tiene existencias (inventario)'}
-                    </span>
-                  </label>
+                    </Label>
+                  </div>
 
                   {tieneExistencias && (
                     <div className="grid grid-cols-2 gap-3 pt-1">
@@ -634,12 +646,6 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                     </div>
                   )}
                 </div>
-
-
-              </div>
-
-              {/* Col 2 - Imagen y Extras */}
-              <div className="space-y-4 flex flex-col">
 
                 {/* ── Insumos requeridos ── */}
                 <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
@@ -696,38 +702,66 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                   )}
 
                   {/* Selector de insumos */}
-                  <Select
-                    value={insumoBusqueda}
-                    onValueChange={(val) => {
-                      if (val) {
-                        agregarInsumo(Number(val));
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Agregar insumo..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border border-border text-foreground z-[200]">
-                      {insumosDisponibles
-                        .filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id))
-                        .map((insumo) => (
-                          <SelectItem key={insumo.id} value={String(insumo.id)}>
-                            <div className="flex items-center gap-2">
-                              <Icon name="add" size={12} />
-                              <span>{insumo.nombre}</span>
+                  <div className="relative">
+                    <label className="text-sm font-medium block mb-1.5 text-muted-foreground">
+                      Agregar insumo
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Buscar insumo..."
+                        value={insumoBusqueda}
+                        onFocus={() => setShowInsumosDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowInsumosDropdown(false), 200)}
+                        onChange={(e) => {
+                          setInsumoBusqueda(e.target.value);
+                          setShowInsumosDropdown(true);
+                        }}
+                        className="w-full bg-background border border-border rounded-md text-sm px-3 py-2 pr-8 focus:outline-none focus:ring-1 focus:ring-[#2e9e9b]"
+                      />
+                      <Icon
+                        name="unfold_more"
+                        size={16}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                      />
+                    </div>
+                    {showInsumosDropdown && (
+                      <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md max-h-48 overflow-y-auto shadow-lg">
+                        {(() => {
+                          const filtrados = insumosDisponibles
+                            .filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id))
+                            .filter(i => !insumoBusqueda || i.nombre.toLowerCase().includes(insumoBusqueda.toLowerCase()) || i.codigo?.toLowerCase().includes(insumoBusqueda.toLowerCase()));
+                          if (filtrados.length === 0) {
+                            return (
+                              <div className="px-3 py-2 text-sm text-muted-foreground">
+                                {insumoBusqueda ? 'Sin resultados' : 'No hay insumos disponibles'}
+                              </div>
+                            );
+                          }
+                          return filtrados.map((insumo) => (
+                            <button
+                              key={insumo.id}
+                              type="button"
+                              onMouseDown={() => {
+                                agregarInsumo(insumo.id);
+                                setInsumoBusqueda('');
+                                setShowInsumosDropdown(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center justify-between text-popover-foreground"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Icon name="add" size={12} />
+                                <span>{insumo.nombre}</span>
+                              </div>
                               <span className="text-xs text-muted-foreground">
-                                ({insumo.codigo || 'Sin código'})
+                                {insumo.codigo || 'Sin código'}
                               </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      {insumosDisponibles.filter(i => !insumosSeleccionados.some(s => s.insumoId === i.id)).length === 0 && (
-                        <div className="px-3 py-2 text-sm text-muted-foreground">
-                          No hay insumos disponibles
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <FormField

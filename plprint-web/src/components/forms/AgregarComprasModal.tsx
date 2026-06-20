@@ -240,36 +240,48 @@ export default function AgregarComprasModal({ open, onOpenChange, onSuccess }: A
                 {/* Insumo search + dropdown */}
                 <div className="col-span-5 relative">
                   <label className="text-[14px] font-medium block mb-1 text-muted-foreground">Insumo *</label>
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    placeholder="Buscar insumo..."
-                    value={insumoSearch}
-                    onFocus={() => setShowDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                    onChange={(e) => {
-                      setInsumoSearch(e.target.value);
-                      setInsumoId(0);
-                      setShowDropdown(true);
-                    }}
-                    className="w-full bg-background border border-border rounded-md text-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#2e9e9b]"
-                  />
-                  {showDropdown && filteredInsumos.length > 0 && (
+                  <div className="relative">
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      placeholder="Buscar insumo..."
+                      value={insumoSearch}
+                      onFocus={() => setShowDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                      onChange={(e) => {
+                        setInsumoSearch(e.target.value);
+                        setInsumoId(0);
+                        setShowDropdown(true);
+                      }}
+                      className="w-full bg-background border border-border rounded-md text-sm px-3 py-2 pr-8 focus:outline-none focus:ring-1 focus:ring-[#2e9e9b]"
+                    />
+                    <Icon
+                      name="unfold_more"
+                      size={16}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    />
+                  </div>
+                  {showDropdown && (
                     <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md max-h-48 overflow-y-auto shadow-lg">
-                      {filteredInsumos.map((i) => (
-                        <button
-                          key={i.id}
-                          type="button"
-                          onMouseDown={() => selectInsumo(i.id)}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors ${i.id === insumoId ? 'bg-accent text-[#2e9e9b]' : 'text-popover-foreground'}`}
-                        >
-                          {i.nombre}
-                          <span className="text-muted-foreground ml-2 text-[14px]">({i.unidad_medida})</span>
-                        </button>
-                      ))}
+                      {filteredInsumos.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          {insumoSearch ? 'Sin resultados' : 'Escribe para buscar...'}
+                        </div>
+                      ) : (
+                        filteredInsumos.map((i) => (
+                          <button
+                            key={i.id}
+                            type="button"
+                            onMouseDown={() => selectInsumo(i.id)}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center justify-between ${i.id === insumoId ? 'bg-accent text-[#2e9e9b]' : 'text-popover-foreground'}`}
+                          >
+                            <span>{i.nombre}</span>
+                            <span className="text-muted-foreground text-[11px]">({i.unidad_medida})</span>
+                          </button>
+                        ))
+                      )}
                     </div>
                   )}
-                 
                 </div>
 
                 <div className="col-span-2">
