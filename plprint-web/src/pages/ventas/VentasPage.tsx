@@ -18,6 +18,7 @@ import { usePermisos } from '@/hooks/usePermisos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
+import { sileo } from 'sileo';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -161,7 +162,7 @@ export default function VentasPage() {
       win.document.close();
       win.onload = () => { win.focus(); };
     } else {
-      alert('Permite las ventanas emergentes para imprimir.');
+      sileo.info({ title: 'Permite las ventanas emergentes para imprimir.' });
     }
   }
 
@@ -179,7 +180,7 @@ export default function VentasPage() {
       fetchVentas(true);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      alert(e.response?.data?.message || 'No se pudo cancelar la venta.');
+      sileo.error({ title: e.response?.data?.message || 'No se pudo cancelar la venta.' });
     } finally {
       setIsCanceling(false);
     }

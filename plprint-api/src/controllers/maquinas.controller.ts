@@ -51,4 +51,17 @@ export class MaquinasController {
       sendNoContent(res);
     } catch (err) { next(err); }
   };
+
+  getReporteCorte = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const sucursalId = Number(req.query.sucursalId);
+      const fechaDesde = req.query.fechaDesde as string;
+      if (!sucursalId || !fechaDesde) {
+        sendSuccess(res, { maquinas: [], total_impresiones: 0, total_mermas: 0 });
+        return;
+      }
+      const reporte = await this.service.getReporteCorte(sucursalId, new Date(fechaDesde));
+      sendSuccess(res, reporte);
+    } catch (err) { next(err); }
+  };
 }

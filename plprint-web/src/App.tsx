@@ -4,6 +4,8 @@ import { AppRoutes } from './routes';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useThemeStore } from '@/store/themeStore';
 
+import { Toaster } from "sileo";
+
 const App: React.FC = () => {
   const { theme } = useThemeStore();
 
@@ -19,6 +21,7 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <TooltipProvider>
+        <Toaster position="top-right" />
         <AppRoutes />
       </TooltipProvider>
     </BrowserRouter>

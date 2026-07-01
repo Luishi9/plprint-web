@@ -354,7 +354,21 @@ analizar este punto, quiero que con el mismo sistema diferentes empresas puedan 
 
 * [x] correccion de folios
 * [] Checar si tenemos TOAST para el manejo de notificaciones, y cambiar a toast en lugar de alert
-* [] checar si tenemos instalado Untitled UI para aplicar estilos
+
+
+
+16 vulnerabilities (1 low, 9 moderate, 6 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
 
 
 
@@ -1102,3 +1116,86 @@ características:
 ✅ NOTIFICACIONES
 ✅ REPORTES
 Cualquier duda podemos checarlo por inbox.
+
+
+-----------------------------------------------------
+
+### Agregar manejo de maquinas de impresion en el sistema
+
+## PLAN DE IMPLEMENTACIÓN — Módulo de Máquinas de Impresión
+
+### Resumen del proceso actual (manual):
+1. Se dan de alta impresoras con nombre, número de impresiones inicial y final
+2. Al final del día, después del corte, se actualiza manualmente el contador de cada máquina
+3. Se busca automatizar este proceso para que el contador se actualice solo
+4. El contador debe incrementarse con: impresiones exitosas + impresiones que salieron mal (merma técnica/operativa)
+5. Las mermas deben registrar en qué máquina se generaron
+6. Todo el módulo es opcional, controlado por configuración "¿Somos centro de impresión? SI/NO"
+
+### Estado actual del sistema:
+- ✅ Modelo `maquinas` en BD con `contador_total` (se incrementa automáticamente en ventas)
+- ✅ Modelo `impresiones` registra cada impresión vinculada a una máquina
+- ✅ CRUD backend de máquinas (controller, service, routes, permisos RBAC)
+- ✅ Mermas ya crean registro en `impresiones` con `fue_merma: true`
+- ✅ Productos pueden tener `maquina_id` asignado (campo existe en BD)
+- ❌ No hay UI de máquinas en el frontend
+- ❌ Mermas NO incrementan `contador_total` (bug)
+- ❌ No hay configuración "centro de impresión"
+- ❌ Productos no wirean `maquina_id` desde el service ni el frontend
+- ❌ No hay tipo de categoría "impresión"
+
+### Decisiones tomadas con el usuario:
+- **Contadores**: Solo automático + lectura física (el contador_total se incrementa solo en ventas/mermas)
+- **Corte diario**: Integrado en el módulo de caja
+- **Mermas parciales**: Solo desde el módulo de mermas (no desde la venta)
+- **Lectura física**: No se necesita, solo contador automático
+
+---
+
+### Plan detallado:
+
+#### 1. Configuración condicional
+- Agregar `somos_centro_impresion` (boolean) al sistema de configuración
+- Condicionar: sidebar (entrada "Máquinas"), ruta `/maquinas`, y sección de máquinas en el corte de caja
+
+#### 2. Fix: Mermas deben incrementar contador
+- Corregir `mermas.service.ts` para que incremente `contador_total` cuando la merma es de un producto con `maquina_id`
+
+#### 3. Mejorar modelo de mermas — agregar `maquina_id` directo
+- Agregar `maquina_id` (opcional) a la tabla `mermas`
+- Si el producto tiene máquina → auto-seleccionarla
+- Si no → permitir selección manual de máquina
+
+#### 4. Página frontend de máquinas
+- CRUD completo (nombre, tipo, marca, modelo)
+- Dashboard de contadores: hoy, semana, mes, total (usando el endpoint `/maquinas/:id/stats` que ya existe)
+- Historial de impresiones por máquina
+- Entrada en sidebar condicionada a `somos_centro_impresion`
+
+#### 5. Corte de caja con reporte de máquinas
+- Si `somos_centro_impresion = true`, al hacer corte mostrar resumen de impresiones por máquina
+- Incluir: impresiones totales, mermas por máquina
+
+#### 6. Categoría tipo "impresión" + selector de máquina en producto
+- Agregar tipo `'impresion'` al modelo de categorías
+- Cuando un producto tenga categoría tipo "impresión", mostrar en el modal una sección "Impresora vinculada" con selector de máquina
+- Wirear `maquina_id` en backend (service DTO, create, update) y frontend (types, form schema, FormData)
+
+---
+
+### Orden de implementación:
+
+1. **Migración BD**: agregar tipo `'impresion'` a categorías + `maquina_id` a mermas
+2. **Seed**: agregar config `somos_centro_impresion`
+3. **Backend**: wire `maquina_id` en productos service (create/update/find)
+4. **Backend**: fix mermas (incrementar contador + maquina_id directo)
+5. **Backend**: endpoint reporte máquinas para corte de caja
+6. **Frontend**: crear `maquinas.api.ts`
+7. **Frontend**: tipos actualizados (Producto, Categoria, CreateProductoPayload)
+8. **Frontend**: modal de categorías con tipo "Impresión"
+9. **Frontend**: modal de productos con sección condicional de impresora
+10. **Frontend**: página de máquinas (CRUD + dashboard)
+11. **Frontend**: módulo de mermas con selector de máquina
+12. **Frontend**: corte de caja con reporte de máquinas
+13. **Frontend**: condicionar todo con `somos_centro_impresion`
+

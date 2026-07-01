@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useMoney } from '@/hooks/useMoney';
+import { maquinasApi, MaquinaReporteCorte } from '@/api/maquinas.api';
+import { configuracionApi } from '@/api/configuracion.api';
 import type { CorteCaja, ResumenCaja } from '@/api/caja.api';
 
 interface Props {
@@ -13,19 +15,49 @@ interface Props {
   onConfirm: (data: { corte_id: number; monto_final_real: number; observaciones?: string }) => Promise<void>;
   corte: CorteCaja;
   resumen: ResumenCaja;
+  sucursalId: number;
 }
 
-export default function CorteModal({ open, onClose, onConfirm, corte, resumen }: Props) {
+export default function CorteModal({ open, onClose, onConfirm, corte, resumen, sucursalId }: Props) {
   const { simbolo, format: money } = useMoney();
   const [montoReal, setMontoReal] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [somosCentroImpresion, setSomosCentroImpresion] = useState(false);
+  const [reporteMaquinas, setReporteMaquinas] = useState<MaquinaReporteCorte[]>([]);
+  const [totalImpresiones, setTotalImpresiones] = useState(0);
+  const [totalMermas, setTotalMermas] = useState(0);
 
   const montoInicial = Number(corte.monto_inicial);
   const efectivoEsperado = montoInicial + resumen.total_efectivo_ventas + resumen.total_ingresos + resumen.total_abonos_efectivo - resumen.total_gastos - resumen.total_retiros;
   const montoRealNum = Number(montoReal);
   const diferencia = montoReal ? montoRealNum - efectivoEsperado : 0;
+
+  useEffect(() => {
+    if (open) {
+      cargarConfigYReporte();
+    }
+  }, [open]);
+
+  const cargarConfigYReporte = async () => {
+    try {
+      const configRes = await configuracionApi.getByGrupo('maquinas');
+      const config = configRes.data?.data;
+      const esCentroImpresion = config?.somos_centro_impresion === true;
+      setSomosCentroImpresion(esCentroImpresion);
+
+      if (esCentroImpresion && sucursalId) {
+        const reporteRes = await maquinasApi.getReporteCorte(sucursalId, corte.fecha_apertura);
+        const data = reporteRes.data?.data;
+        setReporteMaquinas(data?.maquinas || []);
+        setTotalImpresiones(data?.total_impresiones || 0);
+        setTotalMermas(data?.total_mermas || 0);
+      }
+    } catch (e) {
+      console.error('Error cargando configuración de máquinas:', e);
+    }
+  };
 
   const handleConfirm = async () => {
     if (!montoReal || montoRealNum < 0) { setError('Ingresa el monto real contado.'); return; }
@@ -85,6 +117,42 @@ export default function CorteModal({ open, onClose, onConfirm, corte, resumen }:
               <p className="font-mono text-lg font-bold text-blue-400">{money(efectivoEsperado)}</p>
             </div>
           </div>
+
+          {/* Reporte de máquinas - solo si somos centro de impresión */}
+          {somosCentroImpresion && reporteMaquinas.length > 0 && (
+            <div className="bg-background rounded-lg border border-purple-500/30 p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <Icon name="precision_manufacturing" size={16} className="text-purple-400" />
+                <span className="text-sm font-medium text-foreground">Impresiones del período</span>
+              </div>
+              <div className="space-y-2">
+                {reporteMaquinas.map((m) => (
+                  <div key={m.maquina_id} className="flex items-center justify-between text-sm bg-background/50 rounded-md p-2">
+                    <div className="flex items-center gap-2">
+                      <Icon name="print" size={14} className="text-purple-400" />
+                      <span className="text-foreground">{m.nombre}</span>
+                    </div>
+                    <div className="flex items-center gap-3 font-mono text-xs">
+                      <span className="text-[#2e9e9b]">{m.impresiones_periodo} imp.</span>
+                      {m.mermas_periodo > 0 && (
+                        <span className="text-red-400">({m.mermas_periodo} merma)</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-border pt-2 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total impresiones:</span>
+                <span className="font-mono font-bold text-[#2e9e9b]">{totalImpresiones}</span>
+              </div>
+              {totalMermas > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Total mermas:</span>
+                  <span className="font-mono font-bold text-red-400">{totalMermas}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="text-sm font-medium block mb-1.5">Monto real contado ({simbolo}) *</label>

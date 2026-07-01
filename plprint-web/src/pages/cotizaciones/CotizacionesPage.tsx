@@ -13,6 +13,7 @@ import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
 import { useCotizacionPdfBuilder } from '@/components/forms/CotizacionPdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { sileo } from 'sileo';
 import { Textarea } from '@/components/ui/textarea';
 import { RequirePermission } from '@/components/RequirePermission';
 import {
@@ -237,7 +238,7 @@ export default function CotizacionesPage() {
       navigate(`/ventas?ticket=${venta.id}`);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
-      alert(err.response?.data?.message || 'No se pudo convertir la cotización.');
+      sileo.error({ title: err.response?.data?.message || 'No se pudo convertir la cotización.' });
     } finally { setIsConverting(false); }
   };
 
@@ -250,7 +251,7 @@ export default function CotizacionesPage() {
       fetchCotizaciones();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
-      alert(err.response?.data?.message || 'No se pudo cancelar.');
+      sileo.error({ title: err.response?.data?.message || 'No se pudo cancelar.' });
     } finally { setIsCanceling(false); }
   };
 
@@ -285,7 +286,7 @@ export default function CotizacionesPage() {
       });
     } catch (e) {
       console.error(e);
-      alert('Error al generar PDF');
+      sileo.error({ title: 'Error al generar PDF' });
     }
   };
 

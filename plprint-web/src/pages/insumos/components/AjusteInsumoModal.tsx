@@ -33,6 +33,7 @@ import { insumosApi } from '@/api/insumos.api';
 import { Insumo } from '@/types/insumo.types';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
+import { sileo } from 'sileo';
 
 const formSchema = z.object({
   tipo: z.enum(['entrada', 'salida']),
@@ -85,7 +86,7 @@ export function AjusteInsumoModal({ open, insumo, onClose, onSaved }: AjusteInsu
       onSaved();
     } catch (error: any) {
       console.error('Error al ajustar stock:', error);
-      alert(error?.response?.data?.message || 'No se pudo ajustar el stock.');
+      sileo.error({ title: error?.response?.data?.message || 'No se pudo ajustar el stock.' });
     } finally {
       setIsSubmitting(false);
     }

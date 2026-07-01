@@ -16,9 +16,12 @@ const maquinaSchema = z.object({
   modelo: z.string().max(50).optional(),
   reset_diario: z.boolean().default(false),
   fecha_instalacion: z.string().optional(),
+  contador_inicial: z.number().int().min(0).optional(),
+  contador_total: z.number().int().min(0).optional(),
 });
 
 router.get('/', authorizePermission('maquinas', 'ver'), controller.getAll);
+router.get('/reporte-corte', authorizePermission('maquinas', 'ver_contador'), controller.getReporteCorte);
 router.get('/:id', authorizePermission('maquinas', 'ver'), controller.getById);
 router.get('/:id/stats', authorizePermission('maquinas', 'ver_contador'), controller.getStats);
 router.post('/', authorizePermission('maquinas', 'crear'), validate(maquinaSchema), controller.create);

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RequirePermission } from '@/components/RequirePermission';
+import { sileo } from 'sileo';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -110,11 +111,11 @@ export default function ProduccionPage() {
     setIsDeleting(true);
     try {
       await ordenesProduccionApi.remove(eliminarItem.id);
-      alert('Orden eliminada');
+      sileo.success({ title: 'Orden eliminada' });
       setEliminarItem(null);
       fetchOrdenes();
     } catch (e: any) {
-      alert(e?.response?.data?.message ?? 'Error al eliminar');
+      sileo.error({ title: e?.response?.data?.message ?? 'Error al eliminar' });
     } finally { setIsDeleting(false); }
   };
 
@@ -564,10 +565,10 @@ function OrdenProduccionModal({ open, onClose, editando, onSaved }: OrdenProducc
       };
       if (editando) {
         await ordenesProduccionApi.update(editando.id, payload);
-        alert('Orden actualizada');
+        sileo.success({ title: 'Orden actualizada' });
       } else {
         await ordenesProduccionApi.create(payload);
-        alert('Orden creada');
+        sileo.success({ title: 'Orden creada' });
       }
       onSaved();
       onClose();
@@ -898,7 +899,7 @@ function CambiarEstatusModal({ orden, onClose, onSaved }: CambiarEstatusModalPro
         notas: motivo.trim() || null,
         ...(nuevoEstatus === 'terminado' && { cantidadProducida }),
       });
-      alert('Estatus actualizado');
+      sileo.success({ title: 'Estatus actualizado' });
       onSaved();
       onClose();
     } catch (e: any) {

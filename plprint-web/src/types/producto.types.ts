@@ -11,7 +11,9 @@ export interface Producto {
   cobrar_minimo_1?: boolean;
   categoria_id?: number;
   proveedor_id?: number;
-  categorias?: { nombre: string };
+  maquina_id?: number | null;
+  categorias?: { nombre: string; tipo?: string };
+  maquinas?: { id: number; nombre: string } | null;
   inventario?: Array<{ cantidad: number }>;
 }
 
@@ -27,6 +29,7 @@ export interface CreateProductoPayload {
   cantidadInicial?: number;
   sucursalId?: number;
   cobrarMinimo1?: boolean;
+  maquinaId?: number | null;
 }
 
 export interface ItemInventario {

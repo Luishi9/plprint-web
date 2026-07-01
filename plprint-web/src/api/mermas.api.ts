@@ -8,15 +8,17 @@ export interface Merma {
   sucursal_id: number | null;
   usuario_id: number | null;
   venta_id: number | null;
+  maquina_id: number | null;
   cantidad: string;
   motivo: string;
   costo_estimado: string | null;
   fecha: string;
   created_at: string;
-  productos?: { id: number; nombre: string; unidad_medida: string } | null;
+  productos?: { id: number; nombre: string; unidad_medida: string; maquina_id?: number | null } | null;
   insumos?: { id: number; nombre: string; unidad_medida: string } | null;
   sucursales?: { id: number; nombre: string } | null;
   usuarios?: { id: number; nombre: string } | null;
+  maquinas?: { id: number; nombre: string } | null;
 }
 
 export const mermasApi = {

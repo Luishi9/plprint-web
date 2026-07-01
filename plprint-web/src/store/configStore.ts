@@ -15,7 +15,17 @@ interface ConfigState {
 
 const findByClave = (data: ConfigAll, clave: string): ConfigValue | undefined => {
   const grupo = clave.split('_')[0];
-  return data[grupo]?.[clave];
+  // First try the expected group
+  if (data[grupo]?.[clave] !== undefined) {
+    return data[grupo]?.[clave];
+  }
+  // Fallback: search all groups for the clave
+  for (const g of Object.keys(data)) {
+    if (data[g]?.[clave] !== undefined) {
+      return data[g]?.[clave];
+    }
+  }
+  return undefined;
 };
 
 export const useConfigStore = create<ConfigState>((set, get) => ({
@@ -51,6 +61,8 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 
   getBool: (clave) => {
     const v = findByClave(get().data, clave);
-    return v === true;
+    if (v === true) return true;
+    if (typeof v === 'string') return v.toLowerCase() === 'true';
+    return false;
   },
 }));

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RequirePermission } from '@/components/RequirePermission';
+import { sileo } from 'sileo';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -121,7 +122,7 @@ export default function ProveedoresPage() {
       fetchProveedores();
     } catch (e) {
       console.error(e);
-      alert('No se pudo eliminar el proveedor.');
+      sileo.error({ title: 'No se pudo eliminar el proveedor.' });
     } finally {
       setIsDeleting(false);
     }

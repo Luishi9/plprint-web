@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { sileo } from 'sileo';
 
 import { insumosApi } from '@/api/insumos.api';
 import { unidadesMedidaApi, UnidadMedida } from '@/api/unidadesMedida.api';
@@ -113,7 +114,7 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
       onSaved();
     } catch (error) {
       console.error('Error al guardar insumo:', error);
-      alert('No se pudo guardar el insumo.');
+      sileo.error({ title: 'No se pudo guardar el insumo.' });
     } finally {
       setIsSubmitting(false);
     }

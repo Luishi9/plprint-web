@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useMoney } from '@/hooks/useMoney';
 import { useAuthStore } from '@/store/authStore';
+import { sileo } from 'sileo';
 import { RequirePermission } from '@/components/RequirePermission';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -150,7 +151,7 @@ export default function GastosPage() {
       fetchGastos();
     } catch (e) {
       console.error(e);
-      alert('No se pudo eliminar el registro.');
+      sileo.error({ title: 'No se pudo eliminar el registro.' });
     } finally {
       setIsDeleting(false);
     }

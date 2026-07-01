@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { cajaApi, CorteCaja, MovimientoCaja, ResumenCaja } from '@/api/caja.api';
 import CorteTicketImpresion from './CorteTicketImpresion';
 import { useCortePdfBuilder } from './CortePdfBuilder';
+import { sileo } from 'sileo';
 
 interface Props {
   open: boolean;
@@ -38,7 +39,7 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
       setCorteData(res.data.data);
     } catch (e) {
       console.error(e);
-      alert('Error al cargar datos del corte.');
+      sileo.error({ title: 'Error al cargar datos del corte.' });
     } finally {
       setLoading(false);
     }

@@ -36,11 +36,14 @@ import { inventarioApi } from '@/api/inventario.api';
 import { insumosApi } from '@/api/insumos.api';
 import { preciosProductoApi, NIVELES_LABEL, NivelPrecio } from '@/api/preciosProducto.api';
 import { unidadesMedidaApi, UnidadMedida } from '@/api/unidadesMedida.api';
+import { maquinasApi, Maquina } from '@/api/maquinas.api';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { useAuthStore } from '@/store/authStore';
 import { Producto } from '@/types/producto.types';
 import { Insumo } from '@/types/insumo.types';
 import { categoriasApi, Categoria } from '@/api/categorias.api';
+import { useCentroImpresion } from '@/hooks/useCentroImpresion';
+import { sileo } from 'sileo';
 import { getImageUrl } from '@/utils/format';
 
 const formSchema = z.object({
@@ -54,6 +57,7 @@ const formSchema = z.object({
   cantidadInicial: z.preprocess((val) => val ? Number(val) : undefined, z.number().min(0).optional()),
   stockMinimo: z.preprocess((val) => val ? Number(val) : undefined, z.number().min(0).optional()),
   cobrarMinimo1: z.boolean().optional(),
+  maquinaId: z.preprocess((val) => val ? Number(val) : undefined, z.number().int().positive().optional().nullable()),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -68,6 +72,7 @@ interface ProductoFormModalProps {
 export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: ProductoFormModalProps) {
   const { sucursalActiva } = useSucursalStore();
   const { usuario } = useAuthStore();
+  const { esCentroImpresion } = useCentroImpresion();
   const isEditing = !!producto;
   // Fallback: si no hay sucursal activa en el store, usar la primera del usuario
   const sucursalEfectiva = sucursalActiva ?? usuario?.sucursalesDetalle?.[0] ?? null;
@@ -75,6 +80,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [maquinas, setMaquinas] = useState<Maquina[]>([]);
   const [tieneExistencias, setTieneExistencias] = useState(false);
   const [insumosDisponibles, setInsumosDisponibles] = useState<Insumo[]>([]);
   const [insumosSeleccionados, setInsumosSeleccionados] = useState<Array<{ insumoId: number; cantidadRequerida: number; insumo: Insumo }>>([]);
@@ -89,10 +95,11 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar categorías al montar
+  // Cargar categorías y máquinas al montar
   useEffect(() => {
     categoriasApi.getAll().then((res) => setCategorias(res.data?.data || [])).catch(() => { });
     insumosApi.getAll({ limit: 1000 }).then((res) => setInsumosDisponibles(res.data?.data || [])).catch(() => { });
+    maquinasApi.getAll({ activo: true }).then((res) => setMaquinas(res.data?.data || [])).catch(() => { });
   }, []);
 
   // Cargar insumos del producto cuando se edita
@@ -126,6 +133,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       cantidadInicial: undefined,
       stockMinimo: undefined,
       cobrarMinimo1: false,
+      maquinaId: undefined,
     },
   });
 
@@ -155,13 +163,14 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         cantidadInicial: undefined,
         stockMinimo: undefined,
         cobrarMinimo1: producto.cobrar_minimo_1 ?? false,
+        maquinaId: producto.maquina_id ?? undefined,
       });
       setTieneExistencias(false);
       setImagePreview(getImageUrl(producto.imagen_url) ?? null);
       setSelectedFile(null);
       cargarPreciosVolumen(producto.id);
     } else if (open && !producto) {
-      form.reset({ nombre: '', codigo: '', categoriaId: undefined, precioVenta: 0, precioCompra: undefined, unidadMedida: 'unidad', descripcion: '', cantidadInicial: undefined, stockMinimo: undefined, cobrarMinimo1: false });
+      form.reset({ nombre: '', codigo: '', categoriaId: undefined, precioVenta: 0, precioCompra: undefined, unidadMedida: 'unidad', descripcion: '', cantidadInicial: undefined, stockMinimo: undefined, cobrarMinimo1: false, maquinaId: undefined });
       setTieneExistencias(false);
       setImagePreview(null);
       setSelectedFile(null);
@@ -257,6 +266,12 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       formData.append('cobrarMinimo1', values.cobrarMinimo1 ? 'true' : 'false');
       if (values.descripcion) formData.append('descripcion', values.descripcion);
 
+      // Incluir maquinaId si la categoría es de tipo impresión
+      const categoriaSeleccionada = categorias.find(c => c.id === values.categoriaId);
+      if (categoriaSeleccionada?.tipo === 'impresion' && values.maquinaId) {
+        formData.append('maquinaId', values.maquinaId.toString());
+      }
+
       if (!isEditing && tieneExistencias && values.cantidadInicial && values.cantidadInicial > 0 && sucursalEfectiva) {
         formData.append('cantidadInicial', values.cantidadInicial.toString());
         formData.append('sucursalId', sucursalEfectiva.id.toString());
@@ -308,7 +323,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       onOpenChange(false);
     } catch (error) {
       console.error('Error al guardar el producto', error);
-      alert('Hubo un error al guardar el producto.');
+      sileo.error({ title: 'Hubo un error al guardar el producto.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -340,7 +355,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         const err = e as { response?: { data?: { message?: string } } };
         const msg = err.response?.data?.message || `Error al guardar precio ${nivel}`;
         console.error(msg, e);
-        alert(msg);
+        sileo.error({ title: msg });
       }
     }
   };
@@ -402,8 +417,18 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                       <FormItem>
                         <FormLabel>Categoría</FormLabel>
                         <Select
-                          onValueChange={(val) => field.onChange(val === 'none' ? undefined : Number(val))}
-                          value={field.value ? String(field.value) : 'none'}
+                          onValueChange={(val) => {
+                            const newCategoriaId = val === 'none' ? undefined : Number(val); // Si es 'none', asignar undefined 
+                            field.onChange(newCategoriaId); // Actualizar el valor del campo
+                            // Si la nueva categoría no es de impresión, limpiar maquinaId
+                            const categoriaImp = categorias.find(c => c.id === newCategoriaId);
+                            console.log('Categoría seleccionada:', categoriaImp);
+                            console.log('Tipo de categoría:', categoriaImp?.tipo);
+                            if (categoriaImp?.tipo !== 'impresion') { // Si la categoría seleccionada no es de tipo impresión, limpiar el campo maquinaId
+                              form.setValue('maquinaId', undefined); // Limpiar el campo maquinaId
+                            }
+                          }}
+                          value={field.value ? String(field.value) : 'none'} // Si es undefined, mostrar 'none' como valor
                         >
                           <FormControl>
                             <SelectTrigger className="bg-background">
@@ -425,6 +450,50 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                   />
 
                 </div>
+
+                {/* Selector de máquina - solo visible si la categoría es de tipo impresión Y somos centro de impresión */}
+                {(() => {
+                  const categoriaSeleccionada = categorias.find(c => c.id === form.watch('categoriaId'));
+                  if (esCentroImpresion && categoriaSeleccionada?.tipo === 'impresion') {
+                    return (
+                      <FormField
+                        control={form.control}
+                        name="maquinaId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Icon name="print" size={14} className="text-purple-400" />
+                              Impresora vinculada
+                            </FormLabel>
+                            <Select
+                              onValueChange={(val) => field.onChange(val === 'none' ? undefined : Number(val))}
+                              value={field.value ? String(field.value) : 'none'}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-background">
+                                  <SelectValue placeholder="Selecciona una impresora" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-card border border-border text-foreground z-[200]">
+                                <SelectItem value="none">Sin impresora</SelectItem>
+                                {maquinas.map((m) => (
+                                  <SelectItem key={m.id} value={String(m.id)}>
+                                    {m.nombre} ({m.tipo})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                              Las impresiones de este producto se contabilizarán en esta máquina.
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    );
+                  }
+                  return null;
+                })()}
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField

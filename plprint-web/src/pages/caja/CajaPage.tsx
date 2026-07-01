@@ -269,6 +269,7 @@ export default function CajaPage() {
           onConfirm={handleCorte}
           corte={cajaActual}
           resumen={resumen}
+          sucursalId={filtroSucursal}
         />
       )}
 

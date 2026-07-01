@@ -1,5 +1,6 @@
 import { useConfigStore } from '@/store/configStore';
 import { useMoney } from '@/hooks/useMoney';
+import { sileo } from 'sileo';
 
 export interface CotizacionPdfData {
   folio: string;
@@ -172,7 +173,7 @@ export function useCotizacionPdfBuilder() {
   const descargarPdf = (data: CotizacionPdfData) => {
     const html = buildHtml(data);
     const win = window.open('', '_blank', 'width=900,height=1100');
-    if (!win) { alert('Permite las ventanas emergentes para descargar el PDF.'); return; }
+    if (!win) { sileo.info({ title: 'Permite las ventanas emergentes para descargar el PDF.' }); return; }
     win.document.open();
     win.document.write(html);
     win.document.close();

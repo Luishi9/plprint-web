@@ -15,6 +15,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { usePermisos } from '@/hooks/usePermisos';
 import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
+import { useCentroImpresion } from '@/hooks/useCentroImpresion';
 
 const navItems = [
   { to: '/dashboard',  label: 'Dashboard',   icon: 'dashboard', modulo: 'dashboard' },
@@ -24,6 +25,7 @@ const navItems = [
   { to: '/clientes',   label: 'Clientes',    icon: 'group',           modulo: 'clientes' },
   { to: '/cotizaciones', label: 'Cotizaciones', icon: 'description',        modulo: 'cotizaciones' },
   { to: '/produccion', label: 'Producción',  icon: 'factory',         modulo: 'produccion' },
+  { to: '/maquinas',   label: 'Máquinas',    icon: 'precision_manufacturing', modulo: 'maquinas' },
   { to: '/mermas',     label: 'Mermas',      icon: 'delete',          modulo: 'mermas' },
   { to: '/gastos',     label: 'Gastos',      icon: 'receipt',         modulo: 'gastos' },
   { to: '/caja',       label: 'Caja',        icon: 'account_balance_wallet',          modulo: 'caja' },
@@ -44,8 +46,13 @@ export function AppSidebar() {
   const { setOpenMobile, setOpen, isMobile } = useSidebar();
   const { isModuloVisible, isAdmin } = usePermisos();
   const { src: logoSrc, isCustom: logoIsCustom } = useEmpresaLogo();
+  const { esCentroImpresion } = useCentroImpresion();
 
-  const visibleNavItems = navItems.filter((i) => isModuloVisible(i.modulo));
+  const visibleNavItems = navItems.filter((i) => {
+    if (!isModuloVisible(i.modulo)) return false;
+    if (i.modulo === 'maquinas' && !esCentroImpresion) return false;
+    return true;
+  });
   const visibleAdminItems = isAdmin ? adminItems.filter((i) => isModuloVisible(i.modulo)) : [];
 
   const handleNavClick = () => {

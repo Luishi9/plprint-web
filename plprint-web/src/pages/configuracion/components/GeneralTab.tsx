@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { configuracionApi, ConfigAll, ConfigValue } from '@/api/configuracion.api';
+import { useConfigStore } from '@/store/configStore';
 
 type MetaGrupo = {
   label: string;
@@ -44,6 +45,11 @@ const GRUPOS_META: MetaGrupo[] = [
     grupo: 'ticket',
     campos: ['ticket_encabezado', 'ticket_subtitulo', 'ticket_mensaje_pie', 'ticket_mostrar_logo', 'ticket_mostrar_direccion', 'ticket_mostrar_telefono', 'ticket_mostrar_rfc', 'ticket_formato_fecha', 'ticket_formato_hora'],
   },
+  {
+    label: 'Máquinas', icon: <Icon name="precision_manufacturing" size={16} />, desc: 'Configuración de máquinas de impresión',
+    grupo: 'maquinas',
+    campos: ['somos_centro_impresion'],
+  },
 ];
 
 const CAMPO_LABEL: Record<string, string> = {
@@ -57,11 +63,13 @@ const CAMPO_LABEL: Record<string, string> = {
   ticket_mostrar_logo: 'Mostrar logo', ticket_mostrar_direccion: 'Mostrar dirección',
   ticket_mostrar_telefono: 'Mostrar teléfono', ticket_mostrar_rfc: 'Mostrar RFC',
   ticket_formato_fecha: 'Formato de fecha', ticket_formato_hora: 'Formato de hora',
+  somos_centro_impresion: '¿Somos centro de impresión?',
 };
 
 const SWITCH_CAMPOS = new Set([
   'iva_activo', 'reportes_incluir_logo',
   'ticket_mostrar_logo', 'ticket_mostrar_direccion', 'ticket_mostrar_telefono', 'ticket_mostrar_rfc',
+  'somos_centro_impresion',
 ]);
 
 export default function GeneralTab() {
@@ -111,6 +119,8 @@ export default function GeneralTab() {
       await configuracionApi.updateBatch(updates);
       setPending({});
       await fetchConfig();
+      // Also update the global config store so other components (like Sidebar) update immediately
+      useConfigStore.getState().fetch();
       setMessage({ type: 'ok', text: `Guardado: ${updates.length} cambio(s)` });
       setTimeout(() => setMessage(null), 2500);
     } catch (err: any) {
@@ -127,6 +137,7 @@ export default function GeneralTab() {
     try {
       await configuracionApi.uploadLogo(file);
       await fetchConfig();
+      useConfigStore.getState().fetch();
       setMessage({ type: 'ok', text: 'Logo actualizado' });
       setTimeout(() => setMessage(null), 2500);
     } catch (err: any) {
@@ -143,10 +154,11 @@ export default function GeneralTab() {
     const label = CAMPO_LABEL[clave] ?? clave;
 
     if (SWITCH_CAMPOS.has(clave)) {
+      const boolValue = value === true || value === 'true';
       return (
         <div key={clave} className="flex items-center justify-between gap-4 py-2 border-b border-border/40 last:border-0 md:col-span-2">
           <Label htmlFor={id} className="text-sm font-normal cursor-pointer">{label}</Label>
-          <Switch id={id} checked={value === true} onCheckedChange={(v) => handleChange(clave, v)} />
+          <Switch id={id} checked={boolValue} onCheckedChange={(v) => handleChange(clave, v)} />
         </div>
       );
     }

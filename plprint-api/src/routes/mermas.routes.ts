@@ -14,6 +14,7 @@ const mermaSchema = z.object({
   insumo_id: z.number().int().positive().optional(),
   sucursal_id: z.number().int().positive().optional(),
   venta_id: z.number().int().positive().optional(),
+  maquina_id: z.number().int().positive().optional(),
   cantidad: z.number().positive(),
   motivo: z.string().min(1).max(255),
   costo_estimado: z.number().nonnegative().optional(),

@@ -18,6 +18,7 @@ import { useMetodosPago } from '@/hooks/useMetodosPago';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
+import { sileo } from 'sileo';
 import { TicketImpresion, TicketData, buildTicketHtml } from './components/TicketImpresion';
 import QRTicketModal from './components/QRTicketModal';
 import CotizacionSelectorModal from '@/components/forms/CotizacionSelectorModal';
@@ -416,18 +417,18 @@ export default function NuevaVentaPage() {
 
   const handleSubmit = async () => {
     if (!cart.length) return;
-    if (!sucursalEfectiva) { alert('No hay sucursal activa.'); return; }
+    if (!sucursalEfectiva) { sileo.error({ title: 'No hay sucursal activa.' }); return; }
     const invalidItem = cart.find((i) => !Number.isInteger(i.cantidad) || i.cantidad < 1);
     if (invalidItem) {
-      alert(`Cantidad inválida para "${invalidItem.nombre}". Ingresa un número entero mayor a 0.`);
+      sileo.error({ title: `Cantidad inválida para "${invalidItem.nombre}". Ingresa un número entero mayor a 0.` });
       return;
     }
     if (descuentoGlobal > 0 && descuentoMotivo.trim().length < 3) {
-      alert('Debes indicar el motivo del descuento (mínimo 3 caracteres).');
+      sileo.warning({ title: 'Debes indicar el motivo del descuento (mínimo 3 caracteres).' });
       return;
     }
     const montoRecibidoNum = Number(montoRecibido) || 0;
-    if (montoRecibidoNum < 0) { alert('El monto recibido no puede ser negativo.'); return; }
+    if (montoRecibidoNum < 0) { sileo.error({ title: 'El monto recibido no puede ser negativo.' }); return; }
     setIsSubmitting(true);
     try {
       // Si viene de cotización, convertirla directamente
@@ -549,7 +550,7 @@ export default function NuevaVentaPage() {
       });
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? 'Error al registrar la venta';
-      alert(msg);
+      sileo.error({ title: msg });
     } finally {
       setIsSubmitting(false);
     }
@@ -557,9 +558,9 @@ export default function NuevaVentaPage() {
 
   const handleGuardarComoCotizacion = async () => {
     if (!cart.length) return;
-    if (!sucursalEfectiva) { alert('No hay sucursal activa.'); return; }
+    if (!sucursalEfectiva) { sileo.error({ title: 'No hay sucursal activa.' }); return; }
     if (descuentoGlobal > 0 && descuentoMotivo.trim().length < 3) {
-      alert('Debes indicar el motivo del descuento (mínimo 3 caracteres).');
+      sileo.warning({ title: 'Debes indicar el motivo del descuento (mínimo 3 caracteres).' });
       return;
     }
     setIsSavingCotizacion(true);
@@ -591,7 +592,7 @@ export default function NuevaVentaPage() {
       }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      alert(e.response?.data?.message || 'Error al guardar cotización');
+      sileo.error({ title: e.response?.data?.message || 'Error al guardar cotización' });
     } finally {
       setIsSavingCotizacion(false);
     }
@@ -631,7 +632,7 @@ export default function NuevaVentaPage() {
       setCotizacionOrigenId(cot.id);
     } catch (e) {
       console.error(e);
-      alert('Error al cargar la cotización');
+      sileo.error({ title: 'Error al cargar la cotización' });
     }
   };
 
@@ -722,7 +723,7 @@ export default function NuevaVentaPage() {
       if (!ticketData) return;
       const html = buildTicketHtml(ticketData, logoSrc);
       const printWin = window.open('', '_blank', 'width=420,height=700,scrollbars=yes');
-      if (!printWin) { alert('Permite las ventanas emergentes para imprimir.'); return; }
+      if (!printWin) { sileo.info({ title: 'Permite las ventanas emergentes para imprimir.' }); return; }
       printWin.document.open();
       printWin.document.write(html);
       printWin.document.close();

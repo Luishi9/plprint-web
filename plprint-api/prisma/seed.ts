@@ -32,6 +32,7 @@ const CONFIGURACION_INICIAL: Array<{ clave: string; valor: string; tipo: string;
   { clave: 'notif_stock_bajo_umbral', valor: '10',                                   tipo: 'number',  grupo: 'notificaciones' },
   { clave: 'notif_ventas_dia',        valor: 'false',                                tipo: 'boolean', grupo: 'notificaciones' },
   { clave: 'notif_insumos_bajos',     valor: 'true',                                 tipo: 'boolean', grupo: 'notificaciones' },
+  { clave: 'somos_centro_impresion',  valor: 'false',                                tipo: 'boolean', grupo: 'maquinas' },
 ];
 
 const PERMISOS_INICIALES: Array<{ modulo: string; accion: string; descripcion: string }> = [

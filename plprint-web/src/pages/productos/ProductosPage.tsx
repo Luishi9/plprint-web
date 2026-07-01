@@ -8,6 +8,7 @@ import { Producto } from '@/types/producto.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
+import { sileo } from 'sileo';
 import {
   Dialog,
   DialogContent,
@@ -81,7 +82,7 @@ export default function ProductosPage() {
       fetchProductos(searchQuery);
     } catch (error) {
       console.error('Error al eliminar producto:', error);
-      alert('No se pudo eliminar el producto.');
+      sileo.error({ title: 'No se pudo eliminar el producto.' });
     } finally {
       setIsDeleting(false);
     }

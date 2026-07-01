@@ -5,18 +5,19 @@ import { Icon } from '@/components/ui/Icon';
 import { categoriasApi, Categoria } from '@/api/categorias.api';
 import { Button } from '@/components/ui/button';
 import { RequirePermission } from '@/components/RequirePermission';
+import { sileo } from 'sileo';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 
-const emptyForm = { nombre: '', tipo: 'venta' as 'venta' | 'produccion', descripcion: '' };
+const emptyForm = { nombre: '', tipo: 'venta' as 'venta' | 'produccion' | 'impresion', descripcion: '' };
 
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtroTipo, setFiltroTipo] = useState<'todas' | 'venta' | 'produccion'>('todas');
+  const [filtroTipo, setFiltroTipo] = useState<'todas' | 'venta' | 'produccion' | 'impresion'>('todas');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<Categoria | null>(null);
@@ -92,7 +93,7 @@ export default function CategoriasPage() {
       fetchCategorias();
     } catch (e) {
       console.error(e);
-      alert('No se pudo eliminar la categoría.');
+      sileo.error({ title: 'No se pudo eliminar la categoría.' });
     } finally {
       setIsDeleting(false);
     }
@@ -128,6 +129,7 @@ export default function CategoriasPage() {
           { v: 'todas' as const,      label: 'Todas',     icon: 'sell' },
           { v: 'venta' as const,      label: 'Venta',     icon: 'shopping_bag' },
           { v: 'produccion' as const, label: 'Producción', icon: 'factory' },
+          { v: 'impresion' as const,  label: 'Impresión', icon: 'print' },
         ].map((opt) => {
           const iconName = opt.icon;
           return (
@@ -183,6 +185,7 @@ export default function CategoriasPage() {
                 <AnimatePresence>
                   {categoriasFiltradas.map((cat, i) => {
                     const isProduccion = cat.tipo === 'produccion';
+                    const isImpresion = cat.tipo === 'impresion';
                     return (
                       <motion.tr
                         key={cat.id}
@@ -197,10 +200,12 @@ export default function CategoriasPage() {
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                             isProduccion
                               ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                              : isImpresion
+                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
                               : 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30'
                           }`}>
-                            {isProduccion ? <Icon name="factory" size={11} /> : <Icon name="shopping_bag" size={11} />}
-                            {isProduccion ? 'Producción' : 'Venta'}
+                            {isProduccion ? <Icon name="factory" size={11} /> : isImpresion ? <Icon name="print" size={11} /> : <Icon name="shopping_bag" size={11} />}
+                            {isProduccion ? 'Producción' : isImpresion ? 'Impresión' : 'Venta'}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-muted-foreground text-sm">
@@ -268,7 +273,7 @@ export default function CategoriasPage() {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground block mb-1.5">Tipo</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, tipo: 'venta' })}
@@ -290,6 +295,17 @@ export default function CategoriasPage() {
                   }`}
                 >
                   <Icon name="factory" size={14} /> Producción
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, tipo: 'impresion' })}
+                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                    form.tipo === 'impresion'
+                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
+                      : 'bg-background border border-border text-muted-foreground'
+                  }`}
+                >
+                  <Icon name="print" size={14} /> Impresión
                 </button>
               </div>
             </div>

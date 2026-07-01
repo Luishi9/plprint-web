@@ -66,6 +66,7 @@ interface CreateProductoDTO {
   sucursalId?: number;
   usuarioId?: number;
   cobrarMinimo1?: boolean;
+  maquinaId?: number;
   insumos?: Array<{ insumoId: number; cantidadRequerida: number }>;
 }
 
@@ -91,6 +92,7 @@ export class ProductosService {
         orderBy: { nombre: 'asc' },
         include: {
           categorias: { select: { nombre: true } },
+          maquinas: { select: { id: true, nombre: true } },
           inventario: {
             select: { cantidad: true }
           },
@@ -112,6 +114,7 @@ export class ProductosService {
       include: {
         categorias: true,
         proveedores: { select: { id: true, nombre: true } },
+        maquinas: { select: { id: true, nombre: true } },
         inventario: {
           include: { sucursales: { select: { id: true, nombre: true } } },
         },
@@ -155,6 +158,7 @@ export class ProductosService {
           unidad_medida: data.unidadMedida,
           imagen_url: data.imagenUrl,
           cobrar_minimo_1: data.cobrarMinimo1 ?? false,
+          maquina_id: data.maquinaId,
         },
       });
 
@@ -215,6 +219,7 @@ export class ProductosService {
           ...(data.imagenUrl && { imagen_url: data.imagenUrl }),
           ...(data.codigo && { codigo: data.codigo }),
           ...(data.cobrarMinimo1 !== undefined && { cobrar_minimo_1: data.cobrarMinimo1 }),
+          ...(data.maquinaId !== undefined && { maquina_id: data.maquinaId }),
         },
       });
 

@@ -7,6 +7,7 @@ import { Insumo } from '@/types/insumo.types';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { sileo } from 'sileo';
 import {
   Dialog,
   DialogContent,
@@ -113,7 +114,7 @@ export default function InsumosPage() {
       fetchInventario();
     } catch (error) {
       console.error('Error al eliminar insumo:', error);
-      alert('No se pudo eliminar el insumo.');
+      sileo.error({ title: 'No se pudo eliminar el insumo.' });
     } finally {
       setIsDeleting(false);
     }

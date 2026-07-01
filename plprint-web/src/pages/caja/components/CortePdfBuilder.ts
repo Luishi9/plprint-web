@@ -1,6 +1,7 @@
 import { useConfigStore } from '@/store/configStore';
 import { useMoney } from '@/hooks/useMoney';
 import type { CorteCaja, MovimientoCaja, ResumenCaja } from '@/api/caja.api';
+import { sileo } from 'sileo';
 
 export interface CortePdfData {
   corte: CorteCaja;
@@ -205,7 +206,7 @@ export function useCortePdfBuilder() {
   const descargarPdf = (data: CortePdfData) => {
     const html = buildHtml(data);
     const win = window.open('', '_blank', 'width=900,height=1100');
-    if (!win) { alert('Permite las ventanas emergentes para descargar el PDF.'); return; }
+    if (!win) { sileo.info({ title: 'Permite las ventanas emergentes para descargar el PDF.' }); return; }
     win.document.open();
     win.document.write(html);
     win.document.close();

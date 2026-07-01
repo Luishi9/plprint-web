@@ -9,6 +9,7 @@ export interface MermaInput {
   sucursal_id?: number;
   usuario_id?: number;
   venta_id?: number;
+  maquina_id?: number;
   cantidad: number;
   motivo: string;
   costo_estimado?: number;
@@ -46,6 +47,7 @@ export class MermasService {
           sucursales: { select: { id: true, nombre: true } },
           usuarios: { select: { id: true, nombre: true } },
           ventas: { select: { id: true, cotizaciones: { select: { folio: true } } } },
+          maquinas: { select: { id: true, nombre: true } },
         },
       }),
       prisma.mermas.count({ where }),
@@ -66,6 +68,7 @@ export class MermasService {
         productos: true, insumos: true, sucursales: true,
         usuarios: { select: { id: true, nombre: true } },
         ventas: true,
+        maquinas: { select: { id: true, nombre: true } },
       },
     });
     if (!m) throw new NotFoundError('Merma');
@@ -82,6 +85,16 @@ export class MermasService {
     if (dto.tipo === 'insumo' && !dto.insumo_id) throw new NotFoundError('Insumo requerido');
 
     return prisma.$transaction(async (tx) => {
+      let maquinaIdFinal: number | null = null;
+
+      if (dto.tipo === 'producto' && dto.producto_id) {
+        const producto = await tx.productos.findUnique({
+          where: { id: dto.producto_id },
+          select: { maquina_id: true },
+        });
+        maquinaIdFinal = dto.maquina_id ?? producto?.maquina_id ?? null;
+      }
+
       const merma = await tx.mermas.create({
         data: {
           tipo: dto.tipo,
@@ -90,6 +103,7 @@ export class MermasService {
           ...(dto.sucursal_id && { sucursal_id: dto.sucursal_id }),
           ...(dto.usuario_id && { usuario_id: dto.usuario_id }),
           ...(dto.venta_id && { venta_id: dto.venta_id }),
+          ...(maquinaIdFinal && { maquina_id: maquinaIdFinal }),
           cantidad: new Prisma.Decimal(dto.cantidad),
           motivo: dto.motivo,
           ...(dto.costo_estimado !== undefined && { costo_estimado: new Prisma.Decimal(dto.costo_estimado) }),
@@ -119,21 +133,20 @@ export class MermasService {
               ...(dto.usuario_id && { usuario_id: dto.usuario_id }),
             },
           });
-          // Si el producto tiene máquina asignada, registrar impresión como merma
-          const producto = await tx.productos.findUnique({
-            where: { id: dto.producto_id },
-            select: { maquina_id: true },
-          });
-          if (producto?.maquina_id) {
+          if (maquinaIdFinal) {
             await tx.impresiones.create({
               data: {
-                maquina_id: producto.maquina_id,
+                maquina_id: maquinaIdFinal,
                 producto_id: dto.producto_id,
                 merma_id: merma.id,
                 sucursal_id: dto.sucursal_id,
                 fue_merma: true,
                 ...(dto.usuario_id && { usuario_id: dto.usuario_id }),
               },
+            });
+            await tx.maquinas.update({
+              where: { id: maquinaIdFinal },
+              data: { contador_total: { increment: Number(dto.cantidad) } },
             });
           }
         } else if (dto.tipo === 'insumo' && dto.insumo_id) {

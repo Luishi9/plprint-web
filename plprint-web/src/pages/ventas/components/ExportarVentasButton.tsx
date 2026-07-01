@@ -4,6 +4,7 @@ import { Venta } from '@/types/venta.types';
 import { useMetodosPago } from '@/hooks/useMetodosPago';
 import { useMoney } from '@/hooks/useMoney';
 import * as XLSX from 'xlsx';
+import { sileo } from 'sileo';
 
 interface Props {
   ventas: Venta[];
@@ -132,7 +133,7 @@ export default function ExportarVentasButton({ ventas, desde, hasta }: Props) {
       win.document.close();
       win.onload = () => { win.focus(); win.print(); };
     } else {
-      alert('Permite las ventanas emergentes para imprimir.');
+      sileo.info({ title: 'Permite las ventanas emergentes para imprimir.' });
     }
     setOpen(false);
   };

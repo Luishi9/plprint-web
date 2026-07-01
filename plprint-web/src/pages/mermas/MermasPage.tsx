@@ -5,8 +5,11 @@ import { Icon } from '@/components/ui/Icon';
 import { mermasApi, Merma } from '@/api/mermas.api';
 import { productosApi } from '@/api/productos.api';
 import { insumosApi } from '@/api/insumos.api';
+import { maquinasApi, Maquina } from '@/api/maquinas.api';
 import { useMoney } from '@/hooks/useMoney';
 import { useSucursalStore } from '@/store/sucursalStore';
+import { useCentroImpresion } from '@/hooks/useCentroImpresion';
+import { sileo } from 'sileo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
@@ -18,6 +21,7 @@ const emptyForm = {
   tipo: 'producto' as 'producto' | 'insumo',
   producto_id: 0,
   insumo_id: 0,
+  maquina_id: 0,
   cantidad: '1',
   motivo: '',
   costo_estimado: '',
@@ -26,6 +30,7 @@ const emptyForm = {
 export default function MermasPage() {
   const { simbolo, format: money } = useMoney();
   const sucursalActual = useSucursalStore((s) => s.sucursalActiva);
+  const { esCentroImpresion } = useCentroImpresion();
   const [mermas, setMermas] = useState<Merma[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -35,8 +40,9 @@ export default function MermasPage() {
   const [totalCosto, setTotalCosto] = useState(0);
   const limit = 20;
 
-  const [productos, setProductos] = useState<Array<{ id: number; nombre: string; unidad_medida: string }>>([]);
+  const [productos, setProductos] = useState<Array<{ id: number; nombre: string; unidad_medida: string; maquina_id?: number | null }>>([]);
   const [insumos, setInsumos] = useState<Array<{ id: number; nombre: string; unidad_medida: string }>>([]);
+  const [maquinas, setMaquinas] = useState<Maquina[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<Merma | null>(null);
@@ -64,12 +70,14 @@ export default function MermasPage() {
 
   const cargarCatalogos = async () => {
     try {
-      const [p, i] = await Promise.all([
+      const [p, i, m] = await Promise.all([
         productosApi.getAll({ page: 1, limit: 100 }),
         insumosApi.getAll({ page: 1, limit: 100 }),
+        maquinasApi.getAll({ activo: true, ...(sucursalActual?.id && { sucursalId: sucursalActual.id }) }),
       ]);
       setProductos((p.data as { data: typeof productos }).data || []);
       setInsumos((i.data as { data: typeof insumos }).data || []);
+      setMaquinas((m.data as { data: Maquina[] }).data || []);
     } catch (e) { console.error(e); }
   };
 
@@ -95,6 +103,7 @@ export default function MermasPage() {
       tipo: m.tipo,
       producto_id: m.producto_id || 0,
       insumo_id: m.insumo_id || 0,
+      maquina_id: m.maquina_id || 0,
       cantidad: m.cantidad,
       motivo: m.motivo,
       costo_estimado: m.costo_estimado || '',
@@ -118,8 +127,12 @@ export default function MermasPage() {
         ...(form.costo_estimado && { costo_estimado: Number(form.costo_estimado) }),
         ...(sucursalActual?.id && { sucursal_id: sucursalActual.id }),
       };
-      if (form.tipo === 'producto') payload.producto_id = Number(form.producto_id);
-      else payload.insumo_id = Number(form.insumo_id);
+      if (form.tipo === 'producto') {
+        payload.producto_id = Number(form.producto_id);
+        if (form.maquina_id) payload.maquina_id = Number(form.maquina_id);
+      } else {
+        payload.insumo_id = Number(form.insumo_id);
+      }
 
       if (editando) {
         await mermasApi.update(editando.id, payload);
@@ -143,7 +156,7 @@ export default function MermasPage() {
       fetchMermas();
     } catch (e) {
       console.error(e);
-      alert('No se pudo eliminar la merma.');
+      sileo.error({ title: 'No se pudo eliminar la merma.' });
     } finally { setIsDeleting(false); }
   };
 
@@ -215,6 +228,7 @@ export default function MermasPage() {
               <th className="px-6 py-4 font-semibold">Fecha</th>
               <th className="px-6 py-4 font-semibold">Tipo</th>
               <th className="px-6 py-4 font-semibold">Item</th>
+              {esCentroImpresion && <th className="px-6 py-4 font-semibold">Máquina</th>}
               <th className="px-6 py-4 font-semibold text-center">Cantidad</th>
               <th className="px-6 py-4 font-semibold">Motivo</th>
               <th className="px-6 py-4 font-semibold text-right">Costo Est.</th>
@@ -224,11 +238,11 @@ export default function MermasPage() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={8} className="px-6 py-8 text-center">
+              <tr><td colSpan={esCentroImpresion ? 9 : 8} className="px-6 py-8 text-center">
                 <Icon name="progress_activity" className="mx-auto animate-spin text-[#2e9e9b]" size={24} />
               </td></tr>
             ) : mermas.length === 0 ? (
-              <tr><td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+              <tr><td colSpan={esCentroImpresion ? 9 : 8} className="px-6 py-8 text-center text-muted-foreground">
                 <Icon name="delete" size={32} className="mx-auto mb-2 opacity-20" />
                 <p>No hay mermas registradas.</p>
               </td></tr>
@@ -259,6 +273,18 @@ export default function MermasPage() {
                       {m.productos?.nombre || m.insumos?.nombre || '—'}
                       {m.venta_id && <span className="text-[10px] text-muted-foreground ml-1">(venta #{m.venta_id})</span>}
                     </td>
+                    {esCentroImpresion && (
+                      <td className="px-6 py-4">
+                        {m.maquinas ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                            <Icon name="print" size={11} />
+                            {m.maquinas.nombre}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-center font-mono text-red-400">{Number(m.cantidad).toFixed(2)}</td>
                     <td className="px-6 py-4 text-muted-foreground text-sm">{m.motivo}</td>
                     <td className="px-6 py-4 text-right font-mono">
@@ -338,10 +364,17 @@ export default function MermasPage() {
               </label>
               <select
                 value={form.tipo === 'producto' ? form.producto_id : form.insumo_id}
-                onChange={(e) => form.tipo === 'producto'
-                  ? setForm({ ...form, producto_id: Number(e.target.value) })
-                  : setForm({ ...form, insumo_id: Number(e.target.value) })
-                }
+                onChange={(e) => {
+                  const valor = Number(e.target.value);
+                  if (form.tipo === 'producto') {
+                    // Auto-seleccionar la máquina del producto si tiene una vinculada
+                    const productoSeleccionado = productos.find(p => p.id === valor);
+                    const maquinaIdAuto = productoSeleccionado?.maquina_id || 0;
+                    setForm({ ...form, producto_id: valor, maquina_id: maquinaIdAuto });
+                  } else {
+                    setForm({ ...form, insumo_id: valor });
+                  }
+                }}
                 className="w-full bg-background border border-border rounded-md text-sm px-3 py-2"
               >
                 <option value={0}>Seleccionar...</option>
@@ -350,6 +383,30 @@ export default function MermasPage() {
                 ))}
               </select>
             </div>
+            {/* Selector de máquina - solo visible cuando es producto Y somos centro de impresión */}
+            {esCentroImpresion && form.tipo === 'producto' && maquinas.length > 0 && (
+              <div>
+                <label className="text-sm font-medium block mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="print" size={14} className="text-purple-400" />
+                    Máquina (opcional)
+                  </span>
+                </label>
+                <select
+                  value={form.maquina_id}
+                  onChange={(e) => setForm({ ...form, maquina_id: Number(e.target.value) })}
+                  className="w-full bg-background border border-border rounded-md text-sm px-3 py-2"
+                >
+                  <option value={0}>Sin máquina (usar la del producto)</option>
+                  {maquinas.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nombre} ({m.tipo})</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Si el producto tiene una máquina vinculada, se usará automáticamente. Puedes overridearla aquí.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-sm font-medium block mb-1.5">Cantidad *</label>

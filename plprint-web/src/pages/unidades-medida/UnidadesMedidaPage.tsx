@@ -7,6 +7,7 @@ import { unidadesMedidaApi, UnidadMedida, TipoMedida } from '@/api/unidadesMedid
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
+import { sileo } from 'sileo';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -95,7 +96,7 @@ export default function UnidadesMedidaPage() {
       fetchUnidades();
     } catch (e) {
       console.error(e);
-      alert('No se pudo eliminar la unidad de medida.');
+      sileo.error({ title: 'No se pudo eliminar la unidad de medida.' });
     } finally {
       setIsDeleting(false);
     }
