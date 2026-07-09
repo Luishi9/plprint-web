@@ -402,7 +402,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Icon name="shopping_cart" size={16} className="text-[#2e9e9b]" /> Ventas Recientes
+                <Icon name="shopping_cart" size={18} className="text-[#2e9e9b]" /> Ventas Recientes
               </CardTitle>
               <Button size="sm" variant="ghost" className="text-xs text-muted-foreground h-7 px-2" onClick={() => navigate('/ventas')}>
                 Ver todas
@@ -416,6 +416,7 @@ export default function DashboardPage() {
               <div className="text-center py-8">
                 <Icon name="shopping_cart" size={32} className="mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Sin ventas registradas{esHoy ? ' hoy' : ` el ${labelDia}`}</p>
+                <p className="text-sm text-muted-foreground">Las ventas que realices hoy aparecerán en esta lista</p>
                 <Button size="sm" variant="lime" className="mt-3 gap-1.5" onClick={() => navigate('/ventas')}>
                   <Icon name="bolt" size={13} /> Nueva Venta
                 </Button>
@@ -447,25 +448,25 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Icon name="bolt" size={16} className="text-[#2e9e9b]" /> Acciones Rápidas
+              <Icon name="bolt" size={18} className="text-[#2e9e9b]" /> Acciones Rápidas
             </CardTitle>
             <CardDescription>Acceso directo a funciones clave</CardDescription>
           </CardHeader>
           <CardContent className="pt-2 space-y-2">
             <Button variant="lime" className="w-full justify-start gap-3 font-semibold" onClick={() => navigate('/ventas/nueva')}>
-              <Icon name="shopping_cart" size={16} /> Nueva Venta
+              <Icon name="shopping_cart" size={18} /> Nueva Venta
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3" onClick={() => navigate('/productos')}>
-              <Icon name="inventory_2" size={16} /> Gestionar Productos
+              <Icon name="inventory_2" size={18} /> Gestionar Productos
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3" onClick={() => navigate('/inventario')}>
-              <Icon name="bar_chart" size={16} /> Ver Inventario
+              <Icon name="bar_chart" size={18} /> Ver Inventario
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3" onClick={() => navigate('/clientes')}>
-              <Icon name="group" size={16} /> Clientes
+              <Icon name="group" size={18} /> Clientes
             </Button>
             <div className="pt-2 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Sistema</p>
+              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Informacion del Sistema</p>
               <div className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex justify-between">
                   <span>Versión</span>
