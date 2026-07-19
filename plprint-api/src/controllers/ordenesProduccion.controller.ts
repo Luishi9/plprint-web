@@ -7,9 +7,13 @@ export class OrdenesProduccionController {
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const filters: any = {};
+      const sucursalId = Number(req.query.sucursalId);
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
+      const filters: any = { sucursalId };
       if (req.query.estatus) filters.estatus = String(req.query.estatus);
-      if (req.query.sucursalId) filters.sucursalId = Number(req.query.sucursalId);
       if (req.query.productoId) filters.productoId = Number(req.query.productoId);
       if (req.query.usuarioAsignadoId) filters.usuarioAsignadoId = Number(req.query.usuarioAsignadoId);
       if (req.query.prioridad) filters.prioridad = String(req.query.prioridad);
@@ -35,7 +39,11 @@ export class OrdenesProduccionController {
 
   getEstadisticas = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
+      const sucursalId = Number(req.query.sucursalId);
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
       const stats = await this.service.getEstadisticas(sucursalId);
       sendSuccess(res, stats);
     } catch (err) {

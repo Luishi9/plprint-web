@@ -13,7 +13,11 @@ export class MermasController {
       const tipo = req.query.tipo as string | undefined;
       const fechaDesde = req.query.fechaDesde as string | undefined;
       const fechaHasta = req.query.fechaHasta as string | undefined;
-      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
+      const sucursalId = Number(req.query.sucursalId);
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
       const { data, total, totalCantidad, totalCosto } = await this.service.findAll({
         page, limit, search, tipo, fechaDesde, fechaHasta, sucursalId,
       });

@@ -100,7 +100,7 @@ export default function CotizacionesPage() {
     try {
       const [c, p] = await Promise.all([
         clientesApi.getAll({ page: 1, limit: 100 }),
-        productosApi.getAll({ page: 1, limit: 100 }),
+        productosApi.getAll({ page: 1, limit: 100, ...(sucursalActual?.id && { sucursalId: sucursalActual.id }) }),
       ]);
       setClientes((c.data as { data: Cliente[] }).data || []);
       setProductos((p.data as { data: Producto[] }).data || []);

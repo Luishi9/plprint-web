@@ -14,7 +14,11 @@ export class ComprasController {
       const fechaHasta = req.query.fechaHasta as string | undefined;
       const proveedorId = req.query.proveedorId ? Number(req.query.proveedorId) : undefined;
       const insumoId = req.query.insumoId ? Number(req.query.insumoId) : undefined;
-      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
+      const sucursalId = Number(req.query.sucursalId);
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
       const { data, total, totalInvertido, totalCantidad } = await this.comprasService.findAll({
         page, limit, search, fechaDesde, fechaHasta, proveedorId, insumoId, sucursalId,
       });

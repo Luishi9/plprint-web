@@ -9,7 +9,11 @@ export class VentasController {
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 20;
-      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
+      const sucursalId = Number(req.query.sucursalId);
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
       const desde = req.query.desde as string | undefined;
       const hasta = req.query.hasta as string | undefined;
       const estado = (req.query.estado as 'completada' | 'cancelada' | undefined) || undefined;

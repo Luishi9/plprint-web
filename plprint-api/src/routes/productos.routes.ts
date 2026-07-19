@@ -26,6 +26,16 @@ const upload = multer({
   },
 });
 
+const excelUpload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.xlsx' || ext === '.xls') cb(null, true);
+    else cb(new Error('Solo se permiten archivos Excel (.xlsx, .xls)'));
+  },
+});
+
 const createSchema = z.object({
   nombre: z.string().min(1).max(150),
   precioVenta: z.coerce.number().positive(),
@@ -60,6 +70,8 @@ const createSchema = z.object({
 });
 
 router.get('/', controller.getAll);
+router.get('/plantilla', authorize(ROLES.ADMIN), controller.downloadPlantilla);
+router.get('/exportar', authorize(ROLES.ADMIN), controller.downloadCatalog);
 router.get('/:id', controller.getById);
 router.get('/:id/insumos', controller.getInsumos);
 router.post(
@@ -77,5 +89,17 @@ router.put(
   controller.update,
 );
 router.delete('/:id', authorize(ROLES.ADMIN), controller.remove);
+
+router.post(
+  '/importar/preview',
+  authorize(ROLES.ADMIN),
+  excelUpload.single('file'),
+  controller.previewImport,
+);
+router.post(
+  '/importar/confirmar',
+  authorize(ROLES.ADMIN),
+  controller.confirmImport,
+);
 
 export default router;

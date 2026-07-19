@@ -44,7 +44,11 @@ export class GastosController {
       const fechaHasta = req.query.fechaHasta as string | undefined;
       const tipo = req.query.tipo as string | undefined;
       const categoriaId = req.query.categoriaId ? Number(req.query.categoriaId) : undefined;
-      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
+      const sucursalId = Number(req.query.sucursalId);
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
       const { data, total, totalMonto } = await this.gastosService.findAllGastos({
         page, limit, search, fechaDesde, fechaHasta, tipo, categoriaId, sucursalId,
       });

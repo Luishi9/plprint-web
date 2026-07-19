@@ -115,7 +115,7 @@ export default function NuevaVentaPage() {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await productosApi.getAll({ search: productSearch || undefined, limit: 20 });
+        const res = await productosApi.getAll({ search: productSearch || undefined, limit: 20, ...(sucursalActiva?.id && { sucursalId: sucursalActiva.id }) });
         setProductos(res.data?.data || []);
       } catch (e: any) {
         if (e?.code !== 'ERR_CANCELED') console.error(e);

@@ -8,6 +8,8 @@ import { Producto } from '@/types/producto.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequirePermission } from '@/components/RequirePermission';
+import { usePermisos } from '@/hooks/usePermisos';
+import { useSucursalStore } from '@/store/sucursalStore';
 import { sileo } from 'sileo';
 import {
   Dialog,
@@ -19,10 +21,12 @@ import {
 } from '@/components/ui/dialog';
 
 import { ProductoFormModal } from './components/ProductoFormModal';
+import { ImportarProductosModal } from './components/ImportarProductosModal';
 import { getImageUrl } from '@/utils/format';
 import { useMoney } from '@/hooks/useMoney';
 
 export default function ProductosPage() {
+  const { sucursalActiva } = useSucursalStore();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [isLoading, setIsLoading] = useState(true);   // solo carga inicial
   const [isSearching, setIsSearching] = useState(false); // búsqueda sin borrar tabla
@@ -31,6 +35,7 @@ export default function ProductosPage() {
   const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
   const [productoAEliminar, setProductoAEliminar] = useState<Producto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const { format: money } = useMoney();
 
@@ -43,7 +48,7 @@ export default function ProductosPage() {
     else setIsSearching(true);
 
     try {
-      const res = await productosApi.getAll({ search: query || undefined });
+      const res = await productosApi.getAll({ search: query || undefined, sucursalId: sucursalActiva?.id });
       setProductos(res.data?.data || []);
     } catch (error: any) {
       if (error?.name !== 'CanceledError' && error?.code !== 'ERR_CANCELED') {
@@ -59,6 +64,11 @@ export default function ProductosPage() {
   useEffect(() => {
     fetchProductos('', true);
   }, []);
+
+  // Refrescar al cambiar sucursal
+  useEffect(() => {
+    fetchProductos(searchQuery, true);
+  }, [sucursalActiva?.id]);
 
   // Búsqueda con debounce — mantiene la tabla visible mientras busca
   useEffect(() => {
@@ -135,6 +145,41 @@ export default function ProductosPage() {
               Nuevo Producto
             </Button>
           </RequirePermission>
+
+          {(usePermisos().isAdmin) && (
+            <Button
+              onClick={() => setIsImportModalOpen(true)}
+              variant="outline"
+              className="h-10 px-4 border-[#2e9e9b]/30 text-[#2e9e9b] hover:bg-[#2e9e9b]/10 whitespace-nowrap"
+            >
+              <Icon name="upload_file" className="mr-2" size={16} />
+              Importar Excel
+            </Button>
+          )}
+
+          {(usePermisos().isAdmin) && (
+            <Button
+              onClick={async () => {
+                try {
+                  const res = await productosApi.exportCatalog(sucursalActiva?.id);
+                  const blob = new Blob([res.data as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'catalogo_productos.xlsx';
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                } catch {
+                  sileo.error({ title: 'Error al descargar catalogo' });
+                }
+              }}
+              variant="outline"
+              className="h-10 px-4 border-[#2e9e9b]/30 text-[#2e9e9b] hover:bg-[#2e9e9b]/10 whitespace-nowrap"
+            >
+              <Icon name="download" className="mr-2" size={16} />
+              Descargar catalogo
+            </Button>
+          )}
         </motion.div>
       </div>
 
@@ -143,6 +188,12 @@ export default function ProductosPage() {
         onOpenChange={(v) => { setIsModalOpen(v); if (!v) setProductoAEditar(null); }}
         onSuccess={() => fetchProductos(searchQuery)}
         producto={productoAEditar}
+      />
+
+      <ImportarProductosModal
+        open={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        onSuccess={() => fetchProductos(searchQuery)}
       />
 
       {/* DATA TABLE SECTION */}

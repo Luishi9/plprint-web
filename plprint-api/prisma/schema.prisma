@@ -40,6 +40,7 @@ model sucursales {
   impresiones         impresiones[]
   ordenes_produccion   ordenes_produccion[]
   cortes_caja          cortes_caja[]
+  productos            productos[]
 }
 
 model usuarios {
@@ -117,7 +118,7 @@ model proveedores {
 
 model productos {
   id                 Int                  @id @default(autoincrement())
-  codigo             String?              @unique @db.VarChar(50)
+  codigo             String?              @db.VarChar(50)
   nombre             String               @db.VarChar(150)
   descripcion        String?              @db.Text
   precio_venta       Decimal              @db.Decimal(10, 2)
@@ -129,11 +130,13 @@ model productos {
   maquina_id         Int?
   activo             Boolean              @default(true)
   cobrar_minimo_1    Boolean              @default(false)
+  sucursal_id        Int
   created_at         DateTime             @default(now())
   updated_at         DateTime             @default(now()) @updatedAt
   categorias         categorias?          @relation(fields: [categoria_id], references: [id])
   proveedores        proveedores?         @relation(fields: [proveedor_id], references: [id])
   maquinas           maquinas?            @relation(fields: [maquina_id], references: [id])
+  sucursales         sucursales           @relation(fields: [sucursal_id], references: [id])
   inventario         inventario[]
   kardex_movimientos kardex_movimientos[]
   venta_detalle      venta_detalle[]
@@ -144,9 +147,11 @@ model productos {
   ordenes_produccion ordenes_produccion[]
   producto_precios  producto_precios[]
 
+  @@unique([codigo, sucursal_id])
   @@index([categoria_id])
   @@index([activo])
   @@index([maquina_id])
+  @@index([sucursal_id])
 }
 
 model producto_precios {

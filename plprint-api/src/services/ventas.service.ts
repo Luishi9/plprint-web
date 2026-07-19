@@ -236,7 +236,7 @@ export class VentasService {
 
         const producto = await tx.productos.findUnique({
           where: { id: item.productoId },
-          select: { maquina_id: true },
+          select: { maquina_id: true, categoria_id: true, categorias: { select: { tipo: true } } },
         });
         if (producto?.maquina_id) {
           await tx.impresiones.create({
@@ -248,9 +248,22 @@ export class VentasService {
               ...(dto.usuarioId && { usuario_id: dto.usuarioId }),
             },
           });
+          
           await tx.maquinas.update({
             where: { id: producto.maquina_id },
             data: { contador_total: { increment: item.cantidad } },
+          });
+        }
+
+        if (producto?.categorias?.tipo === 'produccion') {
+          await tx.ordenes_produccion.create({
+            data: {
+              sucursal_id: dto.sucursalId,
+              producto_id: item.productoId,
+              cantidad: item.cantidad,
+              estatus: 'pendiente',
+              usuario_creador_id: dto.usuarioId,
+            },
           });
         }
 
@@ -298,15 +311,26 @@ export class VentasService {
 
       // Revertir inventario
       for (const detalle of venta.venta_detalle) {
-        await tx.inventario.update({
+        const invRecord = await tx.inventario.findUnique({
           where: {
             producto_id_sucursal_id: {
               producto_id: detalle.producto_id!,
               sucursal_id: venta.sucursal_id!,
             },
           },
-          data: { cantidad: { increment: detalle.cantidad } },
         });
+
+        if (invRecord) {
+          await tx.inventario.update({
+            where: {
+              producto_id_sucursal_id: {
+                producto_id: detalle.producto_id!,
+                sucursal_id: venta.sucursal_id!,
+              },
+            },
+            data: { cantidad: { increment: detalle.cantidad } },
+          });
+        }
 
         await tx.kardex_movimientos.create({
           data: {

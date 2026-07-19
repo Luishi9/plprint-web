@@ -1,11 +1,18 @@
 import { prisma } from '../config/database';
 import { NotFoundError } from '../utils/errors';
+import { Prisma } from '@prisma/client';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { setTemp, getTemp, deleteTemp } from '../utils/tempStore';
+import crypto from 'crypto';
 
 interface FindAllParams {
   page: number;
   limit: number;
   search?: string;
   categoriaId?: number;
+  categoriaTipo?: string;
+  sucursalId?: number;
 }
 
 const _unidadInfoCache = new Map<string, { es_medida: boolean; tipo_medida: string | null }>();
@@ -51,6 +58,79 @@ const attachUnidadInfo = async <T extends { unidad_medida: string | null; id: nu
   });
 };
 
+const PAD = 4;
+const FALLBACK_PREFIX = 'PROD';
+
+function padWithX(s: string, len: number): string {
+  return s.length >= len ? s.substring(0, len) : s.padEnd(len, 'X');
+}
+
+function buildPrefix(nombre: string): string {
+  const words = nombre
+    .toUpperCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/[^A-Z0-9]/g, ''))
+    .filter(Boolean)
+    .slice(0, 3);
+  if (words.length === 0) return FALLBACK_PREFIX;
+  if (words.length === 1) return padWithX(words[0], 4);
+  if (words.length === 2) {
+    return padWithX(words[0].substring(0, 2) + words[1].substring(0, 2), 4);
+  }
+  return padWithX(
+    words[0].substring(0, 2) + words[1].substring(0, 1) + words[2].substring(0, 1),
+    4
+  );
+}
+
+async function nextCodigoForProducto(
+  tx: Prisma.TransactionClient,
+  prefix: string,
+  sucursalId: number
+): Promise<string> {
+  const last = await tx.productos.findFirst({
+    where: { codigo: { startsWith: prefix + '-' }, sucursal_id: sucursalId },
+    orderBy: { codigo: 'desc' },
+    select: { codigo: true },
+  });
+  if (!last) return `${prefix}-${'1'.padStart(PAD, '0')}`;
+  const re = new RegExp(`^${prefix}-(\\d+)$`);
+  const m = last.codigo?.match(re);
+  const nextNum = m ? parseInt(m[1], 10) + 1 : 1;
+  return `${prefix}-${String(nextNum).padStart(PAD, '0')}`;
+}
+
+export async function generarCodigoProducto(
+  nombre: string,
+  tx?: Prisma.TransactionClient,
+  sucursalId?: number
+): Promise<string> {
+  const client = tx ?? prisma;
+  const prefix = buildPrefix(nombre);
+  return nextCodigoForProducto(client, prefix, sucursalId ?? 1);
+}
+
+interface PreviewRow {
+  fila: number;
+  codigo: string | null;
+  nombre: string;
+  categoria: string | null;
+  descripcion: string | null;
+  unidadMedida: string;
+  manejaInventario: boolean;
+  precioVenta: number;
+  precioCompra: number | null;
+  categoriaId?: number;
+  preciosPorVolumen: Array<{ nivel: string; cantidadMinima: number; precio: number }>;
+  errors: string[];
+  warnings: string[];
+}
+
+interface ImportPreviewData {
+  rows: PreviewRow[];
+  duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string }>;
+}
+
 interface CreateProductoDTO {
   codigo?: string;
   nombre: string;
@@ -71,7 +151,8 @@ interface CreateProductoDTO {
 }
 
 export class ProductosService {
-  async findAll({ page, limit, search, categoriaId }: FindAllParams) {
+  async findAll({ page, limit, search, categoriaId, categoriaTipo, sucursalId }: FindAllParams) {
+
     const skip = (page - 1) * limit;
     const where = {
       activo: true,
@@ -82,6 +163,9 @@ export class ProductosService {
         ],
       }),
       ...(categoriaId && { categoria_id: categoriaId }),
+      ...(categoriaTipo && { categorias: { tipo: categoriaTipo.toLowerCase() } }),
+      ...(sucursalId && { sucursal_id: sucursalId }),
+      // toLowerCase() para que no importe si el query viene en mayúsculas o minúsculas
     };
 
     const [data, total] = await Promise.all([
@@ -148,7 +232,7 @@ export class ProductosService {
       // 1. Crear el producto
       const producto = await tx.productos.create({
         data: {
-          codigo: data.codigo,
+          codigo: data.codigo ?? await generarCodigoProducto(data.nombre, tx, data.sucursalId),
           nombre: data.nombre,
           descripcion: data.descripcion,
           precio_venta: data.precioVenta,
@@ -159,6 +243,7 @@ export class ProductosService {
           imagen_url: data.imagenUrl,
           cobrar_minimo_1: data.cobrarMinimo1 ?? false,
           maquina_id: data.maquinaId,
+          sucursal_id: data.sucursalId ?? 1,
         },
       });
 
@@ -203,7 +288,7 @@ export class ProductosService {
 
   async update(id: number, data: Partial<CreateProductoDTO>) {
     await this.findById(id);
-    
+
     return prisma.$transaction(async (tx) => {
       // 1. Actualizar el producto
       const producto = await tx.productos.update({
@@ -248,7 +333,7 @@ export class ProductosService {
 
   async softDelete(id: number) {
     await this.findById(id);
-    return prisma.productos.update({ where: { id }, data: { activo: false } });
+    return prisma.productos.update({ where: { id }, data: { activo: false, codigo: null } });
   }
 
   async getInsumosByProducto(productoId: number) {
@@ -271,5 +356,428 @@ export class ProductosService {
         },
       },
     });
+  }
+
+  async generateTemplate(): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Productos');
+
+    const headers = [
+      'codigo', 'Nombre', 'Categoria', 'Descripcion', 'Unidad de medida',
+      'Maneja inventario', 'Precio venta', 'Precio compra',
+      'Medio mayoreo (SI/NO)', 'Cantidad medio mayoreo', 'Precio medio mayoreo',
+      'Mayoreo (SI/NO)', 'Cantidad mayoreo', 'Precio mayoreo',
+      'Super mayoreo (SI/NO)', 'Cantidad super mayoreo', 'Precio super mayoreo',
+    ];
+
+    const headerRow = ws.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF225C5E' },
+      };
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    ws.addRow(['', 'Ejemplo de producto', 'Impresion', '', 'unidad', 'SI', '100', '50',
+      'SI', '10', '90', 'NO', '', '', 'NO', '', '']);
+
+    ws.columns = [
+      { width: 12 }, { width: 30 }, { width: 20 }, { width: 40 }, { width: 16 },
+      { width: 18 }, { width: 12 }, { width: 12 },
+      { width: 22 }, { width: 22 }, { width: 20 },
+      { width: 18 }, { width: 18 }, { width: 16 },
+      { width: 24 }, { width: 24 }, { width: 22 },
+    ];
+
+    const buffer = await wb.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  async exportCatalog(sucursalId?: number): Promise<Buffer> {
+    const productos = await prisma.productos.findMany({
+      where: { activo: true, ...(sucursalId && { sucursal_id: sucursalId }) },
+      include: {
+        categorias: { select: { nombre: true } },
+        inventario: { select: { id: true } },
+        producto_precios: { where: { activo: true } },
+      },
+      orderBy: { nombre: 'asc' },
+    });
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Productos');
+
+    const headers = [
+      'codigo', 'Nombre', 'Categoria', 'Descripcion', 'Unidad de medida',
+      'Maneja inventario', 'Precio venta', 'Precio compra',
+      'Medio mayoreo (SI/NO)', 'Cantidad medio mayoreo', 'Precio medio mayoreo',
+      'Mayoreo (SI/NO)', 'Cantidad mayoreo', 'Precio mayoreo',
+      'Super mayoreo (SI/NO)', 'Cantidad super mayoreo', 'Precio super mayoreo',
+    ];
+
+    const headerRow = ws.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF225C5E' } };
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    for (const p of productos) {
+      const precios = p.producto_precios;
+      const medio = precios.find(pr => pr.nivel === 'medio_mayoreo');
+      const mayoreo = precios.find(pr => pr.nivel === 'mayoreo');
+      const superM = precios.find(pr => pr.nivel === 'super_mayoreo');
+
+      ws.addRow([
+        p.codigo || '',
+        p.nombre,
+        p.categorias?.nombre || '',
+        p.descripcion || '',
+        p.unidad_medida,
+        p.inventario.length > 0 ? 'SI' : 'NO',
+        Number(p.precio_venta),
+        p.precio_compra ? Number(p.precio_compra) : '',
+        medio ? 'SI' : 'NO',
+        medio ? medio.cantidad_minima : '',
+        medio ? Number(medio.precio) : '',
+        mayoreo ? 'SI' : 'NO',
+        mayoreo ? mayoreo.cantidad_minima : '',
+        mayoreo ? Number(mayoreo.precio) : '',
+        superM ? 'SI' : 'NO',
+        superM ? superM.cantidad_minima : '',
+        superM ? Number(superM.precio) : '',
+      ]);
+    }
+
+    ws.columns = [
+      { width: 12 }, { width: 30 }, { width: 20 }, { width: 40 }, { width: 16 },
+      { width: 18 }, { width: 12 }, { width: 12 },
+      { width: 22 }, { width: 22 }, { width: 20 },
+      { width: 18 }, { width: 18 }, { width: 16 },
+      { width: 24 }, { width: 24 }, { width: 22 },
+    ];
+
+    const buffer = await wb.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  async previewImport(filePath: string, sucursalId: number): Promise<{ token: string; total: number; nuevos: number; duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string }>; errores: Array<{ fila: number; codigo: string; razon: string }>; warnings: Array<{ fila: number; codigo: string; mensaje: string }> }> {
+    const wb = XLSX.readFile(filePath);
+    const wsname = wb.SheetNames[0];
+    const rows = XLSX.utils.sheet_to_json<(string | number | null | undefined)[]>(wb.Sheets[wsname], { header: 1 });
+
+    const CATALOG = {
+      CODIGO: 0, NOMBRE: 1, CATEGORIA: 2, DESCRIPCION: 3,
+      UNIDAD_MEDIDA: 4, MANEJA_INVENTARIO: 5,
+      PRECIO_VENTA: 6, PRECIO_COMPRA: 7,
+      MEDIO_SI_NO: 8, MEDIO_CANTIDAD: 9, MEDIO_PRECIO: 10,
+      MAYOREO_SI_NO: 11, MAYOREO_CANTIDAD: 12, MAYOREO_PRECIO: 13,
+      SUPER_SI_NO: 14, SUPER_CANTIDAD: 15, SUPER_PRECIO: 16,
+    };
+
+    const headerRow = rows[0] as string[];
+    if (!headerRow) throw new NotFoundError('El archivo no contiene encabezados');
+
+    const [categorias, unidadesList] = await Promise.all([
+      prisma.categorias.findMany({ where: { activo: true } }),
+      prisma.unidades_medida.findMany(),
+    ]);
+
+    const previewRows: PreviewRow[] = [];
+    const errores: Array<{ fila: number; codigo: string; razon: string }> = [];
+    const warnings: Array<{ fila: number; codigo: string; mensaje: string }> = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i] as (string | number | null | undefined)[];
+      if (!row || row.every(c => c === undefined || c === null || c === '')) continue;
+
+      const fila = i + 1;
+      const errors: string[] = [];
+      const rowWarnings: string[] = [];
+
+      const rawCodigo = String(row[CATALOG.CODIGO] ?? '').trim();
+      const nombre = String(row[CATALOG.NOMBRE] ?? '').trim();
+      const categoriaRaw = String(row[CATALOG.CATEGORIA] ?? '').trim();
+      const descripcion = String(row[CATALOG.DESCRIPCION] ?? '').trim() || null;
+      const unidadRaw = String(row[CATALOG.UNIDAD_MEDIDA] ?? '').trim().toLowerCase();
+      const manInvRaw = String(row[CATALOG.MANEJA_INVENTARIO] ?? '').trim().toUpperCase();
+      const precioVenta = Number(row[CATALOG.PRECIO_VENTA]);
+      const precioCompraRaw = row[CATALOG.PRECIO_COMPRA];
+
+      const medioSiNo = String(row[CATALOG.MEDIO_SI_NO] ?? '').trim().toUpperCase();
+      const medioCantidad = Number(row[CATALOG.MEDIO_CANTIDAD]);
+      const medioPrecio = Number(row[CATALOG.MEDIO_PRECIO]);
+      const mayoreoSiNo = String(row[CATALOG.MAYOREO_SI_NO] ?? '').trim().toUpperCase();
+      const mayoreoCantidad = Number(row[CATALOG.MAYOREO_CANTIDAD]);
+      const mayoreoPrecio = Number(row[CATALOG.MAYOREO_PRECIO]);
+      const superSiNo = String(row[CATALOG.SUPER_SI_NO] ?? '').trim().toUpperCase();
+      const superCantidad = Number(row[CATALOG.SUPER_CANTIDAD]);
+      const superPrecio = Number(row[CATALOG.SUPER_PRECIO]);
+
+      if (!nombre) errors.push('Nombre es requerido');
+      if (!precioVenta || precioVenta <= 0) errors.push('Precio venta debe ser mayor a 0');
+
+      let categoriaId: number | undefined;
+      if (categoriaRaw) {
+        const cat = categorias.find(c => c.nombre.toLowerCase() === categoriaRaw.toLowerCase());
+        if (cat) categoriaId = cat.id;
+        else errors.push(`Categoria "${categoriaRaw}" no existe`);
+      }
+
+      let unidad = 'unidad';
+      let esMedida = false;
+      if (unidadRaw) {
+        const u = unidadesList.find(
+          x => x.abreviatura.toLowerCase() === unidadRaw || x.nombre.toLowerCase() === unidadRaw
+        );
+        if (u) {
+          unidad = u.abreviatura;
+          esMedida = u.es_medida;
+        } else {
+          rowWarnings.push(`Unidad de medida "${unidadRaw}" no encontrada, se usara "unidad"`);
+        }
+      }
+
+      let manejaInventario = manInvRaw === 'SI';
+      if (esMedida && manejaInventario) {
+        manejaInventario = false;
+        rowWarnings.push('Producto con unidad de medida (m²/ml) no puede manejar inventario, se forza a NO');
+      }
+
+      let codigo = rawCodigo || null;
+
+      if (!codigo) {
+        codigo = await generarCodigoProducto(nombre, undefined, sucursalId);
+      }
+
+      const preciosPorVolumen: Array<{ nivel: string; cantidadMinima: number; precio: number }> = [];
+
+      if (medioSiNo === 'SI') {
+        if (!medioCantidad || medioCantidad <= 0 || !medioPrecio || medioPrecio <= 0) {
+          errors.push('Medio mayoreo marcado como SI pero falta cantidad o precio valido');
+        } else {
+          preciosPorVolumen.push({ nivel: 'medio_mayoreo', cantidadMinima: medioCantidad, precio: medioPrecio });
+        }
+      }
+      if (mayoreoSiNo === 'SI') {
+        if (!mayoreoCantidad || mayoreoCantidad <= 0 || !mayoreoPrecio || mayoreoPrecio <= 0) {
+          errors.push('Mayoreo marcado como SI pero falta cantidad o precio valido');
+        } else {
+          preciosPorVolumen.push({ nivel: 'mayoreo', cantidadMinima: mayoreoCantidad, precio: mayoreoPrecio });
+        }
+      }
+      if (superSiNo === 'SI') {
+        if (!superCantidad || superCantidad <= 0 || !superPrecio || superPrecio <= 0) {
+          errors.push('Super mayoreo marcado como SI pero falta cantidad o precio valido');
+        } else {
+          preciosPorVolumen.push({ nivel: 'super_mayoreo', cantidadMinima: superCantidad, precio: superPrecio });
+        }
+      }
+
+      const previewRow: PreviewRow = {
+        fila, codigo, nombre,
+        categoria: categoriaRaw || null,
+        descripcion,
+        unidadMedida: unidad,
+        manejaInventario,
+        precioVenta,
+        precioCompra: precioCompraRaw ? Number(precioCompraRaw) : null,
+        categoriaId,
+        preciosPorVolumen,
+        errors,
+        warnings: rowWarnings,
+      };
+
+      previewRows.push(previewRow);
+
+      if (errors.length > 0) {
+        errores.push({ fila, codigo, razon: errors.join('; ') });
+      }
+      warnings.push(...rowWarnings.map(m => ({ fila, codigo, mensaje: m })));
+    }
+
+    const codigosExistentes = await prisma.productos.findMany({
+      where: {
+        codigo: { in: previewRows.filter(r => r.errors.length === 0).map(r => r.codigo).filter(Boolean) as string[] },
+        sucursal_id: sucursalId,
+      },
+      select: { codigo: true, nombre: true },
+    });
+
+    const codigoMap = new Map(codigosExistentes.map(c => [c.codigo, c.nombre]));
+
+    const duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string }> = [];
+    const sinDuplicados: PreviewRow[] = [];
+
+    for (const row of previewRows) {
+      if (row.errors.length > 0) continue;
+      if (row.codigo && codigoMap.has(row.codigo)) {
+        duplicados.push({
+          fila: row.fila,
+          codigo: row.codigo,
+          nombreExistente: codigoMap.get(row.codigo)!,
+          nombreNuevo: row.nombre,
+        });
+      } else {
+        sinDuplicados.push(row);
+      }
+    }
+
+    const token = crypto.randomUUID();
+    const data: ImportPreviewData = { rows: previewRows, duplicados };
+    setTemp(token, data);
+
+    return {
+      token,
+      total: previewRows.length,
+      nuevos: sinDuplicados.length,
+      duplicados,
+      errores,
+      warnings,
+    };
+  }
+
+  async confirmImport(
+    token: string,
+    decisiones: Record<string, string>,
+    sucursalId: number,
+    usuarioId: number
+  ) {
+    const data = getTemp<ImportPreviewData>(token);
+    if (!data) throw new NotFoundError('Token de preview expirado o invalido');
+
+    deleteTemp(token);
+
+    let importados = 0;
+    let actualizados = 0;
+    let omitidos = 0;
+    const errores: Array<{ fila: number; codigo: string; razon: string }> = [];
+
+    for (const row of data.rows) {
+      if (row.errors.length > 0) {
+        errores.push({ fila: row.fila, codigo: row.codigo ?? '', razon: row.errors.join('; ') });
+        continue;
+      }
+
+      const isDuplicado = data.duplicados.some(d => d.codigo === row.codigo);
+      if (isDuplicado) {
+        const decision = row.codigo ? decisiones[row.codigo] : 'omitir';
+        if (decision === 'omitir') {
+          omitidos++;
+          continue;
+        }
+
+        try {
+          await prisma.$transaction(async (tx) => {
+            const existing = await tx.productos.findFirst({ where: { codigo: row.codigo, sucursal_id: sucursalId } });
+            if (existing) {
+              await tx.productos.update({
+                where: { id: existing.id },
+                data: {
+                  nombre: row.nombre,
+                  descripcion: row.descripcion,
+                  categoria_id: row.categoriaId,
+                  unidad_medida: row.unidadMedida,
+                  precio_venta: row.precioVenta,
+                  precio_compra: row.precioCompra,
+                },
+              });
+
+              await tx.producto_precios.deleteMany({ where: { producto_id: existing.id } });
+              if (row.preciosPorVolumen.length > 0) {
+                await tx.producto_precios.createMany({
+                  data: row.preciosPorVolumen.map(p => ({
+                    producto_id: existing.id,
+                    nivel: p.nivel,
+                    cantidad_minima: p.cantidadMinima,
+                    precio: p.precio,
+                  })),
+                });
+              }
+            }
+          });
+          actualizados++;
+        } catch (err) {
+          errores.push({ fila: row.fila, codigo: row.codigo ?? '', razon: `Error al actualizar: ${err instanceof Error ? err.message : 'desconocido'}` });
+        }
+        continue;
+      }
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          let codigo = row.codigo;
+          if (!codigo) {
+            codigo = await generarCodigoProducto(row.nombre, tx, sucursalId);
+          }
+
+          let created = false;
+          let lastP2002: Error | null = null;
+
+          for (let attempt = 0; attempt < 10 && !created; attempt++) {
+            try {
+              const codigoActual = attempt === 0
+                ? codigo
+                : await generarCodigoProducto(row.nombre, tx, sucursalId);
+
+              const producto = await tx.productos.create({
+                data: {
+                  codigo: codigoActual,
+                  nombre: row.nombre,
+                  descripcion: row.descripcion,
+                  precio_venta: row.precioVenta,
+                  precio_compra: row.precioCompra,
+                  categoria_id: row.categoriaId,
+                  unidad_medida: row.unidadMedida,
+                  sucursal_id: sucursalId,
+                },
+              });
+
+              if (row.manejaInventario) {
+                await tx.inventario.create({
+                  data: {
+                    producto_id: producto.id,
+                    sucursal_id: sucursalId,
+                    cantidad: 0,
+                    stock_minimo: 0,
+                  },
+                });
+              }
+
+              if (row.preciosPorVolumen.length > 0) {
+                await tx.producto_precios.createMany({
+                  data: row.preciosPorVolumen.map(p => ({
+                    producto_id: producto.id,
+                    nivel: p.nivel,
+                    cantidad_minima: p.cantidadMinima,
+                    precio: p.precio,
+                  })),
+                });
+              }
+
+              created = true;
+            } catch (err) {
+              if (
+                err instanceof Prisma.PrismaClientKnownRequestError &&
+                err.code === 'P2002'
+              ) {
+                lastP2002 = err;
+                continue;
+              }
+              throw err;
+            }
+          }
+
+          if (!created) throw lastP2002 ?? new Error('No se pudo crear el producto');
+        });
+        importados++;
+      } catch (err) {
+        errores.push({ fila: row.fila, codigo: row.codigo ?? '', razon: `Error al crear: ${err instanceof Error ? err.message : 'desconocido'}` });
+      }
+    }
+
+    return { importados, actualizados, omitidos, errores };
   }
 }

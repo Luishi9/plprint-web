@@ -84,6 +84,7 @@ export default function ProduccionPage() {
     try {
       setIsLoading(true);
       const params: Record<string, unknown> = {
+        ...(sucursalActiva?.id && { sucursalId: sucursalActiva.id }),
         ...(tab !== 'todas' && { estatus: tab }),
         ...(search.trim() && { search: search.trim() }),
       };
@@ -94,6 +95,8 @@ export default function ProduccionPage() {
   };
 
   useEffect(() => { fetchOrdenes(); }, [tab]);
+
+  useEffect(() => { fetchOrdenes(); }, [sucursalActiva?.id]);
 
   useEffect(() => {
     const t = setTimeout(fetchOrdenes, 300);
@@ -512,7 +515,7 @@ function OrdenProduccionModal({ open, onClose, editando, onSaved }: OrdenProducc
     const cargar = async () => {
       try {
         const [pRes, uRes, mRes] = await Promise.all([
-          productosApi.getAll({ page: 1, limit: 200 }),
+          productosApi.getAll({ page: 1, limit: 200, categoriaTipo: 'produccion', sucursalId: sucursalActiva?.id }),
           fetch('/api/v1/usuarios?limit=100', { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }).then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/v1/maquinas?activa=true', { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }).then(r => r.json()).catch(() => ({ data: [] })),
         ]);

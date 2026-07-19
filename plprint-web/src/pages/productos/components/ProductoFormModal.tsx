@@ -257,7 +257,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
       formData.append('nombre', values.nombre);
       formData.append('precioVenta', values.precioVenta.toString());
-      if (values.codigo) formData.append('codigo', values.codigo);
+      if (isEditing && values.codigo) formData.append('codigo', values.codigo);
       if (values.categoriaId) formData.append('categoriaId', values.categoriaId.toString());
       if (values.precioCompra !== undefined && values.precioCompra !== null) {
         formData.append('precioCompra', values.precioCompra.toString());
@@ -272,9 +272,13 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         formData.append('maquinaId', values.maquinaId.toString());
       }
 
+      // Siempre enviar sucursalId al crear para asignar el producto a la sucursal activa
+      if (!isEditing && sucursalEfectiva) {
+        formData.append('sucursalId', sucursalEfectiva.id.toString());
+      }
+
       if (!isEditing && tieneExistencias && values.cantidadInicial && values.cantidadInicial > 0 && sucursalEfectiva) {
         formData.append('cantidadInicial', values.cantidadInicial.toString());
-        formData.append('sucursalId', sucursalEfectiva.id.toString());
         if (values.stockMinimo !== undefined && values.stockMinimo >= 0) {
           formData.append('stockMinimo', values.stockMinimo.toString());
         }
@@ -401,9 +405,21 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
                     name="codigo"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Código / SKU</FormLabel>
+                        <FormLabel className="flex items-center gap-2">
+                          Código
+                          {!isEditing && (
+                            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2e9e9b]/15 text-[#48b9b4] font-semibold">
+                              Autogenerado
+                            </span>
+                          )}
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Ej. ZAP-001" {...field} className="bg-background" />
+                          <Input
+                            placeholder="Autogenerado"
+                            readOnly
+                            className="bg-background text-muted-foreground cursor-not-allowed"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

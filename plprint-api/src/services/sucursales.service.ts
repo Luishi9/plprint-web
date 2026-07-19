@@ -19,37 +19,50 @@ export class SucursalesService {
       const nuevaSucursal = await tx.sucursales.create({ data: sucursalData });
 
       if (copiarProductos) {
-        // Obtener todos los productos activos del sistema
-        const todosLosProductos = await tx.productos.findMany({
+        const productosOrigen = await tx.productos.findMany({
           where: { activo: true },
-          select: { id: true },
+          include: {
+            producto_precios: { where: { activo: true } },
+            producto_insumos: true,
+          },
         });
 
-        if (todosLosProductos.length > 0) {
-          // Obtener config de stock desde el inventario de la matriz (si existe)
-          const matriz = await tx.sucursales.findFirst({
-            where: { id: { not: nuevaSucursal.id } },
-            orderBy: { id: 'asc' },
+        for (const p of productosOrigen) {
+          const nuevoProducto = await tx.productos.create({
+            data: {
+              codigo: p.codigo,
+              nombre: p.nombre,
+              descripcion: p.descripcion,
+              precio_venta: p.precio_venta,
+              precio_compra: p.precio_compra,
+              categoria_id: p.categoria_id,
+              proveedor_id: p.proveedor_id,
+              unidad_medida: p.unidad_medida,
+              cobrar_minimo_1: p.cobrar_minimo_1,
+              maquina_id: p.maquina_id,
+              activo: true,
+              sucursal_id: nuevaSucursal.id,
+            },
           });
 
-          const stockMatriz = matriz
-            ? await tx.inventario.findMany({
-                where: { sucursal_id: matriz.id },
-                select: { producto_id: true, stock_minimo: true, stock_maximo: true },
-              })
-            : [];
+          for (const pr of p.producto_precios) {
+            await tx.producto_precios.create({
+              data: {
+                producto_id: nuevoProducto.id,
+                nivel: pr.nivel,
+                cantidad_minima: pr.cantidad_minima,
+                precio: pr.precio,
+              },
+            });
+          }
 
-          const stockMap = new Map(stockMatriz.map(i => [i.producto_id, i]));
-
-          await tx.inventario.createMany({
-            data: todosLosProductos.map(p => ({
-              producto_id: p.id,
+          await tx.inventario.create({
+            data: {
+              producto_id: nuevoProducto.id,
               sucursal_id: nuevaSucursal.id,
               cantidad: 0,
-              stock_minimo: stockMap.get(p.id)?.stock_minimo ?? 0,
-              stock_maximo: stockMap.get(p.id)?.stock_maximo ?? undefined,
-            })),
-            skipDuplicates: true,
+              stock_minimo: 0,
+            },
           });
         }
       }
@@ -101,35 +114,50 @@ export class SucursalesService {
       const sucursal = await tx.sucursales.update({ where: { id }, data: sucursalData });
 
       if (copiarProductos) {
-        const todosLosProductos = await tx.productos.findMany({
+        const productosOrigen = await tx.productos.findMany({
           where: { activo: true },
-          select: { id: true },
+          include: {
+            producto_precios: { where: { activo: true } },
+            producto_insumos: true,
+          },
         });
 
-        if (todosLosProductos.length > 0) {
-          const matriz = await tx.sucursales.findFirst({
-            where: { id: { not: id } },
-            orderBy: { id: 'asc' },
+        for (const p of productosOrigen) {
+          const nuevoProducto = await tx.productos.create({
+            data: {
+              codigo: p.codigo,
+              nombre: p.nombre,
+              descripcion: p.descripcion,
+              precio_venta: p.precio_venta,
+              precio_compra: p.precio_compra,
+              categoria_id: p.categoria_id,
+              proveedor_id: p.proveedor_id,
+              unidad_medida: p.unidad_medida,
+              cobrar_minimo_1: p.cobrar_minimo_1,
+              maquina_id: p.maquina_id,
+              activo: true,
+              sucursal_id: id,
+            },
           });
 
-          const stockMatriz = matriz
-            ? await tx.inventario.findMany({
-                where: { sucursal_id: matriz.id },
-                select: { producto_id: true, stock_minimo: true, stock_maximo: true },
-              })
-            : [];
+          for (const pr of p.producto_precios) {
+            await tx.producto_precios.create({
+              data: {
+                producto_id: nuevoProducto.id,
+                nivel: pr.nivel,
+                cantidad_minima: pr.cantidad_minima,
+                precio: pr.precio,
+              },
+            });
+          }
 
-          const stockMap = new Map(stockMatriz.map(i => [i.producto_id, i]));
-
-          await tx.inventario.createMany({
-            data: todosLosProductos.map(p => ({
-              producto_id: p.id,
+          await tx.inventario.create({
+            data: {
+              producto_id: nuevoProducto.id,
               sucursal_id: id,
               cantidad: 0,
-              stock_minimo: stockMap.get(p.id)?.stock_minimo ?? 0,
-              stock_maximo: stockMap.get(p.id)?.stock_maximo ?? undefined,
-            })),
-            skipDuplicates: true,
+              stock_minimo: 0,
+            },
           });
         }
       }

@@ -70,8 +70,8 @@ function useDashboard(fecha: string) {
       const hasta = new Date(y, m - 1, d, 23, 59, 59, 999).toISOString();
 
       const [ventasRes, productosRes] = await Promise.allSettled([
-        ventasApi.getAll({ desde, hasta, limit: 100 }),
-        productosApi.getAll({ limit: 1 }),
+        ventasApi.getAll({ desde, hasta, limit: 100, ...(sucursalActiva?.id && { sucursalId: sucursalActiva.id }) }),
+        productosApi.getAll({ limit: 1, sucursalId: sucursalActiva?.id }),
       ]);
 
       let ventasList: VentaReciente[] = [];

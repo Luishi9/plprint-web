@@ -1199,3 +1199,7 @@ Cualquier duda podemos checarlo por inbox.
 12. **Frontend**: corte de caja con reporte de máquinas
 13. **Frontend**: condicionar todo con `somos_centro_impresion`
 
+
+
+
+faltan cotizaciones

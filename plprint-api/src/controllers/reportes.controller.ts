@@ -13,10 +13,20 @@ export class ReportesController {
     };
   }
 
+  private requireSucursalId(req: Request, res: Response): number | null {
+    const sucursalId = Number(req.query.sucursalId);
+    if (!sucursalId) {
+      res.status(400).json({ error: 'sucursalId es requerido' });
+      return null;
+    }
+    return sucursalId;
+  }
+
   ventasPorRango = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const rango = this.parseRango(req);
-      const data = await this.reportesService.ventasPorRango(rango);
+      const sucursalId = this.requireSucursalId(req, res);
+      if (sucursalId === null) return;
+      const data = await this.reportesService.ventasPorRango({ ...this.parseRango(req), sucursalId });
       sendSuccess(res, data);
     } catch (err) {
       next(err);
@@ -25,9 +35,10 @@ export class ReportesController {
 
   topProductos = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const filtro = this.parseRango(req);
+      const sucursalId = this.requireSucursalId(req, res);
+      if (sucursalId === null) return;
       const limite = req.query.limit ? Number(req.query.limit) : 10;
-      const data = await this.reportesService.topProductos(filtro, limite);
+      const data = await this.reportesService.topProductos({ ...this.parseRango(req), sucursalId }, limite);
       sendSuccess(res, data);
     } catch (err) {
       next(err);
@@ -36,9 +47,10 @@ export class ReportesController {
 
   topClientes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const filtro = this.parseRango(req);
+      const sucursalId = this.requireSucursalId(req, res);
+      if (sucursalId === null) return;
       const limite = req.query.limit ? Number(req.query.limit) : 10;
-      const data = await this.reportesService.topClientes(filtro, limite);
+      const data = await this.reportesService.topClientes({ ...this.parseRango(req), sucursalId }, limite);
       sendSuccess(res, data);
     } catch (err) {
       next(err);
@@ -47,11 +59,13 @@ export class ReportesController {
 
   kardexGlobal = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const sucursalId = this.requireSucursalId(req, res);
+      if (sucursalId === null) return;
       const data = await this.reportesService.kardexGlobal({
         desde: req.query.desde ? new Date(String(req.query.desde)) : undefined,
         hasta: req.query.hasta ? new Date(String(req.query.hasta)) : undefined,
         productoId: req.query.productoId ? Number(req.query.productoId) : undefined,
-        sucursalId: req.query.sucursalId ? Number(req.query.sucursalId) : undefined,
+        sucursalId,
         limit: req.query.limit ? Number(req.query.limit) : 200,
       });
       sendSuccess(res, data);
@@ -62,8 +76,9 @@ export class ReportesController {
 
   ganancias = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const rango = this.parseRango(req);
-      const data = await this.reportesService.ganancias(rango);
+      const sucursalId = this.requireSucursalId(req, res);
+      if (sucursalId === null) return;
+      const data = await this.reportesService.ganancias({ ...this.parseRango(req), sucursalId });
       sendSuccess(res, data);
     } catch (err) {
       next(err);
@@ -72,7 +87,8 @@ export class ReportesController {
 
   dashboard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
+      const sucursalId = this.requireSucursalId(req, res);
+      if (sucursalId === null) return;
       const data = await this.reportesService.dashboard(sucursalId);
       sendSuccess(res, data);
     } catch (err) {

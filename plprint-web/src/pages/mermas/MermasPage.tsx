@@ -59,6 +59,7 @@ export default function MermasPage() {
       const res = await mermasApi.getAll({
         page, limit, search: search || undefined,
         tipo: filtroTipo === 'todos' ? undefined : filtroTipo,
+        ...(sucursalActual?.id && { sucursalId: sucursalActual.id }),
       });
       const data = (res.data as { data: Merma[]; meta: { total: number; totalCosto?: number } });
       setMermas(data.data || []);
@@ -71,7 +72,7 @@ export default function MermasPage() {
   const cargarCatalogos = async () => {
     try {
       const [p, i, m] = await Promise.all([
-        productosApi.getAll({ page: 1, limit: 100 }),
+        productosApi.getAll({ page: 1, limit: 100, ...(sucursalActual?.id && { sucursalId: sucursalActual.id }) }),
         insumosApi.getAll({ page: 1, limit: 100 }),
         maquinasApi.getAll({ activo: true, ...(sucursalActual?.id && { sucursalId: sucursalActual.id }) }),
       ]);
@@ -82,6 +83,8 @@ export default function MermasPage() {
   };
 
   useEffect(() => { fetchMermas(); }, [page, filtroTipo]);
+
+  useEffect(() => { setPage(1); fetchMermas(); }, [sucursalActual?.id]);
 
   useEffect(() => {
     const t = setTimeout(() => { setPage(1); fetchMermas(); }, 300);

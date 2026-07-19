@@ -5,6 +5,8 @@ export interface ProductoParams {
   limit?: number;
   search?: string;
   categoriaId?: number;
+  categoriaTipo?: string;
+  sucursalId?: number;
 }
 
 export const productosApi = {
@@ -16,4 +18,12 @@ export const productosApi = {
   update: (id: number, data: FormData) =>
     apiClient.put(`/productos/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   remove: (id: number) => apiClient.delete(`/productos/${id}`),
+  previewImport: (formData: FormData) =>
+    apiClient.post('/productos/importar/preview', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  confirmImport: (payload: { token: string; decisiones: Record<string, string>; sucursalId: number }) =>
+    apiClient.post('/productos/importar/confirmar', payload),
+  descargarPlantilla: () =>
+    apiClient.get('/productos/plantilla', { responseType: 'blob' }),
+  exportCatalog: (sucursalId?: number) =>
+    apiClient.get('/productos/exportar', { params: { sucursalId }, responseType: 'blob' }),
 };
