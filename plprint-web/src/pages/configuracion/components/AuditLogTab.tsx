@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -44,19 +44,40 @@ export default function AuditLogTab() {
     }
   };
 
-  useEffect(() => { fetchData(1); }, [modulo, accion]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setIsLoading(true);
+        const params: Record<string, unknown> = { page: 1, limit: 25 };
+        if (modulo && modulo !== 'all') params.modulo = modulo;
+        if (accion && accion !== 'all') params.accion = accion;
+        const [logsRes, statsRes] = await Promise.all([auditLogApi.getAll(params), auditLogApi.getStats()]);
+        if (cancelled) return;
+        setLogs(logsRes.data.data);
+        setMeta(logsRes.data.meta);
+        setStats(statsRes.data.data);
+      } catch (err) {
+        if (!cancelled) console.error(err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [modulo, accion]);
 
   const filtrados = search
     ? logs.filter((l) =>
         l.usuarios?.nombre.toLowerCase().includes(search.toLowerCase()) ||
         l.modulo.toLowerCase().includes(search.toLowerCase()) ||
         l.accion.toLowerCase().includes(search.toLowerCase()) ||
+        l.descripcion?.toLowerCase().includes(search.toLowerCase()) ||
         l.detalle?.toLowerCase().includes(search.toLowerCase()),
       )
     : logs;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
@@ -153,18 +174,20 @@ export default function AuditLogTab() {
                         </span>
                         <span className="text-xs text-muted-foreground">·</span>
                         <span className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString('es')}</span>
-                        {l.ip && (
+                        {/*{l.ip && (
                           <>
                             <span className="text-xs text-muted-foreground">·</span>
                             <span className="text-xs text-muted-foreground font-mono">{l.ip}</span>
                           </>
-                        )}
+                        )}*/}
                       </div>
-                      {l.detalle && (
+                      {l.descripcion ? (
+                        <p className="text-sm text-foreground mt-0.5">{l.descripcion}</p>
+                      ) : l.detalle ? (
                         <p className="text-xs text-muted-foreground mt-0.5 font-mono truncate" title={l.detalle}>
                           {l.detalle}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -190,6 +213,6 @@ export default function AuditLogTab() {
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </m.div>
   );
 }

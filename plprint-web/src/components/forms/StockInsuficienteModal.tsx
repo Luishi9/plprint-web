@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,7 +66,7 @@ export default function StockInsuficienteModal({
             <div className="space-y-1.5">
               <AnimatePresence>
                 {faltantes.map((f, i) => (
-                  <motion.div
+                  <m.div
                     key={`${f.insumo}-${i}`}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -83,7 +83,7 @@ export default function StockInsuficienteModal({
                       <span>Requerido: <span className="text-foreground">{f.requerido.toFixed(2)}</span></span>
                       <span>Disponible: <span className="text-orange-400 font-bold">{f.disponible.toFixed(2)}</span></span>
                     </div>
-                  </motion.div>
+                  </m.div>
                 ))}
               </AnimatePresence>
             </div>

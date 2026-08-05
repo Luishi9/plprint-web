@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -110,7 +110,7 @@ export default function NotificacionesTab() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -179,6 +179,6 @@ export default function NotificacionesTab() {
           })}
         </CardContent>
       </Card>
-    </motion.div>
+    </m.div>
   );
 }

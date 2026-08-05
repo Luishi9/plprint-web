@@ -83,7 +83,7 @@ export function AppSidebar() {
             PLPrint
           </span>
         </div>
-        <button
+        <button type="button"
           onClick={() => isMobile ? setOpenMobile(false) : setOpen(false)}
           className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
           title="Ocultar menú"
@@ -183,7 +183,7 @@ export function AppSidebar() {
                 <p className="text-sm font-semibold text-sidebar-foreground truncate">{usuario?.nombre}</p>
                 <p className="text-xs text-sidebar-foreground/50 truncate">{usuario?.email}</p>
               </div>
-              <button
+              <button type="button"
                 onClick={handleLogout}
                 className="text-sidebar-foreground/50 hover:text-red-400 transition-colors p-1 rounded cursor-pointer border-0 bg-transparent shrink-0"
                 title="Cerrar sesión"

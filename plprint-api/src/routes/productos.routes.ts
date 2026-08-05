@@ -6,6 +6,7 @@ import { ProductosController } from '../controllers/productos.controller';
 import { ProductosService } from '../services/productos.service';
 import { validate } from '../middleware/validate.middleware';
 import { authorize, ROLES } from '../middleware/rbac.middleware';
+import { audit } from '../middleware/audit.middleware';
 
 const router = Router();
 const controller = new ProductosController(new ProductosService());
@@ -79,6 +80,7 @@ router.post(
   authorize(ROLES.ADMIN, ROLES.OPERADOR),
   upload.single('imagen'),
   validate(createSchema),
+  audit('productos', 'CREATE'),
   controller.create,
 );
 router.put(
@@ -86,9 +88,10 @@ router.put(
   authorize(ROLES.ADMIN, ROLES.OPERADOR),
   upload.single('imagen'),
   validate(createSchema.partial()),
+  audit('productos', 'UPDATE'),
   controller.update,
 );
-router.delete('/:id', authorize(ROLES.ADMIN), controller.remove);
+router.delete('/:id', authorize(ROLES.ADMIN), audit('productos', 'DELETE'), controller.remove);
 
 router.post(
   '/importar/preview',
@@ -99,6 +102,7 @@ router.post(
 router.post(
   '/importar/confirmar',
   authorize(ROLES.ADMIN),
+  audit('productos', 'IMPORT'),
   controller.confirmImport,
 );
 

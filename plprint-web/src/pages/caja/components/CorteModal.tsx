@@ -35,29 +35,31 @@ export default function CorteModal({ open, onClose, onConfirm, corte, resumen, s
   const diferencia = montoReal ? montoRealNum - efectivoEsperado : 0;
 
   useEffect(() => {
+    let cancelled = false;
     if (open) {
-      cargarConfigYReporte();
-    }
-  }, [open]);
+      (async () => {
+        try {
+          const configRes = await configuracionApi.getByGrupo('maquinas');
+          if (cancelled) return;
+          const config = configRes.data?.data;
+          const esCentroImpresion = config?.somos_centro_impresion === true;
+          setSomosCentroImpresion(esCentroImpresion);
 
-  const cargarConfigYReporte = async () => {
-    try {
-      const configRes = await configuracionApi.getByGrupo('maquinas');
-      const config = configRes.data?.data;
-      const esCentroImpresion = config?.somos_centro_impresion === true;
-      setSomosCentroImpresion(esCentroImpresion);
-
-      if (esCentroImpresion && sucursalId) {
-        const reporteRes = await maquinasApi.getReporteCorte(sucursalId, corte.fecha_apertura);
-        const data = reporteRes.data?.data;
-        setReporteMaquinas(data?.maquinas || []);
-        setTotalImpresiones(data?.total_impresiones || 0);
-        setTotalMermas(data?.total_mermas || 0);
-      }
-    } catch (e) {
-      console.error('Error cargando configuración de máquinas:', e);
+          if (esCentroImpresion && sucursalId) {
+            const reporteRes = await maquinasApi.getReporteCorte(sucursalId, corte.fecha_apertura);
+            if (cancelled) return;
+            const data = reporteRes.data?.data;
+            setReporteMaquinas(data?.maquinas || []);
+            setTotalImpresiones(data?.total_impresiones || 0);
+            setTotalMermas(data?.total_mermas || 0);
+          }
+        } catch (e) {
+          if (!cancelled) console.error('Error cargando configuración de máquinas:', e);
+        }
+      })();
     }
-  };
+    return () => { cancelled = true; };
+  }, [open, sucursalId, corte?.fecha_apertura]);
 
   const handleConfirm = async () => {
     if (!montoReal || montoRealNum < 0) { setError('Ingresa el monto real contado.'); return; }
@@ -155,8 +157,9 @@ export default function CorteModal({ open, onClose, onConfirm, corte, resumen, s
           )}
 
           <div>
-            <label className="text-sm font-medium block mb-1.5">Monto real contado ({simbolo}) *</label>
+            <label htmlFor="corte-monto-real" className="text-sm font-medium block mb-1.5">Monto real contado ({simbolo}) *</label>
             <Input
+              id="corte-monto-real"
               type="number"
               step="0.01"
               min="0"
@@ -177,8 +180,9 @@ export default function CorteModal({ open, onClose, onConfirm, corte, resumen, s
           )}
 
           <div>
-            <label className="text-sm font-medium block mb-1.5">Observaciones</label>
+            <label htmlFor="corte-observaciones" className="text-sm font-medium block mb-1.5">Observaciones</label>
             <Textarea
+              id="corte-observaciones"
               placeholder="Notas sobre el corte (opcional)..."
               value={observaciones}
               onChange={(e) => setObservaciones(e.target.value)}

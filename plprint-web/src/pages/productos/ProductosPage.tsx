@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 
 import { productosApi } from '@/api/productos.api';
@@ -22,8 +22,8 @@ import {
 
 import { ProductoFormModal } from './components/ProductoFormModal';
 import { ImportarProductosModal } from './components/ImportarProductosModal';
-import { getImageUrl } from '@/utils/format';
 import { useMoney } from '@/hooks/useMoney';
+import { ProductosTable } from './ProductosTable';
 
 export default function ProductosPage() {
   const { sucursalActiva } = useSucursalStore();
@@ -40,7 +40,6 @@ export default function ProductosPage() {
   const { format: money } = useMoney();
 
   const fetchProductos = async (query: string, isInitial = false) => {
-    // Cancelar request anterior si sigue en vuelo
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
@@ -60,27 +59,37 @@ export default function ProductosPage() {
     }
   };
 
-  // Carga inicial
   useEffect(() => {
-    fetchProductos('', true);
-  }, []);
-
-  // Refrescar al cambiar sucursal
-  useEffect(() => {
-    fetchProductos(searchQuery, true);
-  }, [sucursalActiva?.id]);
-
-  // Búsqueda con debounce — mantiene la tabla visible mientras busca
-  useEffect(() => {
+    let cancelled = false;
     const timer = setTimeout(() => {
-      fetchProductos(searchQuery);
+      (async () => {
+        try {
+          setIsLoading(true);
+          const res = await productosApi.getAll({ search: searchQuery || undefined, sucursalId: sucursalActiva?.id });
+          if (cancelled) return;
+          setProductos(res.data?.data || []);
+        } catch (error: any) {
+          if (error?.name !== 'CanceledError' && error?.code !== 'ERR_CANCELED' && !cancelled) {
+            console.error('Error al cargar productos:', error);
+          }
+        } finally {
+          if (!cancelled) setIsLoading(false);
+        }
+      })();
     }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [sucursalActiva?.id, searchQuery]);
 
-  const handleEditar = (producto: Producto) => {
-    setProductoAEditar(producto);
-    setIsModalOpen(true);
+  const handleEditar = async (producto: Producto) => {
+    try {
+      const res = await productosApi.getById(producto.id);
+      const full = (res.data as { data?: Producto }).data ?? producto;
+      setProductoAEditar(full);
+      setIsModalOpen(true);
+    } catch {
+      setProductoAEditar(producto);
+      setIsModalOpen(true);
+    }
   };
 
   const handleEliminar = async () => {
@@ -102,7 +111,7 @@ export default function ProductosPage() {
     <div className="flex flex-col gap-6 h-full min-h-0">
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="flex flex-col"
@@ -114,9 +123,9 @@ export default function ProductosPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Gestión global de productos e inventario.
           </p>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -180,10 +189,11 @@ export default function ProductosPage() {
               Descargar catalogo
             </Button>
           )}
-        </motion.div>
+        </m.div>
       </div>
 
       <ProductoFormModal
+        key={productoAEditar?.id ?? 'new'}
         open={isModalOpen}
         onOpenChange={(v) => { setIsModalOpen(v); if (!v) setProductoAEditar(null); }}
         onSuccess={() => fetchProductos(searchQuery)}
@@ -197,138 +207,14 @@ export default function ProductosPage() {
       />
 
       {/* DATA TABLE SECTION */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className={`rounded-xl border border-border bg-card/50 backdrop-blur-md flex-1 min-h-0 overflow-y-auto overflow-x-auto shadow-2xl transition-opacity duration-200 ${isSearching ? 'opacity-60' : 'opacity-100'}`}
-      >
-        <div className="relative">
-          <table className="w-full text-sm text-left rtl:text-right text-foreground">
-            <thead className="text-xs font-medium text-muted-foreground bg-background/50 border-b border-border">
-              <tr>
-                <th scope="col" className="px-6 py-4">
-                  <span className="sr-only">Imagen</span>
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold">
-                  Nombre
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold">
-                  Código
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-right">
-                  Precio Venta
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-right">
-                  Precio Compra
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-right">
-                  Stock
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-center">
-                  Estado
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-center">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center">
-                    <Icon name="progress_activity" className="mx-auto animate-spin text-[#2e9e9b]" size={24} />
-                    <p className="mt-2 text-xs text-muted-foreground">Cargando catálogo...</p>
-                  </td>
-                </tr>
-              ) : productos.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                    No se encontraron productos.
-                  </td>
-                </tr>
-              ) : (
-                <AnimatePresence>
-                  {productos.map((producto, i) => (
-                    <motion.tr
-                      key={producto.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
-                    >
-                      <td className="p-4">
-                        {producto.imagen_url ? (
-                          <div className="w-12 h-12 rounded-md overflow-hidden bg-background/50 border border-border shadow-inner">
-                            <img
-                              src={getImageUrl(producto.imagen_url)}
-                              alt={producto.nombre}
-                              className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-12 h-12 rounded-md bg-background/80 border border-border flex items-center justify-center text-muted-foreground/30 shadow-inner">
-                            <Icon name="image" size={20} />
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-foreground tracking-wide">
-                        {producto.nombre}
-                      </td>
-                      <td className="px-6 py-4 text-muted-foreground text-xs font-mono">
-                        {producto.codigo || '—'}
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-right text-[#2e9e9b] tracking-wide">
-                        {money(Number(producto.precio_venta))}
-                      </td>
-                      <td className="px-6 py-4 text-right text-muted-foreground font-mono text-sm">
-                        {producto.precio_compra ? money(Number(producto.precio_compra)) : '—'}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {producto.inventario && producto.inventario.length > 0 ? (
-                          <span className="font-mono text-sm font-semibold text-[#2e9e9b]">
-                            {producto.inventario.reduce((sum, inv) => sum + inv.cantidad, 0)}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${producto.activo ? 'bg-[#2e9e9b]/10 text-[#2e9e9b] border border-[#2e9e9b]/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}`}>
-                          {producto.activo ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <RequirePermission modulo="productos" accion="editar">
-                            <button
-                              onClick={() => handleEditar(producto)}
-                              title="Editar"
-                              className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
-                            >
-                              <Icon name="edit" size={16} />
-                            </button>
-                          </RequirePermission>
-                          <RequirePermission modulo="productos" accion="eliminar">
-                            <button
-                              onClick={() => setProductoAEliminar(producto)}
-                              title="Eliminar"
-                              className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                            >
-                              <Icon name="delete" size={16} />
-                            </button>
-                          </RequirePermission>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
+      <ProductosTable
+        isLoading={isLoading}
+        isSearching={isSearching}
+        productos={productos as never}
+        money={money as never}
+        onEditar={handleEditar as never}
+        onEliminar={setProductoAEliminar as never}
+      />
 
       {/* DIÁLOGO CONFIRMAR ELIMINACIÓN */}
       <Dialog open={!!productoAEliminar} onOpenChange={(v) => { if (!v) setProductoAEliminar(null); }}>

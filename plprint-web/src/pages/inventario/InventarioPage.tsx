@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 
 import { inventarioApi } from '@/api/inventario.api';
@@ -10,31 +10,8 @@ import { Input } from '@/components/ui/input';
 
 import { AjusteModal } from './components/AjusteModal';
 import { KardexModal } from './components/KardexModal';
-import { getImageUrl } from '@/utils/format';
 import { useMoney } from '@/hooks/useMoney';
-
-interface InventarioItem {
-  id: number;
-  cantidad: number;
-  stock_minimo: number;
-  stock_maximo: number | null;
-  producto_id: number;
-  sucursal_id: number;
-  productos: {
-    id: number;
-    codigo: string | null;
-    nombre: string;
-    imagen_url: string | null;
-    precio_venta: string;
-    unidad_medida: string | null;
-  };
-}
-
-const getStockBadge = (cantidad: number, minimo: number) => {
-  if (cantidad === 0) return { label: 'Sin stock', cls: 'bg-red-500/15 text-red-400 border-red-500/30' };
-  if (cantidad <= minimo) return { label: 'Stock bajo', cls: 'bg-yellow-400/15 text-yellow-400 border-yellow-400/30' };
-  return { label: 'En stock', cls: 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30' };
-};
+import { InventarioTable, InventarioItem } from './InventarioTable';
 
 export default function InventarioPage() {
   const [items, setItems] = useState<InventarioItem[]>([]);
@@ -49,11 +26,9 @@ export default function InventarioPage() {
   const { format: money } = useMoney();
   const sucursalEfectiva = sucursalActiva ?? usuario?.sucursalesDetalle?.[0] ?? null;
 
-  // Ajuste modal
   const [ajusteItem, setAjusteItem] = useState<InventarioItem | null>(null);
   const [ajusteOpen, setAjusteOpen] = useState(false);
 
-  // Kardex modal
   const [kardexItem, setKardexItem] = useState<InventarioItem | null>(null);
   const [kardexOpen, setKardexOpen] = useState(false);
 
@@ -76,12 +51,28 @@ export default function InventarioPage() {
     }
   };
 
-  useEffect(() => { fetchInventario(true); }, [sucursalEfectiva, soloStockBajo]);
-
   useEffect(() => {
-    const t = setTimeout(() => fetchInventario(), 300);
-    return () => clearTimeout(t);
-  }, [searchQuery]);
+    if (!sucursalEfectiva) { setIsLoading(false); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      (async () => {
+        try {
+          setIsLoading(true);
+          const res = await inventarioApi.getBySucursal(sucursalEfectiva.id, {
+            search: searchQuery || undefined,
+            soloStockBajo: soloStockBajo || undefined,
+          });
+          if (cancelled) return;
+          setItems(res.data?.data || []);
+        } catch (e: any) {
+          if (e?.code !== 'ERR_CANCELED' && !cancelled) console.error(e);
+        } finally {
+          if (!cancelled) setIsLoading(false);
+        }
+      })();
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [sucursalEfectiva, searchQuery, soloStockBajo]);
 
   const stats = {
     total: items.length,
@@ -89,12 +80,21 @@ export default function InventarioPage() {
     stockBajo: items.filter((i) => i.cantidad > 0 && i.cantidad <= i.stock_minimo).length,
   };
 
+  const abrirAjuste = (item: InventarioItem) => {
+    setAjusteItem(item);
+    setAjusteOpen(true);
+  };
+
+  const abrirKardex = (item: InventarioItem) => {
+    setKardexItem(item);
+    setKardexOpen(true);
+  };
+
   return (
     <div className="w-full h-full flex flex-col gap-6">
 
-      {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
+        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <Icon name="inventory_2" size={32} className="text-[#2e9e9b]" />
             Inventario
@@ -102,9 +102,9 @@ export default function InventarioPage() {
           <p className="text-sm text-muted-foreground mt-1">
             {sucursalEfectiva ? `Sucursal: ${sucursalEfectiva.nombre}` : 'Sin sucursal activa'}
           </p>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -129,17 +129,16 @@ export default function InventarioPage() {
             <Icon name="warning" size={14} className="mr-2" />
             Stock bajo
           </Button>
-        </motion.div>
+        </m.div>
       </div>
 
-      {/* STAT CARDS */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: 'Total productos', value: stats.total, color: 'text-white' },
           { label: 'Stock bajo', value: stats.stockBajo, color: 'text-yellow-400' },
           { label: 'Sin stock', value: stats.sinStock, color: 'text-red-400' },
         ].map((stat, i) => (
-          <motion.div
+          <m.div
             key={stat.label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -148,166 +147,20 @@ export default function InventarioPage() {
           >
             <span className="text-xs text-muted-foreground uppercase tracking-widest">{stat.label}</span>
             <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 
-      {/* TABLE inventario productos */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className={`rounded-xl border border-border bg-card/50 backdrop-blur-md flex-1 min-h-0 overflow-y-auto overflow-x-auto shadow-2xl transition-opacity duration-200 ${isSearching ? 'opacity-60' : 'opacity-100'}`}
-      >
-        <div className="relative">
-          <table className="w-full text-sm text-left rtl:text-right text-foreground">
-            <thead className="text-xs font-medium text-muted-foreground bg-background/50 border-b border-border">
-              <tr>
-                <th scope="col" className="px-6 py-4">
-                  <span className="sr-only">Imagen</span>
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold">
-                  Producto
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold">
-                  Código
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-right">
-                  Cantidad
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold">
-                  Unidad
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-right">
-                  Precio Venta
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-center">
-                  Estado
-                </th>
-                <th scope="col" className="px-6 py-4 font-semibold text-center">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center">
-                    <Icon name="hourglass_top" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
-                    <p className="mt-2 text-xs text-muted-foreground">Cargando inventario...</p>
-                  </td>
-                </tr>
-              ) : !sucursalEfectiva ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                    <Icon name="inventory" size={36} className="mx-auto mb-3 opacity-20" />
-                    <p>No hay sucursal activa. Inicia sesión nuevamente.</p>
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                    <Icon name="inventory_2" size={36} className="mx-auto mb-3 opacity-20" />
-                    <p>No se encontraron productos en el inventario.</p>
-                  </td>
-                </tr>
-              ) : (
-                <AnimatePresence>
-                  {items.map((item, i) => {
-                    const badge = getStockBadge(item.cantidad, item.stock_minimo ?? 0);
-                    return (
-                      <motion.tr
-                        key={item.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
-                      >
-                        {/* Imagen */}
-                        <td className="p-4">
-                          {item.productos.imagen_url ? (
-                            <div className="w-12 h-12 rounded-md overflow-hidden bg-background/50 border border-border">
-                              <img
-                                src={getImageUrl(item.productos.imagen_url)}
-                                alt={item.productos.nombre}
-                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-12 h-12 rounded-md bg-background/80 border border-border flex items-center justify-center text-muted-foreground/30">
-                              <Icon name="image" size={20} />
-                            </div>
-                          )}
-                        </td>
+      <InventarioTable
+        isLoading={isLoading}
+        isSearching={isSearching}
+        items={items}
+        hasSucursal={!!sucursalEfectiva}
+        money={money as never}
+        onAjustar={abrirAjuste}
+        onVerKardex={abrirKardex}
+      />
 
-                        {/* Nombre */}
-                        <td className="px-6 py-4 font-semibold text-foreground">
-                          {item.productos.nombre}
-                        </td>
-
-                        {/* Código */}
-                        <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
-                          {item.productos.codigo || '—'}
-                        </td>
-
-                        {/* Cantidad */}
-                        <td className="px-6 py-4 text-right">
-                          <span className={`text-xl font-bold font-mono ${item.cantidad === 0 ? 'text-red-400' :
-                            item.cantidad <= (item.stock_minimo ?? 0) ? 'text-yellow-400' :
-                              'text-white'
-                            }`}>
-                            {item.cantidad}
-                          </span>
-                        </td>
-
-                        {/* Unidad */}
-                        <td className="px-6 py-4 text-sm text-muted-foreground">
-                          {item.productos.unidad_medida ?? '—'}
-                        </td>
-
-                        {/* Precio */}
-                        <td className="px-6 py-4 text-right font-mono text-sm text-[#2e9e9b]">
-                          {money(Number(item.productos.precio_venta))}
-                        </td>
-
-                        {/* Estado */}
-                        <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badge.cls}`}>
-                            {badge.label}
-                          </span>
-                        </td>
-
-                        {/* Acciones */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => { setAjusteItem(item); setAjusteOpen(true); }}
-                              title="Ajustar stock"
-                              className="p-2 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
-                            >
-                              <Icon name="tune" size={16} />
-                            </button>
-                            <button
-                              onClick={() => { setKardexItem(item); setKardexOpen(true); }}
-                              title="Ver kardex"
-                              className="p-2 rounded-md text-muted-foreground hover:text-white hover:bg-white/10 transition-colors"
-                            >
-                              <Icon name="history" size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </AnimatePresence>
-              )}
-            </tbody>
-          </table>
-
-        </div>
-      </motion.div>
-
-      {/* MODALS */}
       <AjusteModal
         item={ajusteItem}
         open={ajusteOpen}
@@ -324,4 +177,3 @@ export default function InventarioPage() {
     </div>
   );
 }
-

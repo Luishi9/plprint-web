@@ -12,8 +12,9 @@ const ajusteSchema = z.object({
   productoId: z.number().int().positive(),
   sucursalId: z.number().int().positive(),
   tipo: z.enum(['entrada', 'salida', 'ajuste']),
-  cantidad: z.number().int().positive(),
+  cantidad: z.number().int().min(0),
   notas: z.string().optional(),
+  stockMinimo: z.number().min(1, 'El stock mínimo debe ser mayor a 0').optional(),
 });
 
 router.get('/sucursal/:sucursalId', authorizeSucursal, controller.getBySucursal);

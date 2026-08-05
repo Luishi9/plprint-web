@@ -1,6 +1,15 @@
 import { useConfigStore } from '@/store/configStore';
 import { useMoney } from '@/hooks/useMoney';
 import { sileo } from 'sileo';
+import { escapeHtml } from '@/utils/escapeHtml';
+import { sanitizePrintHtml } from '@/utils/sanitizePrintHtml';
+
+const FECHA_FMT = new Intl.DateTimeFormat('es-MX', {
+  day: '2-digit', month: 'long', year: 'numeric',
+});
+const HORA_FMT = new Intl.DateTimeFormat('es-MX', {
+  hour: '2-digit', minute: '2-digit', hour12: false,
+});
 
 export interface CotizacionPdfData {
   folio: string;
@@ -36,15 +45,10 @@ export function useCotizacionPdfBuilder() {
       email: config.getStr('empresa_email'),
     };
     const fmt = (n: number) => `${simbolo}${(n || 0).toFixed(decimales)}`;
-    const fechaStr = new Intl.DateTimeFormat('es-MX', {
-      day: '2-digit', month: 'long', year: 'numeric',
-    }).format(data.fecha);
-    const horaStr = new Intl.DateTimeFormat('es-MX', {
-      hour: '2-digit', minute: '2-digit', hour12: false,
-    }).format(data.fecha);
+    const fechaStr = FECHA_FMT.format(data.fecha);
+    const horaStr = HORA_FMT.format(data.fecha);
     const venceStr = data.diasVigencia
-      ? new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })
-          .format(new Date(data.fecha.getTime() + data.diasVigencia * 24 * 60 * 60 * 1000))
+      ? FECHA_FMT.format(new Date(data.fecha.getTime() + data.diasVigencia * 24 * 60 * 60 * 1000))
       : null;
 
     const rows = data.items.map((it) => {
@@ -52,7 +56,7 @@ export function useCotizacionPdfBuilder() {
       const lineTotal = lineSubtotal - (it.descuento || 0);
       return `
         <tr>
-          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb;font-size:12px;">${it.nombre}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb;font-size:12px;">${escapeHtml(it.nombre)}</td>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:center;font-size:12px;">${it.cantidad}</td>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:12px;">${fmt(it.precioUnitario)}</td>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:12px;">${fmt(lineSubtotal)}</td>
@@ -105,32 +109,32 @@ export function useCotizacionPdfBuilder() {
 <body>
   <div class="header">
     <div class="empresa-info">
-      <h1>${empresa.nombre}</h1>
-      ${empresa.rfc ? `<p><strong>RFC:</strong> ${empresa.rfc}</p>` : ''}
-      ${empresa.direccion ? `<p>${empresa.direccion}</p>` : ''}
-      ${empresa.telefono ? `<p><strong>Tel:</strong> ${empresa.telefono}</p>` : ''}
-      ${empresa.email ? `<p>${empresa.email}</p>` : ''}
+      <h1>${escapeHtml(empresa.nombre)}</h1>
+      ${empresa.rfc ? `<p><strong>RFC:</strong> ${escapeHtml(empresa.rfc)}</p>` : ''}
+      ${empresa.direccion ? `<p>${escapeHtml(empresa.direccion)}</p>` : ''}
+      ${empresa.telefono ? `<p><strong>Tel:</strong> ${escapeHtml(empresa.telefono)}</p>` : ''}
+      ${empresa.email ? `<p>${escapeHtml(empresa.email)}</p>` : ''}
     </div>
-    ${data.logoUrl ? `<img class="logo" src="${data.logoUrl}" alt="logo" />` : ''}
+    ${data.logoUrl ? `<img class="logo" src="${escapeHtml(data.logoUrl)}" alt="logo" />` : ''}
     <div class="doc-titulo">
       <h2>COTIZACIÓN</h2>
-      <div class="folio">Folio: ${data.folio}</div>
-      <div class="fecha">${fechaStr} · ${horaStr}</div>
+      <div class="folio">Folio: ${escapeHtml(data.folio)}</div>
+      <div class="fecha">${escapeHtml(fechaStr)} · ${escapeHtml(horaStr)}</div>
       <div class="fecha" style="margin-top:6px;"><span class="estado">Pendiente</span></div>
     </div>
   </div>
 
   <div class="cliente-box">
     <h3>Información del cliente</h3>
-    <div class="valor">${data.cliente || 'Público General'}</div>
+    <div class="valor">${escapeHtml(data.cliente) || 'Público General'}</div>
     <div class="grid">
-      <div class="campo"><strong>${data.vendedor || '—'}</strong>Vendedor</div>
-      <div class="campo"><strong>${data.sucursal || '—'}</strong>Sucursal</div>
+      <div class="campo"><strong>${escapeHtml(data.vendedor || '—')}</strong>Vendedor</div>
+      <div class="campo"><strong>${escapeHtml(data.sucursal || '—')}</strong>Sucursal</div>
       <div class="campo"><strong>${data.items.length}</strong>Productos</div>
     </div>
   </div>
 
-  ${venceStr ? `<div class="vence">📅 Esta cotización es válida hasta el <strong>${venceStr}</strong>.</div>` : ''}
+  ${venceStr ? `<div class="vence">📅 Esta cotización es válida hasta el <strong>${escapeHtml(venceStr)}</strong>.</div>` : ''}
 
   <table>
     <thead>
@@ -149,18 +153,18 @@ export function useCotizacionPdfBuilder() {
     <div class="totales-box">
       <div class="totales-row"><span>Subtotal:</span><span>${fmt(data.subtotal)}</span></div>
       ${data.descuento > 0 ? `
-        <div class="totales-row"><span>Descuento${data.descuentoMotivo ? ` (${data.descuentoMotivo})` : ''}:</span><span>-${fmt(data.descuento)}</span></div>
+        <div class="totales-row"><span>Descuento${data.descuentoMotivo ? ` (${escapeHtml(data.descuentoMotivo)})` : ''}:</span><span>-${fmt(data.descuento)}</span></div>
       ` : ''}
       <div class="totales-row total"><span>TOTAL:</span><span>${fmt(data.total)}</span></div>
     </div>
   </div>
 
-  ${data.notas ? `<div class="notas"><strong>Notas:</strong> ${data.notas}</div>` : ''}
+  ${data.notas ? `<div class="notas"><strong>Notas:</strong> ${escapeHtml(data.notas)}</div>` : ''}
 
   <div class="footer">
     <p>Este documento es una cotización y no representa una venta realizada.</p>
     <p>Para confirmar, solicite al vendedor la conversión a venta.</p>
-    <p style="margin-top:6px;">${empresa.nombre} · Generado el ${fechaStr} a las ${horaStr}</p>
+    <p style="margin-top:6px;">${escapeHtml(empresa.nombre)} · Generado el ${escapeHtml(fechaStr)} a las ${escapeHtml(horaStr)}</p>
   </div>
 
   <div class="no-print" style="text-align:center;margin-top:24px;">
@@ -171,7 +175,7 @@ export function useCotizacionPdfBuilder() {
   };
 
   const descargarPdf = (data: CotizacionPdfData) => {
-    const html = buildHtml(data);
+    const html = sanitizePrintHtml(buildHtml(data));
     const win = window.open('', '_blank', 'width=900,height=1100');
     if (!win) { sileo.info({ title: 'Permite las ventanas emergentes para descargar el PDF.' }); return; }
     win.document.open();

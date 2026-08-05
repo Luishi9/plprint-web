@@ -1,13 +1,26 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Icon } from '@/components/ui/Icon';
+import { sileo } from 'sileo';
 
-import { cajaApi, CorteCaja, MovimientoCaja, ResumenCaja } from '@/api/caja.api';
+import {
+  cajaApi, CorteCaja, MovimientoCaja, ResumenCaja,
+  MaquinaReporteItem, CategoriaImpresionReporteItem,
+} from '@/api/caja.api';
+import { configuracionApi } from '@/api/configuracion.api';
 import { usuariosApi } from '@/api/usuarios.api';
 import { sucursalesApi } from '@/api/sucursales.api';
 import { useAuthStore } from '@/store/authStore';
 import { useSucursalStore } from '@/store/sucursalStore';
 import { Button } from '@/components/ui/button';
 import { RequirePermission } from '@/components/RequirePermission';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 import ResumenCards from './components/ResumenCards';
 import FiltrosBar from './components/FiltrosBar';
@@ -16,6 +29,7 @@ import AperturaModal from './components/AperturaModal';
 import CorteModal from './components/CorteModal';
 import MovimientoModal from './components/MovimientoModal';
 import ReimprimirCorteModal from './components/ReimprimirCorteModal';
+import { MaquinasCorteModal } from './components/MaquinasCorteModal';
 import { useCortePdfBuilder } from './components/CortePdfBuilder';
 
 export default function CajaPage() {
@@ -48,6 +62,18 @@ export default function CajaPage() {
   const [movimientoOpen, setMovimientoOpen] = useState(false);
   const [movimientoTipo, setMovimientoTipo] = useState<'ingreso' | 'gasto' | 'retiro'>('gasto');
   const [reimprimirOpen, setReimprimirOpen] = useState(false);
+  const [recomendacionOpen, setRecomendacionOpen] = useState(false);
+
+  // Modal de reporte de máquinas (post-cierre)
+  const [maquinasModalOpen, setMaquinasModalOpen] = useState(false);
+  const [reporteMaquinas, setReporteMaquinas] = useState<MaquinaReporteItem[]>([]);
+  const [reporteCategorias, setReporteCategorias] = useState<CategoriaImpresionReporteItem[]>([]);
+  const [cortePendiente, setCortePendiente] = useState<{
+    corte_id: number;
+    monto_final_real: number;
+    observaciones?: string;
+  } | null>(null);
+  const [savingReporte, setSavingReporte] = useState(false);
 
   const fetchEstado = useCallback(async () => {
     try {
@@ -127,6 +153,16 @@ export default function CajaPage() {
     }
   }, [filtroCorte, cortesList]);
 
+  useEffect(() => {
+    if (!loading && !cajaActual && !corteSeleccionado && movimientos.length > 0) {
+      setRecomendacionOpen(true);
+    }
+  }, [loading, cajaActual, corteSeleccionado, movimientos.length]);
+
+  useEffect(() => {
+    setRecomendacionOpen(false);
+  }, [filtroSucursal]);
+
   const handleApertura = async (montoInicial: number) => {
     await cajaApi.aperturar({ sucursal_id: filtroSucursal, monto_inicial: montoInicial });
     await fetchEstado();
@@ -134,6 +170,35 @@ export default function CajaPage() {
   };
 
   const handleCorte = async (data: { corte_id: number; monto_final_real: number; observaciones?: string }) => {
+    // Verificar si la sucursal es centro de impresión.
+    let esCentroImpresion = false;
+    try {
+      const configRes = await configuracionApi.getByGrupo('maquinas');
+      esCentroImpresion = configRes.data?.data?.somos_centro_impresion === true;
+    } catch {
+      esCentroImpresion = false;
+    }
+
+    if (esCentroImpresion) {
+      // Cargar reporte inicial desde backend (snapshot persistido al aperturar).
+      try {
+        const [repMaquinas, repCategorias] = await Promise.all([
+          cajaApi.getCorteReporteMaquinas(data.corte_id),
+          cajaApi.getCorteReporteCategoriasImpresion(data.corte_id),
+        ]);
+        setReporteMaquinas(repMaquinas.data?.data?.maquinas ?? []);
+        setReporteCategorias(repCategorias.data?.data?.categorias ?? []);
+        setCortePendiente(data);
+        setMaquinasModalOpen(true);
+        return;
+      } catch (e) {
+        console.error('Error al cargar reporte de máquinas:', e);
+        sileo.error({ title: 'No se pudo cargar el reporte de máquinas. Se cerrará sin el reporte.' });
+        // Continuar con el flujo simple.
+      }
+    }
+
+    // Flujo sin reporte de máquinas (sucursal NO es centro de impresión).
     await cajaApi.realizarCorte(data);
     try {
       const res = await cajaApi.getCorteReimprimir(data.corte_id);
@@ -146,6 +211,55 @@ export default function CajaPage() {
     setCajaActual(null);
     setFiltroCorte('');
     await fetchCortes();
+  };
+
+  const handleConfirmarReporteMaquinas = async (payload: { maquinasContadores: Array<{ maquinaId: number; contadorFinal: number }> }) => {
+    if (!cortePendiente) return;
+    try {
+      setSavingReporte(true);
+      await cajaApi.realizarCorte({
+        corte_id: cortePendiente.corte_id,
+        monto_final_real: cortePendiente.monto_final_real,
+        observaciones: cortePendiente.observaciones,
+        maquinasContadores: payload.maquinasContadores,
+      });
+      const [res, repMaquinasActualizado, repCategoriasActualizado] = await Promise.all([
+        cajaApi.getCorteReimprimir(cortePendiente.corte_id),
+        cajaApi.getCorteReporteMaquinas(cortePendiente.corte_id),
+        cajaApi.getCorteReporteCategoriasImpresion(cortePendiente.corte_id),
+      ]);
+      const corteData = res.data.data;
+      if (corteData) {
+        descargarPdf({
+          corte: corteData.corte,
+          movimientos: corteData.movimientos,
+          resumen: corteData.resumen,
+          reporteMaquinas: repMaquinasActualizado.data?.data?.maquinas ?? [],
+          reporteCategoriasImpresion: repCategoriasActualizado.data?.data?.categorias ?? [],
+        });
+      }
+      setMaquinasModalOpen(false);
+      setCortePendiente(null);
+      setReporteMaquinas([]);
+      setReporteCategorias([]);
+      setCajaActual(null);
+      setFiltroCorte('');
+      await fetchCortes();
+      sileo.success({ title: 'Corte realizado correctamente.' });
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      sileo.error({ title: e.response?.data?.message || 'No se pudo guardar el reporte de máquinas.' });
+    } finally {
+      setSavingReporte(false);
+    }
+  };
+
+  const handleCancelarReporteMaquinas = () => {
+    setMaquinasModalOpen(false);
+    setCortePendiente(null);
+    setReporteMaquinas([]);
+    setReporteCategorias([]);
+    sileo.info({ title: 'Cierre cancelado. La caja sigue abierta.' });
   };
 
   const handleMovimiento = async (data: { sucursal_id: number; categoria_id: number; concepto: string; monto: number; notas?: string; autorizado_por?: number }) => {
@@ -286,6 +400,45 @@ export default function CajaPage() {
         onClose={() => setReimprimirOpen(false)}
         sucursalId={filtroSucursal}
       />
+
+      <MaquinasCorteModal
+        open={maquinasModalOpen}
+        maquinas={reporteMaquinas}
+        categorias={reporteCategorias}
+        isSaving={savingReporte}
+        onClose={handleCancelarReporteMaquinas}
+        onConfirm={handleConfirmarReporteMaquinas}
+      />
+
+      <Dialog open={recomendacionOpen} onOpenChange={setRecomendacionOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="warning" size={20} className="text-amber-400" />
+              Caja cerrada
+            </DialogTitle>
+            <DialogDescription>
+              Hay {movimientos.length} movimientos registrados sin un corte de caja activo.
+              Te recomendamos aperturar la caja para mantener un mejor control de las ventas.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setRecomendacionOpen(false)}>
+              Continuar sin aperturar
+            </Button>
+            <Button
+              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
+              onClick={() => {
+                setRecomendacionOpen(false);
+                setAperturaOpen(true);
+              }}
+            >
+              <Icon name="add" size={16} className="mr-2" />
+              Aperturar caja
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

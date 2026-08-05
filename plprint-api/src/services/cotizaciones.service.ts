@@ -187,6 +187,8 @@ export class CotizacionesService {
           cantidad: d.cantidad,
           precio_unitario: Number(d.precio_unitario),
           descuento: Number(d.descuento),
+          alto_m: d.alto_m != null ? Number(d.alto_m) : undefined,
+          ancho_m: d.ancho_m != null ? Number(d.ancho_m) : undefined,
         }));
 
     return prisma.$transaction(async (tx) => {
@@ -225,10 +227,12 @@ export class CotizacionesService {
             })),
           },
         },
+        include: { venta_detalle: true },
       });
 
       // Descontar inventario y registrar impresiones
-      for (const item of itemsFinales) {
+      for (let idx = 0; idx < itemsFinales.length; idx++) {
+        const item = itemsFinales[idx];
         const sucursalId = ajustes?.sucursal_id || cot.sucursal_id;
         if (sucursalId) {
           const inv = await tx.inventario.findFirst({
@@ -257,11 +261,13 @@ export class CotizacionesService {
             select: { maquina_id: true },
           });
           if (producto?.maquina_id) {
+            const ventaDetalleId = venta.venta_detalle[idx]?.id ?? null;
             await tx.impresiones.create({
               data: {
                 maquina_id: producto.maquina_id,
                 producto_id: item.producto_id,
                 venta_id: venta.id,
+                venta_detalle_id: ventaDetalleId,
                 sucursal_id: sucursalId,
                 ...(ajustes?.usuario_id && { usuario_id: ajustes.usuario_id }),
               },
@@ -270,6 +276,35 @@ export class CotizacionesService {
               where: { id: producto.maquina_id },
               data: { contador_total: { increment: item.cantidad } },
             });
+          }
+          // Descontar insumos del BOM (mismo factor de consumo que ventas.create)
+          const productoInsumos = await tx.producto_insumos.findMany({
+            where: { producto_id: item.producto_id },
+          });
+          for (const pi of productoInsumos) {
+            const factorConsumo = item.alto_m != null && Number(item.alto_m) > 0
+              ? Number(item.alto_m)
+              : Number(item.cantidad);
+            const cantidadDescontar = Number(pi.cantidad_requerida) * factorConsumo;
+            const insumoInv = await tx.insumos_inventario.findUnique({
+              where: {
+                insumo_id_sucursal_id: {
+                  insumo_id: pi.insumo_id,
+                  sucursal_id: sucursalId,
+                },
+              },
+            });
+            if (insumoInv) {
+              await tx.insumos_inventario.update({
+                where: {
+                  insumo_id_sucursal_id: {
+                    insumo_id: pi.insumo_id,
+                    sucursal_id: sucursalId,
+                  },
+                },
+                data: { cantidad: { decrement: cantidadDescontar } },
+              });
+            }
           }
         }
       }

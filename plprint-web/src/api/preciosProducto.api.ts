@@ -11,12 +11,6 @@ export interface NivelPrecioItem {
   activo: boolean;
 }
 
-export const NIVELES: Array<{ value: NivelPrecio; label: string }> = [
-  { value: 'medio_mayoreo', label: 'Medio mayoreo' },
-  { value: 'mayoreo', label: 'Mayoreo' },
-  { value: 'super_mayoreo', label: 'Super mayoreo' },
-];
-
 export interface PrecioVolumenInput {
   nivel: NivelPrecio;
   cantidad_minima: number;

@@ -1,0 +1,3 @@
+-- Agregar back-relation Prisma entre impresiones.venta_detalle_id y venta_detalle.impresiones.
+-- La columna venta_detalle_id ya existe en impresiones desde la migracion 20260608000008_add_maquinas_impresiones.
+-- Esta migracion solo registra el cambio en el historial para que el ORM mantenga la relacion.

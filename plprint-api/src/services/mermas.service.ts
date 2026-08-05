@@ -1,5 +1,5 @@
 import { prisma } from '../config/database';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { Prisma } from '@prisma/client';
 
 export interface MermaInput {
@@ -83,6 +83,19 @@ export class MermasService {
   async create(dto: MermaInput) {
     if (dto.tipo === 'producto' && !dto.producto_id) throw new NotFoundError('Producto requerido');
     if (dto.tipo === 'insumo' && !dto.insumo_id) throw new NotFoundError('Insumo requerido');
+    if (!dto.sucursal_id) throw new ValidationError('sucursal_id es requerido');
+
+    // Validar consistencia insumo-sucursal
+    if (dto.tipo === 'insumo' && dto.insumo_id) {
+      const insumo = await prisma.insumos.findUnique({
+        where: { id: dto.insumo_id },
+        select: { sucursal_id: true },
+      });
+      if (!insumo) throw new NotFoundError('Insumo');
+      if (insumo.sucursal_id !== dto.sucursal_id) {
+        throw new ValidationError('El insumo no pertenece a la sucursal indicada');
+      }
+    }
 
     return prisma.$transaction(async (tx) => {
       let maquinaIdFinal: number | null = null;

@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/input';
 
@@ -67,22 +67,22 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
       {/* Visualización cambio / saldo */}
       <AnimatePresence mode="wait">
         {vacio && (
-          <motion.div
+          <m.div
             key="vacio"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, maxHeight: 0 }}
+            animate={{ opacity: 1, maxHeight: 200 }}
+            exit={{ opacity: 0, maxHeight: 0 }}
+            style={{ overflow: 'hidden' }}
           >
             <div className="text-[10px] text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded p-2 flex items-center gap-1.5">
               <Icon name="error" size={12} />
               <span>La venta se registrará como <b>PENDIENTE DE COBRO</b></span>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {exacto && (
-          <motion.div
+          <m.div
             key="exacto"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -91,21 +91,21 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
           >
             <Icon name="check" size={12} />
             <span>Pago exacto · Venta será marcada como <b>PAGADA</b></span>
-          </motion.div>
+          </m.div>
         )}
 
         {completo && !exacto && (
-          <motion.div
+          <m.div
             key="cambio"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, maxHeight: 0 }}
+            animate={{ opacity: 1, maxHeight: 200 }}
+            exit={{ opacity: 0, maxHeight: 0 }}
+            style={{ overflow: 'hidden' }}
           >
             <div className="rounded-md p-2.5 bg-[#2e9e9b]/10 border border-[#2e9e9b]/40">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Su cambio:</span>
-                <motion.span
+                <m.span
                   key={cambio}
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
@@ -113,26 +113,26 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
                   className="font-mono font-bold text-2xl text-[#2e9e9b]"
                 >
                   {simbolo}{cambio.toFixed(2)}
-                </motion.span>
+                </m.span>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {parcial && (
-          <motion.div
+          <m.div
             key="saldo"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, maxHeight: 0 }}
+            animate={{ opacity: 1, maxHeight: 200 }}
+            exit={{ opacity: 0, maxHeight: 0 }}
+            style={{ overflow: 'hidden' }}
           >
             <div className="rounded-md p-2.5 bg-orange-500/10 border border-orange-500/30">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-orange-400 flex items-center gap-1">
                   <Icon name="error" size={11} /> Quedará pendiente:
                 </span>
-                <motion.span
+                <m.span
                   key={saldo}
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
@@ -140,13 +140,13 @@ export default function MontoRecibidoInput({ total, value, onChange, simbolo }: 
                   className="font-mono font-bold text-xl text-orange-400"
                 >
                   {simbolo}{saldo.toFixed(2)}
-                </motion.span>
+                </m.span>
               </div>
               <div className="text-[10px] text-orange-300/70 mt-1">
                 Venta como <b>PAGO PARCIAL</b> · Se podrán registrar abonos después
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

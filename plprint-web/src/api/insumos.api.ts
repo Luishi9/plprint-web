@@ -2,7 +2,7 @@ import { apiClient } from './client';
 import { InsumoDTO, AjusteInsumoDTO } from '@/types/insumo.types';
 
 export const insumosApi = {
-  getAll: (params?: { page?: number; limit?: number; search?: string }) =>
+  getAll: (params?: { page?: number; limit?: number; search?: string; sucursalId?: number }) =>
     apiClient.get('/insumos', { params }),
 
   getById: (id: number) => apiClient.get(`/insumos/${id}`),
@@ -17,4 +17,16 @@ export const insumosApi = {
     apiClient.get(`/insumos/sucursal/${sucursalId}`, { params }),
 
   ajustarStock: (data: AjusteInsumoDTO) => apiClient.post('/insumos/ajuste', data),
+
+  descargarPlantilla: () =>
+    apiClient.get('/insumos/plantilla', { responseType: 'blob' }),
+
+  exportCatalog: (sucursalId?: number) =>
+    apiClient.get('/insumos/exportar', { params: { sucursalId }, responseType: 'blob' }),
+
+  previewImport: (formData: FormData) =>
+    apiClient.post('/insumos/importar/preview', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  confirmImport: (payload: { token: string; decisiones: Record<string, string>; sucursalId: number }) =>
+    apiClient.post('/insumos/importar/confirmar', payload),
 };

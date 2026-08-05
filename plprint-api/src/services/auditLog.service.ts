@@ -6,6 +6,7 @@ interface RecordAuditParams {
   usuarioId: number | null;
   accion: string;
   modulo: string;
+  descripcion?: string;
   detalle?: Record<string, unknown>;
   ip?: string;
 }
@@ -17,13 +18,14 @@ export class AuditLogService {
         usuario_id: params.usuarioId,
         accion: params.accion,
         modulo: params.modulo,
+        descripcion: params.descripcion,
         detalle: params.detalle ? JSON.stringify(params.detalle) : null,
         ip: params.ip,
       },
     });
   }
 
-  async recordFromRequest(req: Request, accion: string, modulo: string, detalleExtra?: Record<string, unknown>) {
+  async recordFromRequest(req: Request, accion: string, modulo: string, detalleExtra?: Record<string, unknown>, descripcion?: string) {
     const user = req.user as JwtPayload | undefined;
     const detalle = {
       method: req.method,
@@ -37,6 +39,7 @@ export class AuditLogService {
       usuarioId: user?.sub ?? null,
       accion,
       modulo,
+      descripcion,
       detalle,
       ip: req.ip,
     });

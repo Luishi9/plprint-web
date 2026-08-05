@@ -23,8 +23,10 @@ export default function FiltrosBar({
     <div className="flex flex-wrap items-center gap-3 text-sm">
       <Icon name="filter_list" size={14} className="text-muted-foreground" />
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">Corte:</span>
+        <label htmlFor="filtro-corte" className="text-muted-foreground">Corte:</label>
         <select
+          id="filtro-corte"
+          aria-label="Filtrar por corte"
           value={filtroCorte}
           onChange={(e) => onChangeCorte(e.target.value)}
           className="bg-background border border-border rounded-md text-sm px-2 py-1.5 min-w-[160px]"
@@ -38,8 +40,10 @@ export default function FiltrosBar({
         </select>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">Usuario:</span>
+        <label htmlFor="filtro-usuario" className="text-muted-foreground">Usuario:</label>
         <select
+          id="filtro-usuario"
+          aria-label="Filtrar por usuario"
           value={filtroUsuario}
           onChange={(e) => onChangeUsuario(e.target.value)}
           className="bg-background border border-border rounded-md text-sm px-2 py-1.5 min-w-[140px]"
@@ -51,8 +55,10 @@ export default function FiltrosBar({
         </select>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">Sucursal:</span>
+        <label htmlFor="filtro-sucursal" className="text-muted-foreground">Sucursal:</label>
         <select
+          id="filtro-sucursal"
+          aria-label="Filtrar por sucursal"
           value={filtroSucursal}
           onChange={(e) => onChangeSucursal(e.target.value)}
           className="bg-background border border-border rounded-md text-sm px-2 py-1.5 min-w-[140px]"

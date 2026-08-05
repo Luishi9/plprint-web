@@ -7,6 +7,8 @@ const router = Router();
 const controller = new RespaldoController(new RespaldoService());
 
 router.get('/', authorize(ROLES.ADMIN), controller.generate);
+router.post('/', authorize(ROLES.ADMIN), controller.generate);
+router.post('/generar', authorize(ROLES.ADMIN), controller.generate);
 router.get('/list', authorize(ROLES.ADMIN), controller.list);
 router.get('/stats', authorize(ROLES.ADMIN), controller.stats);
 router.get('/download/:filename', authorize(ROLES.ADMIN), controller.download);

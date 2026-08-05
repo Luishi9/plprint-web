@@ -47,6 +47,22 @@ export interface ResumenCaja {
   ventas_por_metodo_pago: Array<{ metodo: string; total: number }>;
 }
 
+export interface MaquinaReporteItem {
+  maquina_id: number;
+  nombre: string;
+  tipo: string;
+  contador_inicial: number;
+  contador_actual: number;
+  contador_final: number;
+}
+
+export interface CategoriaImpresionReporteItem {
+  categoria_id: number;
+  nombre: string;
+  conteo_inicial: number;
+  conteo_final: number;
+}
+
 export type CorteListado = CorteCaja;
 
 export const cajaApi = {
@@ -56,8 +72,12 @@ export const cajaApi = {
   aperturar: (data: { sucursal_id: number; monto_inicial: number }) =>
     apiClient.post('/caja/apertura', data),
 
-  realizarCorte: (data: { corte_id: number; monto_final_real: number; observaciones?: string }) =>
-    apiClient.post('/caja/corte', data),
+  realizarCorte: (data: {
+    corte_id: number;
+    monto_final_real: number;
+    observaciones?: string;
+    maquinasContadores?: Array<{ maquinaId: number; contadorFinal: number }>;
+  }) => apiClient.post('/caja/corte', data),
 
   getMovimientos: (params?: Record<string, string | number | undefined>) =>
     apiClient.get('/caja/movimientos', { params }),
@@ -70,6 +90,12 @@ export const cajaApi = {
 
   getCorteReimprimir: (id: number) =>
     apiClient.get<{ success: boolean; data: { corte: CorteCaja; movimientos: MovimientoCaja[]; resumen: ResumenCaja } }>(`/caja/cortes/${id}/reimprimir`),
+
+  getCorteReporteMaquinas: (id: number) =>
+    apiClient.get<{ success: boolean; data: { maquinas: MaquinaReporteItem[] } }>(`/caja/cortes/${id}/reporte-maquinas`),
+
+  getCorteReporteCategoriasImpresion: (id: number) =>
+    apiClient.get<{ success: boolean; data: { categorias: CategoriaImpresionReporteItem[] } }>(`/caja/cortes/${id}/reporte-categorias-impresion`),
 
   registrarIngreso: (data: { sucursal_id: number; categoria_id: number; concepto: string; monto: number; notas?: string }) =>
     apiClient.post('/caja/ingreso', data),

@@ -18,9 +18,50 @@ export class SucursalesService {
     return prisma.$transaction(async (tx) => {
       const nuevaSucursal = await tx.sucursales.create({ data: sucursalData });
 
-      if (copiarProductos) {
+      // Matriz = primera sucursal existente distinta a la nueva
+      const matriz = await tx.sucursales.findFirst({
+        where: { id: { not: nuevaSucursal.id } },
+        orderBy: { id: 'asc' },
+      });
+
+      // Mapa de insumos matriz -> nueva sucursal (para replicar BOM)
+      const insumosMap = new Map<number, number>();
+
+      if (copiarInsumos && matriz) {
+        const insumosMatriz = await tx.insumos.findMany({
+          where: { activo: true, sucursal_id: matriz.id },
+        });
+
+        for (const ins of insumosMatriz) {
+          const nuevoInsumo = await tx.insumos.create({
+            data: {
+              codigo: ins.codigo,
+              nombre: ins.nombre,
+              descripcion: ins.descripcion,
+              unidad_medida: ins.unidad_medida,
+              ancho_rollo: ins.ancho_rollo,
+              precio_compra: ins.precio_compra,
+              proveedor_id: ins.proveedor_id,
+              sucursal_id: nuevaSucursal.id,
+            },
+          });
+
+          await tx.insumos_inventario.create({
+            data: {
+              insumo_id: nuevoInsumo.id,
+              sucursal_id: nuevaSucursal.id,
+              cantidad: 0,
+              stock_minimo: 0,
+            },
+          });
+
+          insumosMap.set(ins.id, nuevoInsumo.id);
+        }
+      }
+
+      if (copiarProductos && matriz) {
         const productosOrigen = await tx.productos.findMany({
-          where: { activo: true },
+          where: { activo: true, sucursal_id: matriz.id },
           include: {
             producto_precios: { where: { activo: true } },
             producto_insumos: true,
@@ -64,41 +105,22 @@ export class SucursalesService {
               stock_minimo: 0,
             },
           });
-        }
-      }
 
-      if (copiarInsumos) {
-        // Obtener todos los insumos activos del sistema
-        const todosLosInsumos = await tx.insumos.findMany({
-          where: { activo: true },
-          select: { id: true },
-        });
-
-        if (todosLosInsumos.length > 0) {
-          // Obtener config de stock desde el inventario de la matriz (si existe)
-          const matriz = await tx.sucursales.findFirst({
-            where: { id: { not: nuevaSucursal.id } },
-            orderBy: { id: 'asc' },
-          });
-
-          const stockMatriz = matriz
-            ? await tx.insumos_inventario.findMany({
-                where: { sucursal_id: matriz.id },
-                select: { insumo_id: true, stock_minimo: true },
-              })
-            : [];
-
-          const stockMap = new Map(stockMatriz.map(i => [i.insumo_id, i]));
-
-          await tx.insumos_inventario.createMany({
-            data: todosLosInsumos.map(ins => ({
-              insumo_id: ins.id,
-              sucursal_id: nuevaSucursal.id,
-              cantidad: 0,
-              stock_minimo: stockMap.get(ins.id)?.stock_minimo ?? 0,
-            })),
-            skipDuplicates: true,
-          });
+          // Replicar BOM si los insumos fueron copiados
+          if (copiarInsumos) {
+            for (const pi of p.producto_insumos) {
+              const nuevoInsumoId = insumosMap.get(pi.insumo_id);
+              if (nuevoInsumoId) {
+                await tx.producto_insumos.create({
+                  data: {
+                    producto_id: nuevoProducto.id,
+                    insumo_id: nuevoInsumoId,
+                    cantidad_requerida: pi.cantidad_requerida,
+                  },
+                });
+              }
+            }
+          }
         }
       }
 
@@ -113,9 +135,50 @@ export class SucursalesService {
     return prisma.$transaction(async (tx) => {
       const sucursal = await tx.sucursales.update({ where: { id }, data: sucursalData });
 
-      if (copiarProductos) {
+      // Matriz = primera sucursal existente distinta a la actual
+      const matriz = await tx.sucursales.findFirst({
+        where: { id: { not: id } },
+        orderBy: { id: 'asc' },
+      });
+
+      // Mapa de insumos matriz -> esta sucursal (para replicar BOM)
+      const insumosMap = new Map<number, number>();
+
+      if (copiarInsumos && matriz) {
+        const insumosMatriz = await tx.insumos.findMany({
+          where: { activo: true, sucursal_id: matriz.id },
+        });
+
+        for (const ins of insumosMatriz) {
+          const nuevoInsumo = await tx.insumos.create({
+            data: {
+              codigo: ins.codigo,
+              nombre: ins.nombre,
+              descripcion: ins.descripcion,
+              unidad_medida: ins.unidad_medida,
+              ancho_rollo: ins.ancho_rollo,
+              precio_compra: ins.precio_compra,
+              proveedor_id: ins.proveedor_id,
+              sucursal_id: id,
+            },
+          });
+
+          await tx.insumos_inventario.create({
+            data: {
+              insumo_id: nuevoInsumo.id,
+              sucursal_id: id,
+              cantidad: 0,
+              stock_minimo: 0,
+            },
+          });
+
+          insumosMap.set(ins.id, nuevoInsumo.id);
+        }
+      }
+
+      if (copiarProductos && matriz) {
         const productosOrigen = await tx.productos.findMany({
-          where: { activo: true },
+          where: { activo: true, sucursal_id: matriz.id },
           include: {
             producto_precios: { where: { activo: true } },
             producto_insumos: true,
@@ -159,39 +222,22 @@ export class SucursalesService {
               stock_minimo: 0,
             },
           });
-        }
-      }
 
-      if (copiarInsumos) {
-        const todosLosInsumos = await tx.insumos.findMany({
-          where: { activo: true },
-          select: { id: true },
-        });
-
-        if (todosLosInsumos.length > 0) {
-          const matriz = await tx.sucursales.findFirst({
-            where: { id: { not: id } },
-            orderBy: { id: 'asc' },
-          });
-
-          const stockMatriz = matriz
-            ? await tx.insumos_inventario.findMany({
-                where: { sucursal_id: matriz.id },
-                select: { insumo_id: true, stock_minimo: true },
-              })
-            : [];
-
-          const stockMap = new Map(stockMatriz.map(i => [i.insumo_id, i]));
-
-          await tx.insumos_inventario.createMany({
-            data: todosLosInsumos.map(ins => ({
-              insumo_id: ins.id,
-              sucursal_id: id,
-              cantidad: 0,
-              stock_minimo: stockMap.get(ins.id)?.stock_minimo ?? 0,
-            })),
-            skipDuplicates: true,
-          });
+          // Replicar BOM si los insumos fueron copiados
+          if (copiarInsumos) {
+            for (const pi of p.producto_insumos) {
+              const nuevoInsumoId = insumosMap.get(pi.insumo_id);
+              if (nuevoInsumoId) {
+                await tx.producto_insumos.create({
+                  data: {
+                    producto_id: nuevoProducto.id,
+                    insumo_id: nuevoInsumoId,
+                    cantidad_requerida: pi.cantidad_requerida,
+                  },
+                });
+              }
+            }
+          }
         }
       }
 

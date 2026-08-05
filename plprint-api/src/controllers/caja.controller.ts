@@ -88,6 +88,20 @@ export class CajaController {
     } catch (err) { next(err); }
   };
 
+  getCorteReporteMaquinas = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.cajaService.getReporteMaquinasByCorte(Number(req.params.id));
+      sendSuccess(res, result);
+    } catch (err) { next(err); }
+  };
+
+  getCorteReporteCategoriasImpresion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.cajaService.getReporteCategoriasImpresionByCorte(Number(req.params.id));
+      sendSuccess(res, result);
+    } catch (err) { next(err); }
+  };
+
   registrarIngreso = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const dto = {

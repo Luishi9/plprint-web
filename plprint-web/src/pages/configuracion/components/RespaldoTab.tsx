@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useCallback, useEffect, useState } from 'react';
+import { m } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ export default function RespaldoTab() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [b, s] = await Promise.all([respaldoApi.list(), respaldoApi.getStats()]);
       setBackups(b.data.data);
@@ -33,11 +33,11 @@ export default function RespaldoTab() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
     setMessage(null);
     try {
@@ -50,9 +50,9 @@ export default function RespaldoTab() {
       setIsGenerating(false);
       setTimeout(() => setMessage(null), 3000);
     }
-  };
+  }, [fetchData]);
 
-  const handleDownload = async (filename: string) => {
+  const handleDownload = useCallback(async (filename: string) => {
     try {
       const token = useAuthStore.getState().accessToken;
       const res = await apiClient.get(`/respaldo/download/${filename}`, {
@@ -70,9 +70,9 @@ export default function RespaldoTab() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
-  const handleEliminar = async () => {
+  const handleEliminar = useCallback(async () => {
     if (!eliminarItem) return;
     setIsDeleting(true);
     try {
@@ -84,7 +84,7 @@ export default function RespaldoTab() {
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [eliminarItem, fetchData]);
 
   if (isLoading) {
     return (
@@ -95,7 +95,7 @@ export default function RespaldoTab() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div>
@@ -171,13 +171,13 @@ export default function RespaldoTab() {
                   </div>
                 </div>
               ))
-            )}
+            )}  
           </div>
         </CardContent>
       </Card>
 
       <Dialog open={!!eliminarItem} onOpenChange={(v) => !v && setEliminarItem(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Eliminar respaldo</DialogTitle>
             <DialogDescription>
@@ -193,6 +193,6 @@ export default function RespaldoTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </m.div>
   );
 }

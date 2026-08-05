@@ -42,6 +42,24 @@ export class VentasController {
     }
   };
 
+  /**
+   * Public ticket endpoint - no auth, rate-limited at route level.
+   * Returns the bare minimum needed to render a customer-facing ticket.
+   */
+  getPublicById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id) || id <= 0) {
+        res.status(400).json({ success: false, message: 'ID inválido' });
+        return;
+      }
+      const venta = await this.ventasService.findByIdPublic(id);
+      sendSuccess(res, venta);
+    } catch (err) {
+      next(err);
+    }
+  };
+
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const venta = await this.ventasService.create({
@@ -56,8 +74,17 @@ export class VentasController {
 
   cancel = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const venta = await this.ventasService.cancel(Number(req.params.id), req.user!.sub);
+      const venta = await this.ventasService.cancel(Number(req.params.id), req.user!.sub, req.body);
       sendSuccess(res, venta);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  getProductosConInsumos = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const productos = await this.ventasService.getProductosConInsumosByVenta(Number(req.params.id));
+      sendSuccess(res, productos);
     } catch (err) {
       next(err);
     }

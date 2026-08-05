@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { Icon } from '@/components/ui/Icon';
 
 import { sucursalesApi, Sucursal, SucursalDTO } from '@/api/sucursales.api';
@@ -19,59 +19,109 @@ interface Props {
   onSaved: () => void;
 }
 
+interface FormState {
+  nombre: string;
+  direccion: string;
+  telefono: string;
+  activa: boolean;
+  copiarProductos: boolean;
+  copiarInsumos: boolean;
+  isSaving: boolean;
+  copyDone: boolean;
+  error: string;
+}
+
+type FormAction =
+  | { type: 'set'; field: 'nombre' | 'direccion' | 'telefono'; value: string }
+  | { type: 'set'; field: 'activa' | 'copiarProductos' | 'copiarInsumos' | 'copyDone'; value: boolean }
+  | { type: 'setSaving'; value: boolean }
+  | { type: 'setError'; value: string }
+  | { type: 'reset'; payload: { nombre: string; direccion: string; telefono: string; activa: boolean } };
+
+const initialForm: FormState = {
+  nombre: '',
+  direccion: '',
+  telefono: '',
+  activa: true,
+  copiarProductos: false,
+  copiarInsumos: false,
+  isSaving: false,
+  copyDone: false,
+  error: '',
+};
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'set':
+      return { ...state, [action.field]: action.value };
+    case 'setSaving':
+      return { ...state, isSaving: action.value };
+    case 'setError':
+      return { ...state, error: action.value };
+    case 'reset':
+      return {
+        ...state,
+        nombre: action.payload.nombre,
+        direccion: action.payload.direccion,
+        telefono: action.payload.telefono,
+        activa: action.payload.activa,
+        copiarProductos: false,
+        copiarInsumos: false,
+        copyDone: false,
+        error: '',
+      };
+    default:
+      return state;
+  }
+}
+
 export default function SucursalFormModal({ open, sucursal, matrizSucursal, onClose, onSaved }: Props) {
   const isEdit = !!sucursal;
 
-  const [nombre, setNombre] = useState('');
-  const [direccion, setDireccion] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [activa, setActiva] = useState(true);
-  const [copiarProductos, setCopiarProductos] = useState(false);
-  const [copiarInsumos, setCopiarInsumos] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [copyDone, setCopyDone] = useState(false);
-  const [error, setError] = useState('');
+  const [state, dispatch] = useReducer(formReducer, initialForm);
+  const { isSaving, copyDone, error } = state;
 
   useEffect(() => {
     if (open) {
-      setNombre(sucursal?.nombre ?? '');
-      setDireccion(sucursal?.direccion ?? '');
-      setTelefono(sucursal?.telefono ?? '');
-      setActiva(sucursal?.activa ?? true);
-      setCopiarProductos(false);
-      setCopiarInsumos(false);
-      setCopyDone(false);
-      setError('');
+      dispatch({
+        type: 'reset',
+        payload: {
+          nombre: sucursal?.nombre ?? '',
+          direccion: sucursal?.direccion ?? '',
+          telefono: sucursal?.telefono ?? '',
+          activa: sucursal?.activa ?? true,
+        },
+      });
     }
   }, [open, sucursal]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim()) { setError('El nombre es requerido.'); return; }
-    setIsSaving(true);
-    setError('');
+    if (!state.nombre.trim()) { dispatch({ type: 'setError', value: 'El nombre es requerido.' }); return; }
+    dispatch({ type: 'setSaving', value: true });
+    dispatch({ type: 'setError', value: '' });
     try {
       const dto: SucursalDTO = {
-        nombre: nombre.trim(),
-        direccion: direccion.trim() || undefined,
-        telefono: telefono.trim() || undefined,
-        activa,
-        ...(matrizSucursal ? { copiarProductos, copiarInsumos } : {}),
+        nombre: state.nombre.trim(),
+        direccion: state.direccion.trim() || undefined,
+        telefono: state.telefono.trim() || undefined,
+        activa: state.activa,
+        ...(matrizSucursal ? { copiarProductos: state.copiarProductos, copiarInsumos: state.copiarInsumos } : {}),
       };
       if (isEdit) {
         await sucursalesApi.update(sucursal!.id, dto);
       } else {
         await sucursalesApi.create(dto);
       }
-      if (copiarProductos || copiarInsumos) {
-        setCopyDone(true);
+      if (state.copiarProductos || state.copiarInsumos) {
+        dispatch({ type: 'set', field: 'copyDone', value: true });
         await new Promise((r) => setTimeout(r, 1200));
       }
       onSaved();
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Ocurrió un error al guardar.');
+      dispatch({ type: 'setError', value: err?.response?.data?.message ?? 'Ocurrió un error al guardar.' });
     } finally {
-      setIsSaving(false);
+      dispatch({ type: 'setSaving', value: false });
     }
   };
 
@@ -95,8 +145,8 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
             </Label>
             <Input
               id="sucursal-nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              value={state.nombre}
+              onChange={(e) => dispatch({ type: 'set', field: 'nombre', value: e.target.value })}
               placeholder="Ej. Sucursal Centro"
               className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
               autoFocus
@@ -110,8 +160,8 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
             </Label>
             <Textarea
               id="sucursal-direccion"
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
+              value={state.direccion}
+              onChange={(e) => dispatch({ type: 'set', field: 'direccion', value: e.target.value })}
               placeholder="Calle, número, colonia..."
               rows={2}
               className="bg-white/5 border-border text-white placeholder:text-muted-foreground resize-none"
@@ -125,8 +175,8 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
             </Label>
             <Input
               id="sucursal-telefono"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
+              value={state.telefono}
+              onChange={(e) => dispatch({ type: 'set', field: 'telefono', value: e.target.value })}
               placeholder="000 000 0000"
               className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
             />
@@ -139,7 +189,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
                 <p className="text-sm text-white/80 font-medium">Sucursal activa</p>
                 <p className="text-xs text-muted-foreground">Las sucursales inactivas no pueden usarse en ventas</p>
               </div>
-              <Switch checked={activa} onCheckedChange={setActiva} />
+              <Switch checked={state.activa} onCheckedChange={(v) => dispatch({ type: 'set', field: 'activa', value: v })} />
             </div>
           )}
 
@@ -147,10 +197,10 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
           {matrizSucursal && (
             <>
               <div className={`flex items-center justify-between rounded-lg border px-4 py-3 transition-colors ${
-                copiarProductos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
+                state.copiarProductos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
               }`}>
                 <div className="flex items-start gap-2.5">
-                  <Icon name="package_2" size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarProductos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
+                  <Icon name="package_2" size={16} className={`shrink-0 mt-0.5 transition-colors ${state.copiarProductos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
                   <div>
                     <p className="text-sm text-white/80 font-medium">
                       {isEdit ? 'Sincronizar catálogo de productos' : 'Heredar catálogo de productos'}
@@ -163,15 +213,15 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
                     </p>
                   </div>
                 </div>
-                <Switch checked={copiarProductos} onCheckedChange={setCopiarProductos} disabled={isSaving} />
+                <Switch checked={state.copiarProductos} onCheckedChange={(v) => dispatch({ type: 'set', field: 'copiarProductos', value: v })} disabled={isSaving} />
               </div>
 
               {/* Catálogo de insumos */}
               <div className={`flex items-center justify-between rounded-lg border px-4 py-3 transition-colors ${
-                copiarInsumos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
+                state.copiarInsumos ? 'border-[#2e9e9b]/40 bg-[#2e9e9b]/5' : 'border-border bg-white/5'
               }`}>
                 <div className="flex items-start gap-2.5">
-                  <Icon name="inventory" size={16} className={`shrink-0 mt-0.5 transition-colors ${copiarInsumos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
+                  <Icon name="inventory" size={16} className={`shrink-0 mt-0.5 transition-colors ${state.copiarInsumos ? 'text-[#2e9e9b]' : 'text-muted-foreground'}`} />
                   <div>
                     <p className="text-sm text-white/80 font-medium">
                       {isEdit ? 'Sincronizar catálogo de insumos' : 'Heredar catálogo de insumos'}
@@ -184,13 +234,13 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
                     </p>
                   </div>
                 </div>
-                <Switch checked={copiarInsumos} onCheckedChange={setCopiarInsumos} disabled={isSaving} />
+                <Switch checked={state.copiarInsumos} onCheckedChange={(v) => dispatch({ type: 'set', field: 'copiarInsumos', value: v })} disabled={isSaving} />
               </div>
             </>
           )}
 
           {/* Overlay de progreso al copiar productos o insumos */}
-          {isSaving && (copiarProductos || copiarInsumos) && (
+          {isSaving && (state.copiarProductos || state.copiarInsumos) && (
             <div className="flex items-center gap-3 rounded-lg border border-[#2e9e9b]/30 bg-[#2e9e9b]/5 px-4 py-3">
               {copyDone
                 ? <Icon name="check_circle" size={15} className="text-[#2e9e9b] shrink-0" />
@@ -199,7 +249,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
               <p className="text-xs text-[#2e9e9b]">
                 {copyDone 
                   ? 'Catálogo copiado correctamente' 
-                  : `Copiando catálogo de ${copiarProductos && copiarInsumos ? 'productos e insumos' : copiarProductos ? 'productos' : 'insumos'}...`
+                  : `Copiando catálogo de ${state.copiarProductos && state.copiarInsumos ? 'productos e insumos' : state.copiarProductos ? 'productos' : 'insumos'}...`
                 }
               </p>
             </div>
@@ -222,7 +272,7 @@ export default function SucursalFormModal({ open, sucursal, matrizSucursal, onCl
             >
               {isSaving && <Icon name="progress_activity" size={14} className="animate-spin" />}
               {isSaving
-                ? ((copiarProductos || copiarInsumos) ? 'Procesando...' : 'Guardando...')
+                ? ((state.copiarProductos || state.copiarInsumos) ? 'Procesando...' : 'Guardando...')
                 : (isEdit ? 'Guardar cambios' : 'Crear sucursal')
               }
             </Button>

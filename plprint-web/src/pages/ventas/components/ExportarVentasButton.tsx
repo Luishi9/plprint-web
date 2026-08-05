@@ -3,6 +3,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Venta } from '@/types/venta.types';
 import { useMetodosPago } from '@/hooks/useMetodosPago';
 import { useMoney } from '@/hooks/useMoney';
+import { todayLocal, formatLocalDate, formatLocalDateTime } from '@/utils/localDate';
 import * as XLSX from 'xlsx';
 import { sileo } from 'sileo';
 
@@ -19,14 +20,14 @@ export default function ExportarVentasButton({ ventas, desde, hasta }: Props) {
 
   const fechaStr = desde && hasta
     ? `${desde}_a_${hasta}`
-    : new Date().toISOString().split('T')[0];
+    : todayLocal();
 
   const exportExcel = () => {
     const rows: Record<string, unknown>[] = [];
     for (const v of ventas) {
       for (const d of v.venta_detalle) {
         rows.push({
-          Fecha: new Date(v.created_at).toLocaleDateString('es-MX'),
+          Fecha: formatLocalDate(v.created_at),
           Folio: v.folio || `#${v.id}`,
           '#Venta': v.id,
           Cliente: v.clientes?.nombre || 'Público General',
@@ -77,7 +78,7 @@ export default function ExportarVentasButton({ ventas, desde, hasta }: Props) {
         (v) => `
       <tr>
         <td style="padding:4px 6px;border:1px solid #ddd;">${v.folio || `#${v.id}`}</td>
-        <td style="padding:4px 6px;border:1px solid #ddd;">${new Date(v.created_at).toLocaleDateString('es-MX')}</td>
+        <td style="padding:4px 6px;border:1px solid #ddd;">${formatLocalDate(v.created_at)}</td>
         <td style="padding:4px 6px;border:1px solid #ddd;">${v.clientes?.nombre || 'Público General'}</td>
         <td style="padding:4px 6px;border:1px solid #ddd;">${v.usuarios?.nombre || '—'}</td>
         <td style="padding:4px 6px;border:1px solid #ddd;text-align:right;">${money(Number(v.total))}</td>
@@ -107,7 +108,7 @@ export default function ExportarVentasButton({ ventas, desde, hasta }: Props) {
 </style></head><body>
   <div class="header">
     <h1>Historial de Ventas</h1>
-    <p>${desde && hasta ? `Del ${desde} al ${hasta}` : `Generado el ${new Date().toLocaleDateString('es-MX')}`}</p>
+    <p>${desde && hasta ? `Del ${desde} al ${hasta}` : `Generado el ${formatLocalDateTime(new Date())}`}</p>
     <p>Total registros: ${ventas.length}</p>
   </div>
   <table>
@@ -140,7 +141,7 @@ export default function ExportarVentasButton({ ventas, desde, hasta }: Props) {
 
   return (
     <div className="relative">
-      <button
+      <button type="button"
         onClick={() => setOpen(!open)}
         disabled={ventas.length === 0}
         className="h-10 px-4 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-lg border border-border disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-2 text-sm"
@@ -151,16 +152,16 @@ export default function ExportarVentasButton({ ventas, desde, hasta }: Props) {
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <button type="button" aria-label="Cerrar menú" className="fixed inset-0 z-40 border-0 bg-transparent cursor-default" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-xl min-w-[140px] overflow-hidden">
-            <button
+            <button type="button"
               onClick={exportExcel}
               className="w-full px-4 py-2.5 text-left text-sm text-foreground hover:bg-white/5 flex items-center gap-2 transition-colors"
             >
               <Icon name="table_chart" size={16} className="text-[#2e9e9b]" />
               Excel (.xlsx)
             </button>
-            <button
+            <button type="button"
               onClick={exportPdf}
               className="w-full px-4 py-2.5 text-left text-sm text-foreground hover:bg-white/5 flex items-center gap-2 transition-colors"
             >

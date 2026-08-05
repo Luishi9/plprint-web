@@ -90,7 +90,7 @@ export function AjusteModal({ item, open, onOpenChange, onSuccess }: AjusteModal
             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Tipo de movimiento</p>
             <div className="grid grid-cols-3 gap-2">
                 {TIPOS.map(({ value, label, icon, cls }) => (
-                  <button
+                  <button type="button"
                     key={value}
                     onClick={() => setTipo(value)}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-xs font-medium transition-all ${

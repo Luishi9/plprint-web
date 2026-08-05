@@ -26,7 +26,7 @@ const ConfiguracionPage = lazy(() => import('@/pages/configuracion/Configuracion
 const CajaPage = lazy(() => import('@/pages/caja/CajaPage'));
 
 const Loader = () => (
-  <div className="flex h-screen items-center justify-center">
+  <div className="flex h-dvh items-center justify-center">
     <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
   </div>
 );

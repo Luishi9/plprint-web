@@ -1,12 +1,24 @@
 import { useConfigStore } from '@/store/configStore';
 import { useMoney } from '@/hooks/useMoney';
-import type { CorteCaja, MovimientoCaja, ResumenCaja } from '@/api/caja.api';
+import type { CorteCaja, MovimientoCaja, ResumenCaja, MaquinaReporteItem, CategoriaImpresionReporteItem } from '@/api/caja.api';
 import { sileo } from 'sileo';
+import { escapeHtml } from '@/utils/escapeHtml';
+import { sanitizePrintHtml } from '@/utils/sanitizePrintHtml';
+
+const CORTE_DATE_FMT = new Intl.DateTimeFormat('es-MX', {
+  day: '2-digit', month: 'short', year: 'numeric',
+  hour: '2-digit', minute: '2-digit',
+});
+const CORTE_TIME_FMT = new Intl.DateTimeFormat('es-MX', {
+  hour: '2-digit', minute: '2-digit', hour12: false,
+});
 
 export interface CortePdfData {
   corte: CorteCaja;
   movimientos: MovimientoCaja[];
   resumen: ResumenCaja;
+  reporteMaquinas?: MaquinaReporteItem[];
+  reporteCategoriasImpresion?: CategoriaImpresionReporteItem[];
 }
 
 export function useCortePdfBuilder() {
@@ -27,10 +39,8 @@ export function useCortePdfBuilder() {
     //const ticketMensaje = config.getStr('ticket_mensaje_pie') || 'Gracias por su preferencia';
 
     const fmt = (n: number) => `${simbolo}${(n || 0).toFixed(decimales)}`;
-    const fmtDate = (d: string | null) =>
-      d ? new Date(d).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-    const fmtTime = (d: string) =>
-      new Date(d).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const fmtDate = (d: string | null) => d ? CORTE_DATE_FMT.format(new Date(d)) : '—';
+    const fmtTime = (d: string) => CORTE_TIME_FMT.format(new Date(d));
 
     const montoInicial = Number(corte.monto_inicial);
     const efectivoEsperado = montoInicial + resumen.total_efectivo_ventas + resumen.total_ingresos + resumen.total_abonos_efectivo - resumen.total_gastos - resumen.total_retiros;
@@ -43,16 +53,16 @@ export function useCortePdfBuilder() {
       return `
         <tr>
           <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${fmtTime(m.fecha)}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${m.tipo_display}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${m.concepto || '—'}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${m.usuario || '—'}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${escapeHtml(m.tipo_display)}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${escapeHtml(m.concepto || '—')}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${escapeHtml(m.usuario || '—')}</td>
           <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;${colorClass}font-weight:600;">${montoDisplay}</td>
         </tr>`;
     }).join('');
 
     const metodoRows = resumen.ventas_por_metodo_pago.map((v) => `
       <tr>
-        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;">${v.metodo}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;">${escapeHtml(v.metodo)}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;text-align:right;font-weight:600;">${fmt(v.total)}</td>
       </tr>`).join('');
 
@@ -107,11 +117,11 @@ export function useCortePdfBuilder() {
 <body>
   <div class="header">
     <div class="empresa-info">
-      <h1>${empresa.nombre}</h1>
-      ${empresa.rfc ? `<p><strong>RFC:</strong> ${empresa.rfc}</p>` : ''}
-      ${empresa.direccion ? `<p>${empresa.direccion}</p>` : ''}
-      ${empresa.telefono ? `<p><strong>Tel:</strong> ${empresa.telefono}</p>` : ''}
-      ${empresa.email ? `<p>${empresa.email}</p>` : ''}
+      <h1>${escapeHtml(empresa.nombre)}</h1>
+      ${empresa.rfc ? `<p><strong>RFC:</strong> ${escapeHtml(empresa.rfc)}</p>` : ''}
+      ${empresa.direccion ? `<p>${escapeHtml(empresa.direccion)}</p>` : ''}
+      ${empresa.telefono ? `<p><strong>Tel:</strong> ${escapeHtml(empresa.telefono)}</p>` : ''}
+      ${empresa.email ? `<p>${escapeHtml(empresa.email)}</p>` : ''}
     </div>
     <div class="doc-titulo">
       <h2>CORTE DE CAJA</h2>
@@ -125,13 +135,13 @@ export function useCortePdfBuilder() {
     <div class="info-card">
       <h3>Apertura</h3>
       <p><strong>${fmtDate(corte.fecha_apertura)}</strong></p>
-      <p>Por: ${corte.usuario_apertura?.nombre || '—'}</p>
+      <p>Por: ${escapeHtml(corte.usuario_apertura?.nombre || '—')}</p>
       <p>Monto inicial: <strong>${fmt(montoInicial)}</strong></p>
     </div>
     <div class="info-card">
       <h3>Cierre</h3>
       <p><strong>${fmtDate(corte.fecha_cierre)}</strong></p>
-      <p>Por: ${corte.usuario_cierre?.nombre || '—'}</p>
+      <p>Por: ${escapeHtml(corte.usuario_cierre?.nombre || '—')}</p>
       <p>Monto final: <strong>${montoReal !== null ? fmt(montoReal) : '—'}</strong></p>
     </div>
   </div>
@@ -174,6 +184,46 @@ export function useCortePdfBuilder() {
     <tbody>${metodoRows}</tbody>
   </table>` : ''}
 
+  ${data.reporteMaquinas && data.reporteMaquinas.length > 0 ? `
+  <h3 class="section-title">Reporte de Máquinas</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Máquina</th>
+        <th>Tipo</th>
+        <th class="r">Contador Inicial</th>
+        <th class="r">Contador Final</th>
+      </tr>
+    </thead>
+    <tbody>${data.reporteMaquinas.map((m) => `
+      <tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;">${escapeHtml(m.nombre)}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;">${escapeHtml(m.tipo)}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;text-align:right;">${m.contador_inicial}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;text-align:right;font-weight:600;">${m.contador_final}</td>
+      </tr>
+    `).join('')}</tbody>
+  </table>` : ''}
+
+  ${data.reporteCategoriasImpresion && data.reporteCategoriasImpresion.length > 0 ? `
+  <h3 class="section-title">Categorías de Impresión</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Categoría</th>
+        <th class="r">Conteo Inicial</th>
+        <th class="r">Conteo Final</th>
+      </tr>
+    </thead>
+    <tbody>${data.reporteCategoriasImpresion.map((c) => `
+      <tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;">${escapeHtml(c.nombre)}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;text-align:right;">${c.conteo_inicial}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:12px;text-align:right;font-weight:600;">${c.conteo_final}</td>
+      </tr>
+    `).join('')}</tbody>
+  </table>` : ''}
+
   ${movimientos.length > 0 ? `
   <h3 class="section-title">Detalle de Movimientos (${movimientos.length})</h3>
   <table>
@@ -190,10 +240,10 @@ export function useCortePdfBuilder() {
   </table>` : ''}
 
   ${corte.observaciones ? `
-  <div class="observaciones"><strong>Observaciones:</strong> ${corte.observaciones}</div>` : ''}
+  <div class="observaciones"><strong>Observaciones:</strong> ${escapeHtml(corte.observaciones)}</div>` : ''}
 
   <div class="footer">
-    <p style="margin-top:6px;">${empresa.nombre} · Sucursal: ${corte.sucursales?.nombre || '—'}</p>
+    <p style="margin-top:6px;">${escapeHtml(empresa.nombre)} · Sucursal: ${escapeHtml(corte.sucursales?.nombre || '—')}</p>
   </div>
 
   <div class="no-print" style="text-align:center;margin-top:24px;">
@@ -204,14 +254,165 @@ export function useCortePdfBuilder() {
   };
 
   const descargarPdf = (data: CortePdfData) => {
-    const html = buildHtml(data);
+    const html = sanitizePrintHtml(buildHtml(data));
     const win = window.open('', '_blank', 'width=900,height=1100');
     if (!win) { sileo.info({ title: 'Permite las ventanas emergentes para descargar el PDF.' }); return; }
     win.document.open();
     win.document.write(html);
     win.document.close();
-    win.onload = () => { win.focus(); };
+    win.onload = () => {
+      const btn = win.document.querySelector('.no-print button');
+      if (btn) btn.addEventListener('click', () => win.print());
+      win.focus();
+      win.print();
+    };
   };
 
-  return { buildHtml, descargarPdf };
+  const buildTicketHtml = (data: CortePdfData): string => {
+    const { corte, movimientos, resumen } = data;
+    const empresa = {
+      nombre: config.getStr('empresa_nombre') || 'PLPrint',
+      ticketMensaje: config.getStr('ticket_mensaje_pie') || 'Gracias por su preferencia',
+    };
+    const fmt = (n: number) => `${simbolo}${(n || 0).toFixed(decimales)}`;
+    const fechaFmt = new Intl.DateTimeFormat('es-MX', {
+      day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    const horaFmt = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const fmtDate = (d: string | null) => d ? fechaFmt.format(new Date(d)) : '—';
+    const fmtTime = (d: string) => horaFmt.format(new Date(d));
+
+    const montoInicial = Number(corte.monto_inicial);
+    const efectivoEsperado =
+      montoInicial + resumen.total_efectivo_ventas + resumen.total_ingresos +
+      resumen.total_abonos_efectivo - resumen.total_gastos - resumen.total_retiros;
+    const montoReal = corte.monto_final_real ? Number(corte.monto_final_real) : null;
+    const diferencia = corte.diferencia ? Number(corte.diferencia) : 0;
+
+    const movimientoLines = movimientos.map((m) => {
+      const signo = m.signo > 0 ? '+' : '-';
+      const color = m.signo > 0 ? '#059669' : '#dc2626';
+      return `<div style="display:flex;justify-content:space-between;gap:4px;line-height:1.5;">
+        <span>${fmtTime(m.fecha)} ${escapeHtml(m.tipo_display)}</span>
+        <span style="color:${color};font-weight:600;">${signo}${fmt(m.monto)}</span>
+      </div>`;
+    }).join('');
+
+    const metodoLines = resumen.ventas_por_metodo_pago.map((v) =>
+      `<div style="display:flex;justify-content:space-between;gap:4px;line-height:1.5;">
+        <span>${escapeHtml(v.metodo)}</span><span>${fmt(v.total)}</span>
+      </div>`,
+    ).join('');
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Corte de Caja #${corte.id}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      color: #000;
+      background: #fff;
+      width: 80mm;
+      padding: 4mm 6mm 8mm;
+    }
+    @page { margin: 0; size: 80mm auto; }
+    @media print { body { width: 80mm; } }
+    .center { text-align: center; }
+    .title { font-size: 14px; font-weight: bold; letter-spacing: 2px; margin: 6px 0 2px; }
+    .subtitle { font-size: 10px; color: #555; }
+    .divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+    .divider-solid { border: none; border-top: 1px solid #000; margin: 4px 0; }
+    .row { display: flex; justify-content: space-between; gap: 4px; line-height: 1.5; }
+    .section-title { font-weight: bold; text-align: center; margin: 4px 0; }
+    .total-final { font-size: 13px; font-weight: bold; border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; }
+    .diff-pos { color: #059669; }
+    .diff-neg { color: #dc2626; }
+    .footer { text-align: center; margin-top: 8px; font-size: 10px; color: #555; }
+    .no-print { text-align: center; margin-top: 12px; }
+    .no-print button {
+      padding: 10px 24px; background: #2e9e9b; color: white;
+      border: none; border-radius: 6px; font-weight: 600;
+      cursor: pointer; font-size: 14px; font-family: sans-serif;
+    }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="center">
+    <div class="title">${escapeHtml(empresa.nombre)}</div>
+    <div class="subtitle">CORTE DE CAJA</div>
+    <div class="subtitle">${escapeHtml(corte.sucursales?.nombre || '—')}</div>
+  </div>
+
+  <hr class="divider" />
+  <div class="row"><strong>CORTE #${String(corte.id).padStart(6, '0')}</strong></div>
+  <div>Apertura: ${fmtDate(corte.fecha_apertura)}</div>
+  <div>Cierre: ${fmtDate(corte.fecha_cierre)}</div>
+  <div>Abrió: ${escapeHtml(corte.usuario_apertura?.nombre || '—')}</div>
+  ${corte.usuario_cierre ? `<div>Cerró: ${escapeHtml(corte.usuario_cierre.nombre)}</div>` : ''}
+
+  <hr class="divider" />
+  <div class="section-title">RESUMEN</div>
+  <div class="row"><span>Monto inicial:</span><span>${fmt(montoInicial)}</span></div>
+  <div class="row"><span>Ventas efvo.:</span><span style="color:#059669;">+${fmt(resumen.total_efectivo_ventas)}</span></div>
+  <div class="row"><span>Ingresos:</span><span style="color:#059669;">+${fmt(resumen.total_ingresos)}</span></div>
+  <div class="row"><span>Abonos efvo.:</span><span style="color:#2563eb;">+${fmt(resumen.total_abonos_efectivo)}</span></div>
+  <div class="row"><span>Gastos:</span><span style="color:#dc2626;">-${fmt(resumen.total_gastos)}</span></div>
+  <div class="row"><span>Retiros:</span><span style="color:#ea580c;">-${fmt(resumen.total_retiros)}</span></div>
+  <hr class="divider-solid" />
+  <div class="row total-final"><span>ESPERADO:</span><span>${fmt(efectivoEsperado)}</span></div>
+  <div class="row"><span>Real:</span><span>${montoReal !== null ? fmt(montoReal) : '—'}</span></div>
+  <div class="row ${diferencia >= 0 ? 'diff-pos' : 'diff-neg'}">
+    <span>DIF:</span><span><strong>${diferencia >= 0 ? '+' : ''}${fmt(diferencia)}</strong></span>
+  </div>
+
+  ${resumen.ventas_por_metodo_pago.length > 0 ? `
+    <hr class="divider" />
+    <div class="section-title">VENTAS POR MÉTODO</div>
+    ${metodoLines}
+  ` : ''}
+
+  ${movimientos.length > 0 ? `
+    <hr class="divider" />
+    <div class="section-title">MOVIMIENTOS (${movimientos.length})</div>
+    ${movimientoLines}
+  ` : ''}
+
+  ${corte.observaciones ? `
+    <hr class="divider" />
+    <div><strong>Notas:</strong> ${escapeHtml(corte.observaciones)}</div>
+  ` : ''}
+
+  <hr class="divider" />
+  <div class="footer">${escapeHtml(empresa.ticketMensaje)}</div>
+
+  <div class="no-print">
+    <button type="button" onclick="window.print()">Imprimir / Guardar como PDF</button>
+  </div>
+</body>
+</html>`;
+  };
+
+  const imprimirTicket = (data: CortePdfData) => {
+    const html = sanitizePrintHtml(buildTicketHtml(data));
+    const win = window.open('', '_blank', 'width=400,height=700');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      win.onload = () => {
+        const btn = win.document.querySelector('.no-print button');
+        if (btn) btn.addEventListener('click', () => win.print());
+        win.focus();
+        win.print();
+      };
+    } else {
+      sileo.info({ title: 'Permite las ventanas emergentes para imprimir.' });
+    }
+  };
+
+  return { buildHtml, descargarPdf, buildTicketHtml, imprimirTicket };
 }

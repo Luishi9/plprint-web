@@ -14,7 +14,7 @@ export interface Producto {
   maquina_id?: number | null;
   categorias?: { nombre: string; tipo?: string };
   maquinas?: { id: number; nombre: string } | null;
-  inventario?: Array<{ cantidad: number }>;
+  inventario?: Array<{ cantidad: number; stock_minimo: number; sucursal_id: number }>;
 }
 
 export interface CreateProductoPayload {

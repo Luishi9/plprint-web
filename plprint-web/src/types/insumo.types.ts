@@ -7,6 +7,7 @@ export interface Insumo {
   ancho_rollo: string | null;
   precio_compra: string | null;
   proveedor_id: number | null;
+  sucursal_id: number;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -14,6 +15,10 @@ export interface Insumo {
     id: number;
     nombre: string;
   } | null;
+  sucursales?: {
+    id: number;
+    nombre: string;
+  };
   inventario?: InsumoInventario[];
   producto_insumos?: ProductoInsumo[];
 }
@@ -56,6 +61,7 @@ export interface InsumoDTO {
   anchoRollo?: number;
   precioCompra?: number;
   proveedorId?: number;
+  sucursalId?: number;
 }
 
 export interface AjusteInsumoDTO {
@@ -63,4 +69,26 @@ export interface AjusteInsumoDTO {
   sucursalId: number;
   cantidad: number;
   tipo: 'entrada' | 'salida';
+}
+
+export interface ImportInsumoPreviewData {
+  token: string;
+  total: number;
+  nuevos: number;
+  duplicados: Array<{
+    fila: number;
+    codigo: string;
+    nombreExistente: string;
+    nombreNuevo: string;
+    cambios?: string[];
+  }>;
+  errores: Array<{ fila: number; codigo: string; razon: string }>;
+  warnings: Array<{ fila: number; codigo: string; mensaje: string }>;
+}
+
+export interface ImportInsumoConfirmResult {
+  importados: number;
+  actualizados: number;
+  omitidos: number;
+  errores: Array<{ fila: number; codigo: string; razon: string }>;
 }

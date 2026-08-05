@@ -21,13 +21,19 @@ export interface Venta {
   folio?: string;
   total: number;
   descuento: number;
+  descuento_motivo?: string | null;
   metodo_pago: string;
+  metodo_pago_id?: number | null;
   estado: string;
   estado_pago?: 'pagada' | 'pendiente' | 'parcial';
   saldo_pendiente?: number | string;
   fecha_limite_pago?: string | null;
   cotizacion_id?: number | null;
+  notas?: string | null;
   created_at: string;
+  sucursal_id?: number | null;
+  cliente_id?: number | null;
+  cliente?: { nombre: string };
   clientes?: { nombre: string };
   usuarios?: { nombre: string };
   sucursales?: { nombre: string };
@@ -36,6 +42,8 @@ export interface Venta {
     cantidad: number;
     precio_unitario: number;
     subtotal: number;
+    descuento?: number | string | null;
+    notas?: string | null;
     productos?: { nombre: string };
   }[];
   ventas_abonos?: VentaAbono[];

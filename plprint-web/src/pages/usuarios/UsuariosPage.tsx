@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 
 import { usuariosApi, Usuario } from '@/api/usuarios.api';
@@ -87,7 +87,7 @@ export default function UsuariosPage() {
   return (
     <div className="flex flex-col gap-6 h-full">
       {/* HEADER */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -119,7 +119,7 @@ export default function UsuariosPage() {
             Nuevo usuario
           </Button>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -129,7 +129,7 @@ export default function UsuariosPage() {
           { label: 'Vendedores', value: porRol('vendedor'), cls: 'text-blue-400' },
           { label: 'Operadores', value: porRol('operador'), cls: 'text-purple-400' },
         ].map((stat, i) => (
-          <motion.div
+          <m.div
             key={stat.label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -138,12 +138,12 @@ export default function UsuariosPage() {
           >
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{stat.label}</span>
             <span className={`text-2xl font-bold ${stat.cls}`}>{stat.value}</span>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 
       {/* TABLE */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
@@ -183,7 +183,7 @@ export default function UsuariosPage() {
                     const rol = ROL_CONFIG[u.roles?.nombre] ?? ROL_CONFIG.operador;
                     const sucursales = u.usuarios_sucursales?.map((us) => us.sucursales.nombre) ?? [];
                     return (
-                      <motion.tr
+                      <m.tr
                         key={u.id}
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -226,14 +226,14 @@ export default function UsuariosPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-1">
-                            <button
+                            <button type="button"
                               onClick={() => { setEditando(u); setModalOpen(true); }}
                               className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                               title="Editar"
                             >
                               <Icon name="edit" size={13} />
                             </button>
-                            <button
+                            <button type="button"
                               onClick={() => setEliminarItem(u)}
                               className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
                               title="Eliminar"
@@ -242,7 +242,7 @@ export default function UsuariosPage() {
                             </button>
                           </div>
                         </td>
-                      </motion.tr>
+                      </m.tr>
                     );
                   })}
                 </AnimatePresence>
@@ -250,7 +250,7 @@ export default function UsuariosPage() {
             </tbody>
           </table>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* FORM MODAL */}
       <UsuarioFormModal

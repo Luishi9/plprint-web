@@ -27,6 +27,8 @@ import { sileo } from 'sileo';
 import { insumosApi } from '@/api/insumos.api';
 import { unidadesMedidaApi, UnidadMedida } from '@/api/unidadesMedida.api';
 import { Insumo } from '@/types/insumo.types';
+import { useSucursalStore } from '@/store/sucursalStore';
+import { useAuthStore } from '@/store/authStore';
 import {
   Select,
   SelectContent,
@@ -57,6 +59,10 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
   const isEditing = !!insumo;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
+
+  const { sucursalActiva } = useSucursalStore();
+  const { usuario } = useAuthStore();
+  const sucursalEfectiva = sucursalActiva ?? usuario?.sucursalesDetalle?.[0] ?? null;
 
   useEffect(() => {
     unidadesMedidaApi.getAll()
@@ -106,10 +112,11 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
+      const payload = { ...data, sucursalId: insumo?.sucursal_id ?? sucursalEfectiva?.id };
       if (isEditing && insumo) {
         await insumosApi.update(insumo.id, data);
       } else {
-        await insumosApi.create(data);
+        await insumosApi.create(payload);
       }
       onSaved();
     } catch (error) {

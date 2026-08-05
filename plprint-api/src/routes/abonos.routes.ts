@@ -4,6 +4,7 @@ import { AbonosController } from '../controllers/abonos.controller';
 import { AbonosService } from '../services/abonos.service';
 import { validate } from '../middleware/validate.middleware';
 import { authorizePermission } from '../middleware/rbac.middleware';
+import { audit } from '../middleware/audit.middleware';
 
 const router = Router();
 const controller = new AbonosController(new AbonosService());
@@ -15,7 +16,7 @@ const abonoSchema = z.object({
 });
 
 router.get('/venta/:ventaId', authorizePermission('abonos', 'ver'), controller.getByVenta);
-router.post('/venta/:ventaId', authorizePermission('abonos', 'registrar'), validate(abonoSchema), controller.registrar);
-router.delete('/:id', authorizePermission('abonos', 'registrar'), controller.remove);
+router.post('/venta/:ventaId', authorizePermission('abonos', 'registrar'), validate(abonoSchema), audit('abonos', 'CREATE'), controller.registrar);
+router.delete('/:id', authorizePermission('abonos', 'registrar'), audit('abonos', 'DELETE'), controller.remove);
 
 export default router;

@@ -5,6 +5,7 @@ export interface AuditLog {
   usuario_id: number | null;
   accion: string;
   modulo: string;
+  descripcion: string | null;
   detalle: string | null;
   ip: string | null;
   created_at: string;

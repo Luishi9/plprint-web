@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -79,7 +79,7 @@ export default function MetodosPagoTab() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div>
@@ -132,6 +132,7 @@ export default function MetodosPagoTab() {
       </Card>
 
       <MetodoPagoFormModal
+        key={editando?.id ?? 'new'}
         open={modalOpen}
         onOpenChange={(v) => { if (!v) setEditando(null); setModalOpen(v); }}
         metodo={editando}
@@ -153,7 +154,7 @@ export default function MetodosPagoTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -165,18 +166,10 @@ interface MetodoPagoFormModalProps {
 }
 
 function MetodoPagoFormModal({ open, onOpenChange, metodo, onSaved }: MetodoPagoFormModalProps) {
-  const [nombre, setNombre] = useState('');
-  const [icono, setIcono] = useState('Banknote');
+  const [nombre, setNombre] = useState(metodo?.nombre ?? '');
+  const [icono, setIcono] = useState(metodo?.icono ?? 'Banknote');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setNombre(metodo?.nombre ?? '');
-      setIcono(metodo?.icono ?? 'Banknote');
-      setError(null);
-    }
-  }, [open, metodo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

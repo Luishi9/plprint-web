@@ -2,6 +2,44 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TicketData } from './components/TicketImpresion';
 import plprintLogo from '@/assets/logo.png';
+import { ventasApi } from '@/api/ventas.api';
+import type { Venta } from '@/types/venta.types';
+
+const PUBLIC_TICKET_FMT = new Intl.DateTimeFormat('es-MX', {
+  timeZone: 'America/Mexico_City',
+  day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', hour12: false,
+});
+
+/**
+ * Convertir una venta del backend (response from /ventas/public/:id) a TicketData.
+ * La forma que retorna el backend es "limpia" - solo campos seguros para mostrar.
+ */
+function ventaToTicketData(v: Venta): TicketData {
+  return {
+    ventaId: v.id,
+    folio: v.folio ?? undefined,
+    fecha: new Date(v.created_at),
+    sucursal: v.sucursales?.nombre ?? 'PLPrint',
+    cajero: v.usuarios?.nombre ?? 'Cajero',
+    cliente: v.clientes?.nombre ?? 'Público General',
+    metodoPago: v.metodo_pago,
+    items: (v.venta_detalle ?? []).map((d) => ({
+      nombre: d.productos?.nombre ?? `Producto #${d.id}`,
+      cantidad: d.cantidad,
+      precioUnitario: Number(d.precio_unitario),
+      descuento: Number(d.descuento ?? 0),
+    })),
+    subtotal: Number(v.total) + Number(v.descuento ?? 0),
+    descuentoGlobal: Number(v.descuento ?? 0),
+    base: Number(v.total),
+    iva: 0,
+    ivaPorcentaje: 0,
+    ivaActivo: false,
+    total: Number(v.total),
+    notas: v.notas ?? undefined,
+  };
+}
 
 export default function TicketPublicoPage() {
   const [params] = useSearchParams();
@@ -9,19 +47,38 @@ export default function TicketPublicoPage() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    try {
-      const encoded = params.get('d');
-      if (!encoded) { setError(true); return; }
-      const json = decodeURIComponent(escape(atob(encoded)));
-      const parsed = JSON.parse(json) as TicketData;
-      parsed.fecha = new Date(parsed.fecha);
-      setData(parsed);
-    } catch {
-      setError(true);
-    }
+    let cancelled = false;
+    (async () => {
+      // Opcion 1: nuevos IDs sin auth - `/ticket?id=N`.
+      // Datos del ticket se fetchean (NO se envian en URL).
+      const idParam = params.get('id');
+      if (idParam) {
+        const id = Number(idParam);
+        if (!Number.isFinite(id) || id <= 0) { setError(true); return; }
+        try {
+          const { data } = await ventasApi.getPublicById(id);
+          const venta = data as unknown as Venta;
+          if (cancelled) return;
+          setData(ventaToTicketData(venta));
+        } catch {
+          if (!cancelled) setError(true);
+        }
+        return;
+      }
+      // Opcion 2 (legacy): datos encoded en URL (compatibilidad).
+      try {
+        const encoded = params.get('d');
+        if (!encoded) { setError(true); return; }
+        const json = decodeURIComponent(escape(atob(encoded)));
+        const parsed = JSON.parse(json) as TicketData;
+        parsed.fecha = new Date(parsed.fecha);
+        setData(parsed);
+      } catch {
+        if (!cancelled) setError(true);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [params]);
-
-  const handleSavePDF = () => window.print();
 
   if (error) {
     return (
@@ -41,10 +98,7 @@ export default function TicketPublicoPage() {
     );
   }
 
-  const fecha = new Intl.DateTimeFormat('es-MX', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: false,
-  }).format(data.fecha);
+  const fecha = PUBLIC_TICKET_FMT.format(data.fecha);
 
   const simbolo = data.monedaSimbolo || '$';
   const decimales = typeof data.monedaDecimales === 'number' ? data.monedaDecimales : 2;
@@ -54,7 +108,7 @@ export default function TicketPublicoPage() {
     <>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background: #f0f0f0; min-height: 100vh; }
+        html, body { background: #f0f0f0; min-height: 100dvh; }
         .ticket-wrapper {
           max-width: 400px; margin: 0 auto; padding: 16px 0 40px;
           font-family: system-ui, -apple-system, sans-serif;
@@ -197,10 +251,10 @@ export default function TicketPublicoPage() {
                 {data.items.map((item, i) => {
                   const lineTotal = item.precioUnitario * item.cantidad - item.descuento;
                   return (
-                    <tr key={i}>
+                    <tr key={`${item.nombre}-${item.cantidad}-${item.precioUnitario}-${i}`}>
                       <td>
                         <div className="producto-name">{item.nombre}</div>
-                        <div style={{ fontSize: 11, color: '#999' }}>{fmt(item.precioUnitario)} c/u</div>
+                        <div style={{ fontSize: 12, color: '#999' }}>{fmt(item.precioUnitario)} c/u</div>
                       </td>
                       <td style={{ color: '#666' }}>{item.cantidad}</td>
                       <td style={{ fontWeight: 700 }}>{fmt(lineTotal)}</td>
@@ -242,7 +296,7 @@ export default function TicketPublicoPage() {
             <p>PLPrint — {data.sucursal}</p>
           </div>
 
-          <button className="save-btn" onClick={handleSavePDF}>
+          <button type="button" className="save-btn" onClick={() => window.print()}>
             Guardar como PDF
           </button>
           <div style={{ height: 24 }} />

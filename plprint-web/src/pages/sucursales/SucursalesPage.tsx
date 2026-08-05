@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 
 import { sucursalesApi, Sucursal } from '@/api/sucursales.api';
@@ -62,7 +62,7 @@ export default function SucursalesPage() {
   return (
     <div className="flex flex-col gap-6 h-full">
       {/* HEADER */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -83,7 +83,7 @@ export default function SucursalesPage() {
           <Icon name="add" size={16} className="mr-1.5" />
           Nueva sucursal
         </Button>
-      </motion.div>
+      </m.div>
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -92,7 +92,7 @@ export default function SucursalesPage() {
           { label: 'Activas', value: activas, cls: 'text-[#2e9e9b]' },
           { label: 'Inactivas', value: sucursales.length - activas, cls: 'text-red-400' },
         ].map((stat, i) => (
-          <motion.div
+          <m.div
             key={stat.label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -101,13 +101,13 @@ export default function SucursalesPage() {
           >
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{stat.label}</span>
             <span className={`text-2xl font-bold ${stat.cls}`}>{stat.value}</span>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 
       {/* SUCURSAL ACTIVA BANNER */}
       {sucursalActiva && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#2e9e9b]/30 bg-[#2e9e9b]/5"
@@ -116,7 +116,7 @@ export default function SucursalesPage() {
           <span className="text-sm text-muted-foreground">
             Sucursal activa: <strong className="text-[#2e9e9b]">{sucursalActiva.nombre}</strong>
           </span>
-        </motion.div>
+        </m.div>
       )}
 
       {/* CARDS GRID */}
@@ -135,7 +135,7 @@ export default function SucursalesPage() {
             {sucursales.map((s, i) => {
               const isActiva = sucursalActiva?.id === s.id;
               return (
-                <motion.div
+                <m.div
                   key={s.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -208,14 +208,14 @@ export default function SucursalesPage() {
                     >
                       {isActiva ? '✓ En uso' : 'Usar sucursal'}
                     </Button>
-                    <button
+                    <button type="button"
                       onClick={() => { setEditando(s); setModalOpen(true); }}
                       className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
                       title="Editar"
                     >
                       <Icon name="edit" size={13} />
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => setEliminarItem(s)}
                       className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
                       title="Eliminar"
@@ -223,7 +223,7 @@ export default function SucursalesPage() {
                       <Icon name="delete" size={13} />
                     </button>
                   </div>
-                </motion.div>
+                </m.div>
               );
             })}
           </AnimatePresence>

@@ -5,6 +5,7 @@ import { AuthService } from '../services/auth.service';
 import { validate } from '../middleware/validate.middleware';
 import { authenticate } from '../middleware/auth.middleware';
 import { authRateLimiter } from '../middleware/rateLimiter.middleware';
+import { audit } from '../middleware/audit.middleware';
 
 const router = Router();
 const controller = new AuthController(new AuthService());
@@ -18,9 +19,9 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-router.post('/login', authRateLimiter, validate(loginSchema), controller.login);
-router.post('/refresh', validate(refreshSchema), controller.refreshToken);
+router.post('/login', authRateLimiter, validate(loginSchema), audit('auth', 'LOGIN'), controller.login);
+router.post('/refresh', validate(refreshSchema), audit('auth', 'REFRESH'), controller.refreshToken);
 router.get('/me', authenticate, controller.me);
-router.post('/logout', authenticate, controller.logout);
+router.post('/logout', authenticate, audit('auth', 'LOGOUT'), controller.logout);
 
 export default router;

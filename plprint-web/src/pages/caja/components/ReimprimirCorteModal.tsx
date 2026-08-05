@@ -19,7 +19,7 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
   const [loading, setLoading] = useState(false);
   const [corteData, setCorteData] = useState<{ corte: CorteCaja; movimientos: MovimientoCaja[]; resumen: ResumenCaja } | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
-  const { descargarPdf } = useCortePdfBuilder();
+  const { imprimirTicket, descargarPdf } = useCortePdfBuilder();
 
   useEffect(() => {
     if (open) {
@@ -46,20 +46,8 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
   };
 
   const handlePrint = () => {
-    const win = window.open('', '_blank');
-    if (!win || !printRef.current) return;
-    win.document.write(`
-      <html><head><title>Corte de Caja #${selectedId}</title>
-      <style>
-        body { margin: 0; padding: 16px; font-family: monospace; font-size: 12px; }
-        @media print { body { margin: 0; padding: 0; } }
-      </style></head><body>
-    `);
-    win.document.write(printRef.current.innerHTML);
-    win.document.write('</body></html>');
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 500);
+    if (!corteData) return;
+    imprimirTicket({ corte: corteData.corte, movimientos: corteData.movimientos, resumen: corteData.resumen });
   };
 
   const handleDescargarPdf = () => {
@@ -83,12 +71,17 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
             <p className="text-center text-muted-foreground py-4">No hay cortes cerrados.</p>
           ) : (
             <select
+              aria-label="Seleccionar corte a reimprimir"
               value={selectedId || ''}
               onChange={(e) => handleSelect(Number(e.target.value))}
               className="w-full bg-background border border-border rounded-md text-sm px-3 py-2"
             >
               <option value="">Seleccionar corte...</option>
-              {cortes.filter((c) => c.estado === 'cerrada').map((c) => (
+              {cortes.reduce<typeof cortes>((acc, c) => {
+                if (c.estado !== 'cerrada') return acc;
+                acc.push(c);
+                return acc;
+              }, []).map((c) => (
                 <option key={c.id} value={c.id}>
                   Corte #{c.id} — {new Date(c.fecha_apertura).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   {c.diferencia ? ` | Dif: ${Number(c.diferencia) >= 0 ? '+' : ''}$${Number(c.diferencia).toFixed(2)}` : ''}
@@ -110,7 +103,7 @@ export default function ReimprimirCorteModal({ open, onClose, sucursalId }: Prop
               </div>
               <div className="flex gap-2">
                 <Button onClick={handlePrint} variant="outline" className="h-10 px-4 whitespace-nowrap">
-                  <Icon name="print" size={14} className="mr-2" /> Imprimir Ticket
+                  <Icon name="print" size={14} className="mr-2" /> Reimprimir Ticket
                 </Button>
                 <Button onClick={handleDescargarPdf} className="h-10 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap">
                   <Icon name="file_download" size={14} className="mr-2" /> Descargar PDF

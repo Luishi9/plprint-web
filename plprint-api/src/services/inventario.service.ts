@@ -12,6 +12,7 @@ interface AjustarDTO {
   cantidad: number;
   notas?: string;
   usuarioId: number;
+  stockMinimo?: number;
 }
 
 export class InventarioService {
@@ -53,6 +54,7 @@ export class InventarioService {
 
   async ajustar(dto: AjustarDTO) {
     return prisma.$transaction(async (tx) => {
+      const cantidadCambia = dto.cantidad > 0;
       const inv = await tx.inventario.upsert({
         where: {
           producto_id_sucursal_id: {
@@ -61,30 +63,37 @@ export class InventarioService {
           },
         },
         update: {
-          cantidad:
-            dto.tipo === 'entrada'
-              ? { increment: dto.cantidad }
-              : dto.tipo === 'salida'
-              ? { decrement: dto.cantidad }
-              : dto.cantidad,
+          ...(cantidadCambia && {
+            cantidad:
+              dto.tipo === 'entrada'
+                ? { increment: dto.cantidad }
+                : dto.tipo === 'salida'
+                ? { decrement: dto.cantidad }
+                : dto.cantidad,
+          }),
+          ...(dto.stockMinimo !== undefined && { stock_minimo: dto.stockMinimo }),
         },
         create: {
           producto_id: dto.productoId,
           sucursal_id: dto.sucursalId,
-          cantidad: dto.tipo === 'ajuste' ? dto.cantidad : dto.tipo === 'entrada' ? dto.cantidad : 0,
+          cantidad: dto.tipo === 'entrada' ? dto.cantidad : 0,
+          ...(dto.stockMinimo !== undefined && { stock_minimo: dto.stockMinimo }),
         },
       });
 
-      await tx.kardex_movimientos.create({
-        data: {
-          producto_id: dto.productoId,
-          sucursal_id: dto.sucursalId,
-          tipo: dto.tipo,
-          cantidad: dto.cantidad,
-          notas: dto.notas,
-          usuario_id: dto.usuarioId,
-        },
-      });
+      // Solo registrar movimiento de kardex si realmente se movió cantidad.
+      if (cantidadCambia) {
+        await tx.kardex_movimientos.create({
+          data: {
+            producto_id: dto.productoId,
+            sucursal_id: dto.sucursalId,
+            tipo: dto.tipo,
+            cantidad: dto.cantidad,
+            notas: dto.notas,
+            usuario_id: dto.usuarioId,
+          },
+        });
+      }
 
       return inv;
     });

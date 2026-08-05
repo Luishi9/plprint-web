@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useReducer } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,46 +31,72 @@ const TIPO_CFG: Record<MovimientoTipo, { label: string; color: string; }> = {
   retiro: { label: 'Retiro', color: 'text-orange-400 border-orange-500/50 bg-orange-500/20' },
 };
 
+interface FormState {
+  categoriaId: number;
+  concepto: string;
+  monto: string;
+  notas: string;
+  isSaving: boolean;
+  error: string;
+}
+
+const initialForm: FormState = {
+  categoriaId: 0,
+  concepto: '',
+  monto: '',
+  notas: '',
+  isSaving: false,
+  error: '',
+};
+
+type FormAction =
+  | { type: 'reset'; firstCategoriaId: number }
+  | { type: 'set'; field: 'concepto' | 'monto' | 'notas' | 'categoriaId' | 'error'; value: string | number }
+  | { type: 'setSaving'; value: boolean };
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'reset':
+      return { ...initialForm, categoriaId: action.firstCategoriaId };
+    case 'set':
+      return { ...state, [action.field]: action.value };
+    case 'setSaving':
+      return { ...state, isSaving: action.value };
+    default:
+      return state;
+  }
+}
+
 export default function MovimientoModal({ open, onClose, onConfirm, tipo, sucursalId }: Props) {
   const { simbolo } = useMoney();
   const usuario = useAuthStore((s) => s.usuario);
   const [categorias, setCategorias] = useState<CategoriaGasto[]>([]);
-  const [categoriaId, setCategoriaId] = useState(0);
-  const [concepto, setConcepto] = useState('');
-  const [monto, setMonto] = useState('');
-  const [notas, setNotas] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [form, dispatch] = useReducer(formReducer, initialForm);
 
   const cfg = TIPO_CFG[tipo];
 
   useEffect(() => {
-    if (open) {
-      categoriasGastosApi.getAll().then((res) => {
-        const cats = res.data?.data || [];
-        setCategorias(cats);
-        setCategoriaId(cats[0]?.id || 0);
-        setConcepto('');
-        setMonto('');
-        setNotas('');
-        setError('');
-      });
-    }
+    if (!open) return;
+    categoriasGastosApi.getAll().then((res) => {
+      const cats = res.data?.data || [];
+      setCategorias(cats);
+      dispatch({ type: 'reset', firstCategoriaId: cats[0]?.id || 0 });
+    });
   }, [open]);
 
   const handleConfirm = async () => {
-    if (!categoriaId) { setError('Selecciona una categoría.'); return; }
-    if (!concepto.trim()) { setError('El concepto es requerido.'); return; }
-    if (!monto || Number(monto) <= 0) { setError('El monto debe ser mayor a 0.'); return; }
+    if (!form.categoriaId) { dispatch({ type: 'set', field: 'error', value: 'Selecciona una categoría.' }); return; }
+    if (!form.concepto.trim()) { dispatch({ type: 'set', field: 'error', value: 'El concepto es requerido.' }); return; }
+    if (!form.monto || Number(form.monto) <= 0) { dispatch({ type: 'set', field: 'error', value: 'El monto debe ser mayor a 0.' }); return; }
     try {
-      setIsSaving(true);
-      setError('');
+      dispatch({ type: 'setSaving', value: true });
+      dispatch({ type: 'set', field: 'error', value: '' });
       const payload = {
         sucursal_id: sucursalId,
-        categoria_id: categoriaId,
-        concepto: concepto.trim(),
-        monto: Number(monto),
-        notas: notas.trim() || undefined,
+        categoria_id: form.categoriaId,
+        concepto: form.concepto.trim(),
+        monto: Number(form.monto),
+        notas: form.notas.trim() || undefined,
       };
       if (tipo === 'retiro' && usuario?.rol === 'admin') {
         (payload as Record<string, unknown>).autorizado_por = usuario.id;
@@ -78,9 +104,9 @@ export default function MovimientoModal({ open, onClose, onConfirm, tipo, sucurs
       await onConfirm(payload);
       onClose();
     } catch (e: unknown) {
-      setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al registrar.');
+      dispatch({ type: 'set', field: 'error', value: (e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al registrar.' });
     } finally {
-      setIsSaving(false);
+      dispatch({ type: 'setSaving', value: false });
     }
   };
 
@@ -98,10 +124,12 @@ export default function MovimientoModal({ open, onClose, onConfirm, tipo, sucurs
         </DialogHeader>
         <div className="py-2 flex flex-col gap-3">
           <div>
-            <label className="text-sm font-medium block mb-1.5">Categoría *</label>
+            <label htmlFor="movimiento-categoria" className="text-sm font-medium block mb-1.5">Categoría *</label>
             <select
-              value={categoriaId}
-              onChange={(e) => setCategoriaId(Number(e.target.value))}
+              id="movimiento-categoria"
+              aria-label="Categoría"
+              value={form.categoriaId}
+              onChange={(e) => dispatch({ type: 'set', field: 'categoriaId', value: Number(e.target.value) })}
               className="w-full bg-background border border-border rounded-md text-sm px-3 py-2"
             >
               <option value={0}>Seleccionar...</option>
@@ -111,33 +139,36 @@ export default function MovimientoModal({ open, onClose, onConfirm, tipo, sucurs
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1.5">Concepto *</label>
+            <label htmlFor="movimiento-concepto" className="text-sm font-medium block mb-1.5">Concepto *</label>
             <Input
+              id="movimiento-concepto"
               placeholder={tipo === 'ingreso' ? 'Ej. Venta de material' : tipo === 'gasto' ? 'Ej. Compra de papel' : 'Ej. Retiro para cambio'}
-              value={concepto}
-              onChange={(e) => setConcepto(e.target.value)}
+              value={form.concepto}
+              onChange={(e) => dispatch({ type: 'set', field: 'concepto', value: e.target.value })}
               className="bg-background"
               autoFocus
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1.5">Monto ({simbolo}) *</label>
+            <label htmlFor="movimiento-monto" className="text-sm font-medium block mb-1.5">Monto ({simbolo}) *</label>
             <Input
+              id="movimiento-monto"
               type="number"
               step="0.01"
               min="0"
               placeholder="0.00"
-              value={monto}
-              onChange={(e) => setMonto(e.target.value)}
+              value={form.monto}
+              onChange={(e) => dispatch({ type: 'set', field: 'monto', value: e.target.value })}
               className="bg-background"
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1.5">Notas</label>
+            <label htmlFor="movimiento-notas" className="text-sm font-medium block mb-1.5">Notas</label>
             <Textarea
+              id="movimiento-notas"
               placeholder="Información adicional..."
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
+              value={form.notas}
+              onChange={(e) => dispatch({ type: 'set', field: 'notas', value: e.target.value })}
               className="bg-background min-h-[50px]"
             />
           </div>
@@ -146,14 +177,14 @@ export default function MovimientoModal({ open, onClose, onConfirm, tipo, sucurs
               <strong>Retiro:</strong> Requiere autorización de administrador para proceder.
             </div>
           )}
-          {error && <p className="text-red-400 text-xs">{error}</p>}
+          {form.error && <p className="text-red-400 text-xs">{form.error}</p>}
         </div>
         <DialogFooter className="gap-2 flex justify-end">
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+          <Button variant="outline" onClick={onClose} disabled={form.isSaving}>
             <Icon name="close" size={14} className="mr-1" /> Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={isSaving} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold">
-            {isSaving ? <Icon name="progress_activity" size={14} className="mr-1 animate-spin" /> : <Icon name="check" size={14} className="mr-1" />}
+          <Button onClick={handleConfirm} disabled={form.isSaving} className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold">
+            {form.isSaving ? <Icon name="progress_activity" size={14} className="mr-1 animate-spin" /> : <Icon name="check" size={14} className="mr-1" />}
             Registrar
           </Button>
         </DialogFooter>

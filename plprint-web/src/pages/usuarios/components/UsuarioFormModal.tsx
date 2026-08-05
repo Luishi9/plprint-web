@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useReducer } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { usuariosApi, sucursalesApi, Usuario } from '@/api/usuarios.api';
 import { rolesApi, Rol } from '@/api/roles.api';
@@ -8,6 +8,48 @@ import { Label } from '@/components/ui/label';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+
+interface FormState {
+  nombre: string;
+  email: string;
+  password: string;
+  rolId: string;
+  isSaving: boolean;
+  errors: Record<string, string>;
+}
+
+const initialForm: FormState = {
+  nombre: '',
+  email: '',
+  password: '',
+  rolId: '',
+  isSaving: false,
+  errors: {},
+};
+
+type FormAction =
+  | { type: 'set'; field: 'nombre' | 'email' | 'password' | 'rolId'; value: string }
+  | { type: 'setError'; field: string; value: string }
+  | { type: 'setErrors'; value: Record<string, string> }
+  | { type: 'setSaving'; value: boolean }
+  | { type: 'reset' };
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'set':
+      return { ...state, [action.field]: action.value };
+    case 'setError':
+      return { ...state, errors: { ...state.errors, [action.field]: action.value } };
+    case 'setErrors':
+      return { ...state, errors: action.value };
+    case 'setSaving':
+      return { ...state, isSaving: action.value };
+    case 'reset':
+      return initialForm;
+    default:
+      return state;
+  }
+}
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -22,12 +64,7 @@ interface Props {
 export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Props) {
   const isEdit = !!usuario;
 
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rolId, setRolId] = useState<string>('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [form, dispatch] = useReducer(formReducer, initialForm);
 
   const [sucursales, setSucursales] = useState<{ id: number; nombre: string }[]>([]);
   const [sucursalesAsignadas, setSucursalesAsignadas] = useState<number[]>([]);
@@ -54,11 +91,11 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
 
   useEffect(() => {
     if (open) {
-      setNombre(usuario?.nombre ?? '');
-      setEmail(usuario?.email ?? '');
-      setPassword('');
-      setErrors({});
-      setRolId(String(usuario?.rol_id ?? ''));
+      dispatch({ type: 'set', field: 'nombre', value: usuario?.nombre ?? '' });
+      dispatch({ type: 'set', field: 'email', value: usuario?.email ?? '' });
+      dispatch({ type: 'set', field: 'password', value: '' });
+      dispatch({ type: 'set', field: 'rolId', value: String(usuario?.rol_id ?? '') });
+      dispatch({ type: 'setErrors', value: {} });
       setSucursalesAsignadas(
         usuario?.usuarios_sucursales?.map((us) => us.sucursales.id) ?? [],
       );
@@ -67,57 +104,53 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!nombre.trim()) e.nombre = 'El nombre es requerido';
-    if (!email.trim()) e.email = 'El correo es requerido';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Correo inválido';
-    if (!isEdit && !password) e.password = 'La contraseña es requerida';
-    if (!isEdit && password && password.length < 8) e.password = 'Mínimo 8 caracteres';
-    if (isEdit && password && password.length < 8) e.password = 'Mínimo 8 caracteres';
+    if (!form.nombre.trim()) e.nombre = 'El nombre es requerido';
+    if (!form.email.trim()) e.email = 'El correo es requerido';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Correo inválido';
+    if (!isEdit && !form.password) e.password = 'La contraseña es requerida';
+    if (!isEdit && form.password && form.password.length < 8) e.password = 'Mínimo 8 caracteres';
+    if (isEdit && form.password && form.password.length < 8) e.password = 'Mínimo 8 caracteres';
     return e;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setIsSaving(true);
+    if (Object.keys(errs).length > 0) { dispatch({ type: 'setErrors', value: errs }); return; }
+    dispatch({ type: 'setSaving', value: true });
     try {
       const payload: Record<string, unknown> = {
-        nombre: nombre.trim(),
-        email: email.trim(),
-        rolId: Number(rolId),
+        nombre: form.nombre.trim(),
+        email: form.email.trim(),
+        rolId: Number(form.rolId),
       };
-      if (password) payload.password = password;
+      if (form.password) payload.password = form.password;
 
       if (isEdit) {
         await usuariosApi.update(usuario!.id, payload);
         // Sincronizar sucursales
         const actuales = usuario!.usuarios_sucursales?.map((us) => us.sucursales.id) ?? [];
-        for (const sid of sucursalesAsignadas) {
-          if (!actuales.includes(sid)) {
-            await usuariosApi.asignarSucursal(usuario!.id, sid);
-          }
-        }
-        for (const sid of actuales) {
-          if (!sucursalesAsignadas.includes(sid)) {
-            await usuariosApi.removerSucursal(usuario!.id, sid);
-          }
-        }
+        const actualesSet = new Set(actuales);
+        const asignadasSet = new Set(sucursalesAsignadas);
+        const aAsignar = sucursalesAsignadas.filter((sid) => !actualesSet.has(sid));
+        const aRemover = actuales.filter((sid) => !asignadasSet.has(sid));
+        await Promise.all([
+          ...aAsignar.map((sid) => usuariosApi.asignarSucursal(usuario!.id, sid)),
+          ...aRemover.map((sid) => usuariosApi.removerSucursal(usuario!.id, sid)),
+        ]);
       } else {
         const res = await usuariosApi.create(payload as any);
         const nuevoId = res.data?.data?.id ?? res.data?.id;
         if (nuevoId) {
-          for (const sid of sucursalesAsignadas) {
-            await usuariosApi.asignarSucursal(nuevoId, sid);
-          }
+          await Promise.all(sucursalesAsignadas.map((sid) => usuariosApi.asignarSucursal(nuevoId, sid)));
         }
       }
       onSaved();
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? 'Error al guardar';
-      setErrors({ general: msg });
+      dispatch({ type: 'setErrors', value: { general: msg } });
     } finally {
-      setIsSaving(false);
+      dispatch({ type: 'setSaving', value: false });
     }
   };
 
@@ -138,9 +171,9 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-1">
-          {errors.general && (
+          {form.errors.general && (
             <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
-              {errors.general}
+              {form.errors.general}
             </p>
           )}
 
@@ -150,13 +183,13 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
             <div className="relative">
               <Icon name="person" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
+                value={form.nombre}
+                onChange={(e) => dispatch({ type: 'set', field: 'nombre', value: e.target.value })}
                 placeholder="Nombre completo"
                 className="pl-8 bg-background/50 border-border"
               />
             </div>
-            {errors.nombre && <p className="text-xs text-red-400">{errors.nombre}</p>}
+            {form.errors.nombre && <p className="text-xs text-red-400">{form.errors.nombre}</p>}
           </div>
 
           {/* Email */}
@@ -166,13 +199,13 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
               <Icon name="mail" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={form.email}
+                onChange={(e) => dispatch({ type: 'set', field: 'email', value: e.target.value })}
                 placeholder="correo@ejemplo.com"
                 className="pl-8 bg-background/50 border-border"
               />
             </div>
-            {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
+            {form.errors.email && <p className="text-xs text-red-400">{form.errors.email}</p>}
           </div>
 
           {/* Password */}
@@ -184,13 +217,13 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
               <Icon name="lock" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={form.password}
+                onChange={(e) => dispatch({ type: 'set', field: 'password', value: e.target.value })}
                 placeholder={isEdit ? 'Dejar vacío para no cambiar' : 'Mínimo 8 caracteres'}
                 className="pl-8 bg-background/50 border-border"
               />
             </div>
-            {errors.password && <p className="text-xs text-red-400">{errors.password}</p>}
+            {form.errors.password && <p className="text-xs text-red-400">{form.errors.password}</p>}
           </div>
 
           {/* Rol */}
@@ -201,7 +234,7 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
                 <Icon name="progress_activity" size={12} className="animate-spin" /> Cargando roles…
               </div>
             ) : (
-              <Select value={rolId} onValueChange={setRolId}>
+              <Select value={form.rolId} onValueChange={(v) => dispatch({ type: 'set', field: 'rolId', value: v })}>
                 <SelectTrigger className="bg-background/50 border-border">
                   <SelectValue placeholder="Seleccionar rol" />
                 </SelectTrigger>
@@ -225,13 +258,15 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
               <p className="text-xs text-muted-foreground">No hay sucursales disponibles</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {sucursales.map((s) => {
-                  const activa = sucursalesAsignadas.includes(s.id);
-                  return (
-                    <button
-                      type="button"
-                      key={s.id}
-                      onClick={() => toggleSucursal(s.id)}
+                {(() => {
+                  const asignadasSetLocal = new Set(sucursalesAsignadas);
+                  return sucursales.map((s) => {
+                    const activa = asignadasSetLocal.has(s.id);
+                    return (
+                      <button
+                        type="button"
+                        key={s.id}
+                        onClick={() => toggleSucursal(s.id)}
                       className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
                         activa
                           ? 'bg-[#2e9e9b]/15 border-[#2e9e9b]/40 text-[#2e9e9b]'
@@ -240,8 +275,9 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
                     >
                       {s.nombre}
                     </button>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             )}
           </div>
@@ -253,10 +289,10 @@ export default function UsuarioFormModal({ open, usuario, onClose, onSaved }: Pr
             </Button>
             <Button
               type="submit"
-              disabled={isSaving}
+              disabled={form.isSaving}
               className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold gap-2"
             >
-              {isSaving && <Icon name="progress_activity" size={14} className="animate-spin" />}
+              {form.isSaving && <Icon name="progress_activity" size={14} className="animate-spin" />}
               {isEdit ? 'Guardar cambios' : 'Crear usuario'}
             </Button>
           </div>

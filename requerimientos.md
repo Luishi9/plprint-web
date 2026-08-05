@@ -1199,7 +1199,43 @@ Cualquier duda podemos checarlo por inbox.
 12. **Frontend**: corte de caja con reporte de máquinas
 13. **Frontend**: condicionar todo con `somos_centro_impresion`
 
+### Recomendaciones adicionales (no implementadas — pueden ser siguientes pasos)
+1. Rate-limit negociado en producción con un proxy reverso (nginx/cloudflare).
+2. CSP estricta en producción: usar script-src 'self' <hash> (cuando Vite genera hashes en build).
+3. Report URI en CSP: report-uri https://tudominio.com/csp-report para aprender de violaciones.
+4. Rotación automática de tokens en axios interceptor (no implementado aún).
+5. Tokens de corta duración (accessToken 15min) implementados correctamente.
 
 
+### BUGS:
 
-faltan cotizaciones
+1. Cotizaciones, carga infinita de info ✅
+
+2. formato de pdf de la cotizacion se perdio por completo ✅
+
+3. Cuando se importa el catalogo de productos de un archivo con informacion de productos ya existentes se muestra el listado de todos los productos del archivo aun que no se hayan editado algunos o todos, quiero que solo muestre en el listado los productos que se haya editado la informacion en el archivo osea los que no alla la misma coincidencia de el archivo a la informacion que hay en el sistema. ✅
+
+4. agregar catalogo de insumos, mismo funcionamiento de descargar catalogo e importar catalogo como en productos. ✅
+
+5. Error al generar un respaldo del sistema ✅
+
+6. Bitacora de auditoria, no muestra nada ✅
+
+7. en el proceso de venta, cuando vendo un producto en este caso un plano y lo tengo marcado la opcion de "Si el largo es menor a 1m, se cobrará como 1m" cuando se descuenta al insumo se decuenta el 1m pero utilice .60, quiero que se descuente el .60 aun que se cobre como 1m✅
+
+8. despues de cancelar la venta, si ese producto vendido tiene un insumo, mostrar el modal con las opciones de "Revertir el insumo al inventario" y "Poner como merma el insumo del producto cancelado"✅
+
+9. en las estadisticas de las maquinas en "Contador de impresiones por período", en la parte de "Impresiones recientes" muestra el historial, quiero agregarle que muestre la medida o cantidad de la impresion✅
+
+10. cuando abro realizar corte de caja, en el resumen no muestra el total de "venta efectivo" aun que se hayan echo ventas en efectivo ✅
+
+11. entro a productos agrego o edito un producto -> hago check que tiene stock -> agrego la cantidad disponible y el minimo -> guardo->cierro el modal, si vuelvo a abrir el mismo producto no sale marcado el check de "Registrar movimiento de stock", no se guarda la informacion y sale como si no hubiera guardado anteriormente esa informacion ✅
+
+12. actualmente si no se abre la caja no se muestran las ventas que se hayan realizado en caso de que se hayan hecho ventas antes de abrir caja, quiero que eso no pase, que se puedan ver y se pueda tener registro de las ventas aun que no se haya abierto la caja y sirva para el registro del cierre de caja, pero que muestre un mensaje en un modal con un mensaje de que la caja se encuentra cerrada que se recomienda hacer la abertura de caja -> mostrar el modal de abertura de caja ✅
+
+13. - cuando se hace cierre caja en el modal de "Reporte de Máquinas y Categorías" cuando pone el contador final no se pueden poner numeros con punto decimal ejemplo 13.60, quiero que se pueda manejar numeros con decimales.
+- cuando se utilice el sistema se agregaran mas maquinas, quiero que el espacio donde se muestran las maquinas tenga un scroll o algo que pueda mostrar bien las maquinas, al igual que la seccion de "Categorias de impresion"✅
+
+14. error al hacer corte de maquinas:
+al hacer el proceso de cierre de caja, al ingreso del modal "Reporte de Máquinas y Categorías", modifique "contador final" -> pdf  corte de caja, ERROR: no se actualizo el "contador final", explicacion:
+al entrar al modal "Reporte de Máquinas y Categorías" ya estaba un valor en "contador final" de las maquinas, si lo modifico no toma en cuenta el valor que se modifico para generar el pdf se queda con el valor en el que se abrio el modal, si se abrio con 35 y 12, y pongo 50 y 13.60, imprime 35 y 12 en el pdf ✅

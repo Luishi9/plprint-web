@@ -45,8 +45,9 @@ export default function AperturaModal({ open, onClose, onConfirm }: Props) {
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
-          <label className="text-sm font-medium block mb-1.5">Monto inicial ({simbolo})</label>
+          <label htmlFor="apertura-monto-inicial" className="text-sm font-medium block mb-1.5">Monto inicial ({simbolo})</label>
           <Input
+            id="apertura-monto-inicial"
             type="number"
             step="0.01"
             min="0"

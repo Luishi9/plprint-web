@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 import { inventarioApi } from '@/api/inventario.api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -66,11 +66,11 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
           ) : (
             <div className="flex flex-col divide-y divide-border">
               <AnimatePresence>
-                {movimientos.map((m, i) => {
-                  const conf = TIPO_CONFIG[m.tipo] ?? TIPO_CONFIG.ajuste;
+                {movimientos.map((e, i) => {
+                  const conf = TIPO_CONFIG[e.tipo] ?? TIPO_CONFIG.ajuste;
                   return (
-                    <motion.div
-                      key={m.id}
+                    <m.div
+                      key={e.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}
@@ -84,25 +84,25 @@ export function KardexModal({ productoId, sucursalId, nombreProducto, open, onOp
 
                       {/* Cantidad */}
                       <span className={`font-mono font-bold text-lg w-16 text-right ${
-                        m.tipo === 'entrada' ? 'text-[#2e9e9b]' : m.tipo === 'salida' ? 'text-red-400' : 'text-yellow-400'
+                        e.tipo === 'entrada' ? 'text-[#2e9e9b]' : e.tipo === 'salida' ? 'text-red-400' : 'text-yellow-400'
                       }`}>
-                        {m.tipo === 'salida' ? '-' : '+'}{m.cantidad}
+                        {e.tipo === 'salida' ? '-' : '+'}{e.cantidad}
                       </span>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-muted-foreground truncate">
-                          {m.notas ?? (m.venta_id ? `Venta #${m.venta_id}` : 'Sin notas')}
+                          {e.notas ?? (e.venta_id ? `Venta #${e.venta_id}` : 'Sin notas')}
                         </p>
                         <p className="text-xs text-muted-foreground/50">
-                          {m.usuarios?.nombre ?? '—'} ·{' '}
-                          {new Date(m.created_at).toLocaleDateString('es-MX', {
+                          {e.usuarios?.nombre ?? '—'} ·{' '}
+                          {new Date(e.created_at).toLocaleDateString('es-MX', {
                             day: '2-digit', month: 'short', year: 'numeric',
                             hour: '2-digit', minute: '2-digit',
                           })}
                         </p>
                       </div>
-                    </motion.div>
+                    </m.div>
                   );
                 })}
               </AnimatePresence>

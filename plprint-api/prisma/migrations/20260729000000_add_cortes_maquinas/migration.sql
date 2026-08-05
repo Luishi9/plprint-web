@@ -1,0 +1,3 @@
+-- Tablas para reporte de maquinas por corte de caja.
+-- Snapshot al aperturar (contador_inicial) y al cerrar (contador_actual, contador_final editable).
+-- Esta migracion solo registra el cambio en el historial; el schema ya fue sincronizado via `prisma db push`.

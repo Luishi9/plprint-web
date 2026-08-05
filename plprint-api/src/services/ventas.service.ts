@@ -121,6 +121,64 @@ export class VentasService {
     return venta;
   }
 
+  /**
+   * Public ticket view - no auth required.
+   * Returns only safe fields to display in the printed/shared QR ticket.
+   * Excludes PII (cliente email/telefono/direccion), internal IDs (usuario_id, sucursal_id, cliente_id),
+   * and internal data (notas internas, metodo_pago_id, costo fields).
+   *
+   * Sanitizes cliente to only `nombre` and `id` (identifier for matching).
+   * Sanitizes usuarios to only `nombre` (the ticket shows "Cajero: X").
+   * Excludes ventas_abonos (only the ticket front needs them; secure internal data).
+   */
+  async findByIdPublic(id: number) {
+    const venta = await prisma.ventas.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        folio: true,
+        created_at: true,
+        total: true,
+        descuento: true,
+        descuento_motivo: true,
+        metodo_pago: true,
+        estado: true,
+        estado_pago: true,
+        saldo_pendiente: true,
+        sucursales: { select: { nombre: true } },
+        clientes: {
+          select: {
+            id: true,
+            nombre: true,
+          },
+        },
+        usuarios: { select: { nombre: true } },
+        venta_detalle: {
+          select: {
+            id: true,
+            cantidad: true,
+            precio_unitario: true,
+            descuento: true,
+            ancho_m: true,
+            alto_m: true,
+            productos: {
+              select: {
+                id: true,
+                nombre: true,
+                imagen_url: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!venta) throw new NotFoundError('Venta');
+    if (venta.estado === 'cancelada') {
+      throw new NotFoundError('Venta');
+    }
+    return venta;
+  }
+
   private async generarFolio(): Promise<string> {
     const hoy = new Date();
     const yyyy = hoy.getFullYear().toString();
@@ -209,7 +267,8 @@ export class VentasService {
       });
 
       // Descontar inventario, registrar kardex e impresiones
-      for (const item of subtotales) {
+      for (let idx = 0; idx < subtotales.length; idx++) {
+        const item = subtotales[idx];
         const [productoInsumos, invRecord] = await Promise.all([
           tx.producto_insumos.findMany({ where: { producto_id: item.productoId } }),
           tx.inventario.findUnique({
@@ -239,11 +298,13 @@ export class VentasService {
           select: { maquina_id: true, categoria_id: true, categorias: { select: { tipo: true } } },
         });
         if (producto?.maquina_id) {
+          const ventaDetalleId = venta.venta_detalle[idx]?.id ?? null;
           await tx.impresiones.create({
             data: {
               maquina_id: producto.maquina_id,
               producto_id: item.productoId,
               venta_id: venta.id,
+              venta_detalle_id: ventaDetalleId,
               sucursal_id: dto.sucursalId,
               ...(dto.usuarioId && { usuario_id: dto.usuarioId }),
             },
@@ -279,7 +340,10 @@ export class VentasService {
         });
 
         for (const pi of productoInsumos) {
-          const cantidadDescontar = Number(pi.cantidad_requerida) * item.cantidad;
+          const factorConsumo = item.alto_m != null && item.alto_m > 0
+            ? Number(item.alto_m)
+            : item.cantidad;
+          const cantidadDescontar = Number(pi.cantidad_requerida) * factorConsumo;
           await tx.insumos_inventario.update({
             where: {
               insumo_id_sucursal_id: {
@@ -296,12 +360,22 @@ export class VentasService {
     });
   }
 
-  async cancel(id: number, usuarioId: number) {
+  async cancel(
+    id: number,
+    usuarioId: number,
+    opts?: {
+      insumosDecision?: Array<{ productoId: number; accion: 'revertir' | 'merma' }>;
+    },
+  ) {
     const venta = await this.findById(id);
 
     if (venta.estado !== 'completada') {
       throw new ValidationError('Solo se pueden cancelar ventas completadas');
     }
+
+    const decisiones = new Map<number, 'revertir' | 'merma'>(
+      (opts?.insumosDecision ?? []).map((d) => [d.productoId, d.accion]),
+    );
 
     return prisma.$transaction(async (tx) => {
       const updated = await tx.ventas.update({
@@ -342,13 +416,114 @@ export class VentasService {
             usuario_id: usuarioId,
           },
         });
+
+        // Tratamiento de insumos según decisión del usuario (default: revertir)
+        const accion = decisiones.get(detalle.producto_id!) ?? 'revertir';
+        const productoInsumos = await tx.producto_insumos.findMany({
+          where: { producto_id: detalle.producto_id! },
+        });
+        for (const pi of productoInsumos) {
+          const factorConsumo = detalle.alto_m != null && Number(detalle.alto_m) > 0
+            ? Number(detalle.alto_m)
+            : Number(detalle.cantidad);
+          const cantidad = Number(pi.cantidad_requerida) * factorConsumo;
+
+          if (accion === 'revertir') {
+            const insumoInv = await tx.insumos_inventario.findUnique({
+              where: {
+                insumo_id_sucursal_id: {
+                  insumo_id: pi.insumo_id,
+                  sucursal_id: venta.sucursal_id!,
+                },
+              },
+            });
+            if (insumoInv) {
+              await tx.insumos_inventario.update({
+                where: {
+                  insumo_id_sucursal_id: {
+                    insumo_id: pi.insumo_id,
+                    sucursal_id: venta.sucursal_id!,
+                  },
+                },
+                data: { cantidad: { increment: cantidad } },
+              });
+            }
+          } else {
+            // Merma: no devuelve al inventario, registra fila
+            await tx.mermas.create({
+              data: {
+                tipo: 'insumo',
+                insumo_id: pi.insumo_id,
+                sucursal_id: venta.sucursal_id!,
+                venta_id: id,
+                usuario_id: usuarioId,
+                cantidad: new Prisma.Decimal(cantidad),
+                motivo: `Cancelación venta ${venta.folio || '#' + id}`,
+              },
+            });
+          }
+        }
       }
 
       return updated;
     });
   }
 
-  async validarInsumos(sucursalId: number, items: Array<{ productoId: number; cantidad: number }>) {
+  async getProductosConInsumosByVenta(id: number) {
+    const venta = await this.findById(id);
+    const productoIds = Array.from(
+      new Set(venta.venta_detalle.map((d) => d.producto_id!).filter(Boolean)),
+    );
+    if (productoIds.length === 0) return [];
+
+    const productoInsumos = await prisma.producto_insumos.findMany({
+      where: { producto_id: { in: productoIds } },
+      include: {
+        insumos: {
+          select: { id: true, nombre: true, unidad_medida: true },
+        },
+      },
+    });
+
+    const detallePorProducto = new Map<number, { cantidad: number; alto_m: number | null }>();
+    for (const d of venta.venta_detalle) {
+      const existente = detallePorProducto.get(d.producto_id!);
+      if (existente) {
+        existente.cantidad += Number(d.cantidad);
+      } else {
+        detallePorProducto.set(d.producto_id!, {
+          cantidad: Number(d.cantidad),
+          alto_m: d.alto_m != null ? Number(d.alto_m) : null,
+        });
+      }
+    }
+
+    const productosMap = new Map<number, { productoId: number; nombre: string; insumos: Array<{ insumoId: number; nombre: string; cantidad: number; unidad: string }> }>();
+    for (const pi of productoInsumos) {
+      const prod = venta.venta_detalle.find((d) => d.producto_id === pi.producto_id)?.productos;
+      if (!prod) continue;
+      if (!productosMap.has(pi.producto_id)) {
+        productosMap.set(pi.producto_id, {
+          productoId: pi.producto_id,
+          nombre: prod.nombre,
+          insumos: [],
+        });
+      }
+      const info = detallePorProducto.get(pi.producto_id);
+      const factorConsumo = info && info.alto_m != null && info.alto_m > 0 ? info.alto_m : info?.cantidad ?? 1;
+      const cantidadConsumida = Number(pi.cantidad_requerida) * factorConsumo;
+      productosMap.get(pi.producto_id)!.insumos.push({
+        insumoId: pi.insumo_id,
+        nombre: pi.insumos.nombre,
+        cantidad: cantidadConsumida,
+        unidad: pi.insumos.unidad_medida || 'unidad',
+      });
+    }
+
+    return Array.from(productosMap.values());
+  }
+
+  async validarInsumos(sucursalId: number, items: Array<{ productoId: number; cantidad: number; alto_m?: number }>) {
     const faltantes: Array<{
       insumo: string;
       requerido: number;
@@ -363,7 +538,10 @@ export class VentasService {
       });
 
       for (const pi of productoInsumos) {
-        const cantidadRequerida = Number(pi.cantidad_requerida) * item.cantidad;
+        const factorConsumo = item.alto_m != null && item.alto_m > 0
+          ? Number(item.alto_m)
+          : item.cantidad;
+        const cantidadRequerida = Number(pi.cantidad_requerida) * factorConsumo;
 
         const inventario = await prisma.insumos_inventario.findUnique({
           where: {

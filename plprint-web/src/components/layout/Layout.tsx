@@ -8,8 +8,10 @@ function MainContent() {
   return (
     <>
       {!isMobile && open && (
-        <div
-          className="fixed inset-0 z-[5] bg-black/20 cursor-pointer"
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          className="fixed inset-0 z-[5] bg-black/20 cursor-pointer border-0"
           onClick={() => setOpen(false)}
         />
       )}

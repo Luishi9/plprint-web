@@ -1,9 +1,10 @@
 import { prisma } from '../config/database';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { Prisma } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { setTemp, getTemp, deleteTemp } from '../utils/tempStore';
+import { consolidarDataValidationsAsync } from './insumos.service';
 import crypto from 'crypto';
 
 interface FindAllParams {
@@ -178,7 +179,8 @@ export class ProductosService {
           categorias: { select: { nombre: true } },
           maquinas: { select: { id: true, nombre: true } },
           inventario: {
-            select: { cantidad: true }
+            //select: { cantidad: true },
+            include: { sucursales: { select: { id: true, nombre: true } } },
           },
           producto_precios: {
             where: { activo: true },
@@ -271,8 +273,19 @@ export class ProductosService {
         });
       }
 
-      // 3. Si hay insumos, crear las relaciones producto-insumo
+      // 3. Si hay insumos, validar que pertenezcan a la misma sucursal y crear las relaciones
       if (data.insumos && data.insumos.length > 0) {
+        const sucursalProducto = data.sucursalId ?? 1;
+        const insumosIds = data.insumos.map(i => i.insumoId);
+        const insumosEncontrados = await tx.insumos.findMany({
+          where: { id: { in: insumosIds } },
+          select: { id: true, sucursal_id: true },
+        });
+        const insumosDeMismaSucursal = insumosEncontrados.filter(i => i.sucursal_id === sucursalProducto);
+        if (insumosEncontrados.length !== insumosDeMismaSucursal.length) {
+          throw new ValidationError('Todos los insumos del BOM deben pertenecer a la misma sucursal del producto');
+        }
+
         await tx.producto_insumos.createMany({
           data: data.insumos.map(ins => ({
             producto_id: producto.id,
@@ -317,6 +330,19 @@ export class ProductosService {
 
         // Crear nuevas relaciones si hay insumos
         if (data.insumos.length > 0) {
+          // Validar que los insumos pertenezcan a la misma sucursal del producto
+          const productoActual = await tx.productos.findUnique({ where: { id }, select: { sucursal_id: true } });
+          const sucursalProducto = productoActual?.sucursal_id ?? 1;
+          const insumosIds = data.insumos.map(i => i.insumoId);
+          const insumosEncontrados = await tx.insumos.findMany({
+            where: { id: { in: insumosIds } },
+            select: { id: true, sucursal_id: true },
+          });
+          const insumosDeMismaSucursal = insumosEncontrados.filter(i => i.sucursal_id === sucursalProducto);
+          if (insumosEncontrados.length !== insumosDeMismaSucursal.length) {
+            throw new ValidationError('Todos los insumos del BOM deben pertenecer a la misma sucursal del producto');
+          }
+
           await tx.producto_insumos.createMany({
             data: data.insumos.map(ins => ({
               producto_id: id,
@@ -392,8 +418,40 @@ export class ProductosService {
       { width: 24 }, { width: 24 }, { width: 22 },
     ];
 
+    // Hoja auxiliar "Unidades"
+    const unidades = await prisma.unidades_medida.findMany();
+    const wsU = wb.addWorksheet('Unidades');
+    wsU.addRow(['Abreviatura', 'Nombre']);
+    const headerU = wsU.getRow(1);
+    headerU.eachCell((cell) => {
+      cell.font = { bold: true };
+    });
+    for (const u of unidades) {
+      wsU.addRow([u.abreviatura, u.nombre]);
+    }
+    wsU.columns = [{ width: 14 }, { width: 30 }];
+
+    // Validacion de datos (dropdown) en columna "Unidad de medida" (E)
+    const filaFinUnidades = Math.max(unidades.length + 1 + 50, 200);
+    const dvConfig = {
+      type: 'list',
+      allowBlank: true,
+      showInputMessage: true,
+      promptTitle: 'Unidad de medida',
+      prompt: 'Selecciona una unidad de la lista',
+      showErrorMessage: true,
+      errorStyle: 'error',
+      errorTitle: 'Unidad invalida',
+      error: 'Selecciona una unidad de la lista o deja en blanco',
+      formulae: [`Unidades!$A$2:$A$${filaFinUnidades}`],
+    };
+    const wsDv = ws as unknown as { dataValidations: { add: (addr: string, dv: typeof dvConfig) => void } };
+    for (let r = 2; r <= 1000; r++) {
+      wsDv.dataValidations.add(`E${r}`, dvConfig);
+    }
+
     const buffer = await wb.xlsx.writeBuffer();
-    return Buffer.from(buffer);
+    return consolidarDataValidationsAsync(Buffer.from(buffer), 'E2:E1000');
   }
 
   async exportCatalog(sucursalId?: number): Promise<Buffer> {
@@ -464,7 +522,7 @@ export class ProductosService {
     return Buffer.from(buffer);
   }
 
-  async previewImport(filePath: string, sucursalId: number): Promise<{ token: string; total: number; nuevos: number; duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string }>; errores: Array<{ fila: number; codigo: string; razon: string }>; warnings: Array<{ fila: number; codigo: string; mensaje: string }> }> {
+  async previewImport(filePath: string, sucursalId: number): Promise<{ token: string; total: number; nuevos: number; duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string; cambios: string[] }>; errores: Array<{ fila: number; codigo: string; razon: string }>; warnings: Array<{ fila: number; codigo: string; mensaje: string }> }> {
     const wb = XLSX.readFile(filePath);
     const wsname = wb.SheetNames[0];
     const rows = XLSX.utils.sheet_to_json<(string | number | null | undefined)[]>(wb.Sheets[wsname], { header: 1 });
@@ -604,26 +662,60 @@ export class ProductosService {
         codigo: { in: previewRows.filter(r => r.errors.length === 0).map(r => r.codigo).filter(Boolean) as string[] },
         sucursal_id: sucursalId,
       },
-      select: { codigo: true, nombre: true },
+      include: {
+        producto_precios: { where: { activo: true } },
+      },
     });
 
-    const codigoMap = new Map(codigosExistentes.map(c => [c.codigo, c.nombre]));
+    type ExistingProducto = typeof codigosExistentes[number];
+    const codigoMap = new Map<string, ExistingProducto>(
+      codigosExistentes.filter((p): p is typeof p & { codigo: string } => p.codigo !== null).map(p => [p.codigo, p])
+    );
 
-    const duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string }> = [];
+    const normalizePP = (pp: Array<{ nivel: string; cantidad_minima: number | string; precio: number | string }>) =>
+      pp
+        .map(p => ({ nivel: p.nivel, cantidad_minima: Number(p.cantidad_minima), precio: Number(p.precio) }))
+        .sort((a, b) => a.nivel.localeCompare(b.nivel));
+
+    const duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string; cambios: string[] }> = [];
     const sinDuplicados: PreviewRow[] = [];
 
     for (const row of previewRows) {
       if (row.errors.length > 0) continue;
-      if (row.codigo && codigoMap.has(row.codigo)) {
+      if (!row.codigo || !codigoMap.has(row.codigo)) {
+        sinDuplicados.push(row);
+        continue;
+      }
+      const existing = codigoMap.get(row.codigo)!;
+
+      const cambios: string[] = [];
+      if (existing.nombre !== row.nombre) cambios.push('nombre');
+      if ((existing.descripcion ?? null) !== (row.descripcion ?? null)) cambios.push('descripcion');
+      if ((existing.categoria_id ?? null) !== (row.categoriaId ?? null)) cambios.push('categoria');
+      if (existing.unidad_medida !== row.unidadMedida) cambios.push('unidad');
+      if (Number(existing.precio_venta) !== Number(row.precioVenta)) cambios.push('precio_venta');
+      if (Number(existing.precio_compra ?? 0) !== Number(row.precioCompra ?? 0)) cambios.push('precio_compra');
+
+      const ppExistente = normalizePP(existing.producto_precios as any);
+      const ppNuevo = normalizePP(
+        row.preciosPorVolumen.map(p => ({
+          nivel: p.nivel,
+          cantidad_minima: p.cantidadMinima,
+          precio: p.precio,
+        }))
+      );
+      if (JSON.stringify(ppExistente) !== JSON.stringify(ppNuevo)) cambios.push('precios_volumen');
+
+      if (cambios.length > 0) {
         duplicados.push({
           fila: row.fila,
           codigo: row.codigo,
-          nombreExistente: codigoMap.get(row.codigo)!,
+          nombreExistente: existing.nombre,
           nombreNuevo: row.nombre,
+          cambios,
         });
-      } else {
-        sinDuplicados.push(row);
       }
+      // Si no hay cambios: omitido silenciosamente (no se agrega a duplicados ni a sinDuplicados).
     }
 
     const token = crypto.randomUUID();

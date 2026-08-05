@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import * as fs from 'fs';
 import { InsumosService } from '../services/insumos.service';
 import { sendSuccess, sendCreated, sendNoContent, buildPaginationMeta } from '../utils/response';
 
@@ -10,8 +11,9 @@ export class InsumosController {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 20;
       const search = req.query.search as string | undefined;
+      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
 
-      const { data, total } = await this.insumosService.findAll({ page, limit, search });
+      const { data, total } = await this.insumosService.findAll({ page, limit, search, sucursalId });
       const meta = buildPaginationMeta(total, page, limit);
       sendSuccess(res, data, 200, meta);
     } catch (err) {
@@ -71,6 +73,71 @@ export class InsumosController {
       const { insumoId, sucursalId, cantidad, tipo } = req.body;
       const resultado = await this.insumosService.ajustarStock(insumoId, sucursalId, cantidad, tipo);
       sendSuccess(res, resultado);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  downloadPlantilla = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const buffer = await this.insumosService.generateTemplate();
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="plantilla_insumos.xlsx"');
+      res.send(buffer);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  downloadCatalog = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const sucursalId = req.query.sucursalId ? Number(req.query.sucursalId) : undefined;
+      const buffer = await this.insumosService.exportCatalog(sucursalId);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="catalogo_insumos.xlsx"');
+      res.send(buffer);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  previewImport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: 'Debe subir un archivo Excel' });
+        return;
+      }
+      const sucursalId = Number(req.body.sucursalId || req.query.sucursalId);
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
+      const result = await this.insumosService.previewImport(req.file.path, sucursalId);
+      fs.unlink(req.file.path, () => {});
+      sendSuccess(res, result);
+    } catch (err) {
+      if (req.file) fs.unlink(req.file.path, () => {});
+      next(err);
+    }
+  };
+
+  confirmImport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { token, decisiones, sucursalId } = req.body;
+      if (!token) {
+        res.status(400).json({ error: 'token es requerido' });
+        return;
+      }
+      if (!sucursalId) {
+        res.status(400).json({ error: 'sucursalId es requerido' });
+        return;
+      }
+      const result = await this.insumosService.confirmImport(
+        token,
+        decisiones ?? {},
+        Number(sucursalId),
+      );
+      sendSuccess(res, result);
     } catch (err) {
       next(err);
     }

@@ -117,7 +117,14 @@ export class MaquinasService {
         where: { maquina_id: id, fecha: { gte: desde } },
         orderBy: { fecha: 'desc' },
         take: 50,
-        include: { productos: { select: { id: true, nombre: true } }, usuarios: { select: { id: true, nombre: true } } },
+        include: {
+          productos: { select: { id: true, nombre: true, unidad_medida: true } },
+          usuarios: { select: { id: true, nombre: true } },
+          venta_detalle: {
+            select: { id: true, ancho_m: true, alto_m: true, cantidad: true, unidad_medida_detalle: true },
+          },
+          mermas: { select: { id: true, cantidad: true } },
+        },
       }),
     ]);
     return { hoy, semana, mes, total, recientes };

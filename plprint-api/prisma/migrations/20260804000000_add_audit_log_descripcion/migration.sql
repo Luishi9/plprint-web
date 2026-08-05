@@ -1,0 +1,2 @@
+-- Manual: agregada columna descripcion a audit_log via prisma db push
+-- (shadow DB no soporta permisos del usuario rifa_user para INSERT en metodos_pago)

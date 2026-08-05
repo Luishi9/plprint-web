@@ -46,7 +46,7 @@ export default function CompraInsumoModal({
     if (!open) return;
     setLoadingCatalogos(true);
     Promise.all([
-      insumosApi.getAll({ page: 1, limit: 100 }),
+      insumosApi.getAll({ page: 1, limit: 100, sucursalId: sucursalActual?.id }),
       proveedoresApi.getAll({ page: 1, limit: 100 }),
     ])
       .then(([insumosRes, provRes]) => {
@@ -85,6 +85,7 @@ export default function CompraInsumoModal({
     if (!cantidad || cantidad <= 0) { setFormError('La cantidad debe ser mayor a 0.'); return; }
     const precio = Number(form.precio_unitario);
     if (precio < 0) { setFormError('El precio no puede ser negativo.'); return; }
+    if (!sucursalActual?.id) { setFormError('Selecciona una sucursal activa.'); return; }
 
     try {
       setIsSaving(true);
@@ -92,8 +93,8 @@ export default function CompraInsumoModal({
         insumo_id: Number(form.insumo_id),
         cantidad,
         precio_unitario: precio,
+        sucursal_id: sucursalActual.id,
         ...(form.proveedor_id && { proveedor_id: Number(form.proveedor_id) }),
-        ...(sucursalActual?.id && { sucursal_id: sucursalActual.id }),
         ...(form.notas.trim() && { notas: form.notas.trim() }),
       });
       onOpenChange(false);
@@ -125,10 +126,11 @@ export default function CompraInsumoModal({
         ) : (
           <div className="py-2 flex flex-col gap-3">
             <div>
-              <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
+              <label htmlFor="compra-insumo" className="text-sm font-medium block mb-1.5 flex items-center gap-1">
                 <Icon name="inventory" size={13} /> Insumo *
               </label>
               <select
+                id="compra-insumo"
                 value={form.insumo_id}
                 onChange={(e) => {
                   const id = Number(e.target.value);
@@ -152,17 +154,18 @@ export default function CompraInsumoModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
-                  <Icon name="tag" size={13} /> Cantidad *
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.cantidad}
-                  onChange={(e) => setForm({ ...form, cantidad: e.target.value })}
-                  className="bg-background"
-                />
+              <label htmlFor="compra-cantidad" className="text-sm font-medium block mb-1.5 flex items-center gap-1">
+                <Icon name="tag" size={13} /> Cantidad *
+              </label>
+              <Input
+                id="compra-cantidad"
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.cantidad}
+                onChange={(e) => setForm({ ...form, cantidad: e.target.value })}
+                className="bg-background"
+              />
                 {insumoSeleccionado && (
                   <p className="text-[10px] text-muted-foreground mt-1">
                     Unidad: {insumoSeleccionado.unidad_medida}
@@ -170,17 +173,18 @@ export default function CompraInsumoModal({
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
-                  Precio unitario ({simbolo}) *
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.precio_unitario}
-                  onChange={(e) => setForm({ ...form, precio_unitario: e.target.value })}
-                  className="bg-background"
-                />
+              <label htmlFor="compra-precio" className="text-sm font-medium block mb-1.5 flex items-center gap-1">
+                Precio unitario ({simbolo}) *
+              </label>
+              <Input
+                id="compra-precio"
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.precio_unitario}
+                onChange={(e) => setForm({ ...form, precio_unitario: e.target.value })}
+                className="bg-background"
+              />
               </div>
             </div>
 
@@ -192,10 +196,11 @@ export default function CompraInsumoModal({
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
+              <label htmlFor="compra-proveedor" className="text-sm font-medium block mb-1.5 flex items-center gap-1">
                 <Icon name="local_shipping" size={13} /> Proveedor
               </label>
               <select
+                id="compra-proveedor"
                 value={form.proveedor_id}
                 onChange={(e) => setForm({ ...form, proveedor_id: Number(e.target.value) })}
                 className="w-full bg-background border border-border rounded-md text-sm px-3 py-2"
@@ -208,10 +213,11 @@ export default function CompraInsumoModal({
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-1.5 flex items-center gap-1">
+              <label htmlFor="compra-notas" className="text-sm font-medium block mb-1.5 flex items-center gap-1">
                 <Icon name="description" size={13} /> Notas
               </label>
               <Textarea
+                id="compra-notas"
                 placeholder="Ej. Factura #123, lote, observaciones..."
                 value={form.notas}
                 onChange={(e) => setForm({ ...form, notas: e.target.value })}

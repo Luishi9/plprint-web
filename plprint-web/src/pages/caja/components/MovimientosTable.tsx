@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 import { useMoney } from '@/hooks/useMoney';
 import type { MovimientoCaja } from '@/api/caja.api';
@@ -49,34 +49,34 @@ export default function MovimientosTable({ movimientos, isLoading }: Props) {
             </tr>
           ) : (
             <AnimatePresence>
-              {movimientos.map((m, i) => {
-                const cfg = TIPO_CONFIG[m.tipo] || TIPO_CONFIG.gasto;
+              {movimientos.map((mov, i) => {
+                const cfg = TIPO_CONFIG[mov.tipo] || TIPO_CONFIG.gasto;
                 return (
-                  <motion.tr
-                    key={`${m.referencia_tipo}-${m.referencia_id}`}
+                  <m.tr
+                    key={`${mov.referencia_tipo}-${mov.referencia_id}`}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }}
                     className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
                   >
                     <td className="px-6 py-4 text-muted-foreground text-xs font-mono">
-                      {new Date(m.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(mov.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="px-6 py-4 text-foreground text-xs">{m.usuario}</td>
+                    <td className="px-6 py-4 text-foreground text-xs">{mov.usuario}</td>
                     <td className="px-6 py-4">
                       <span className={`flex items-center gap-1.5 text-xs font-medium ${cfg.color}`}>
                         <Icon name={cfg.icon} size={12} /> {cfg.label}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-foreground text-xs">{m.concepto || '—'}</td>
+                    <td className="px-6 py-4 text-foreground text-xs">{mov.concepto || '—'}</td>
                     <td className={`px-6 py-4 text-right font-mono font-semibold text-xs ${
-                      m.signo > 0 ? 'text-green-400' : 'text-red-400'
+                      mov.signo > 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
-                      {m.signo > 0 ? '+' : '-'}{money(m.monto)}
+                      {mov.signo > 0 ? '+' : '-'}{money(mov.monto)}
                     </td>
-                    <td className="px-6 py-4 text-muted-foreground text-xs">{m.metodo_pago}</td>
-                    <td className="px-6 py-4 text-muted-foreground text-xs">{m.sucursal_id || '—'}</td>
-                  </motion.tr>
+                    <td className="px-6 py-4 text-muted-foreground text-xs">{mov.metodo_pago}</td>
+                    <td className="px-6 py-4 text-muted-foreground text-xs">{mov.sucursal_id || '—'}</td>
+                  </m.tr>
                 );
               })}
             </AnimatePresence>

@@ -20,11 +20,6 @@ export const unidadesMedidaApi = {
   remove: (id: number) => apiClient.delete(`/unidades-medida/${id}`),
 };
 
-export const TIPO_MEDIDA_LABEL: Record<TipoMedida, string> = {
-  m2: 'por m²',
-  ml: 'por metro lineal',
-};
-
 export interface CalculoMedida {
   precioUnitario: number;
   labelUnidad: string;

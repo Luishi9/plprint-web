@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 
 import { categoriasGastosApi, CategoriaGasto } from '@/api/gastos.api';
@@ -93,7 +93,7 @@ export default function CategoriasGastosPage() {
   return (
     <div className="w-full h-full flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
+        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <Icon name="account_tree" className="text-[#2e9e9b]" size={32} />
             Categorías de Gastos
@@ -101,7 +101,7 @@ export default function CategoriasGastosPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Clasifica los gastos para reportes y análisis.
           </p>
-        </motion.div>
+        </m.div>
 
         <RequirePermission modulo="gastos" accion="categoria_gestionar">
           <Button
@@ -114,7 +114,7 @@ export default function CategoriasGastosPage() {
         </RequirePermission>
       </div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
@@ -143,7 +143,7 @@ export default function CategoriasGastosPage() {
             ) : (
               <AnimatePresence>
                 {categorias.map((c, i) => (
-                  <motion.tr
+                  <m.tr
                     key={c.id}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -161,14 +161,14 @@ export default function CategoriasGastosPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-1">
                         <RequirePermission modulo="gastos" accion="categoria_gestionar">
-                          <button
+                          <button type="button"
                             onClick={() => abrirEditar(c)}
                             title="Editar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
                           >
                             <Icon name="edit" size={14} />
                           </button>
-                          <button
+                          <button type="button"
                             onClick={() => setEliminarItem(c)}
                             title="Eliminar"
                             className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
@@ -178,13 +178,13 @@ export default function CategoriasGastosPage() {
                         </RequirePermission>
                       </div>
                     </td>
-                  </motion.tr>
+                  </m.tr>
                 ))}
               </AnimatePresence>
             )}
           </tbody>
         </table>
-      </motion.div>
+      </m.div>
 
       <Dialog open={modalOpen} onOpenChange={(v) => { if (!v) setModalOpen(false); }}>
         <DialogContent className="max-w-md bg-card border-border">
@@ -195,8 +195,9 @@ export default function CategoriasGastosPage() {
           </DialogHeader>
           <div className="py-2 flex flex-col gap-3">
             <div>
-              <label className="text-sm font-medium block mb-1.5">Nombre *</label>
+              <label htmlFor="cat-nombre" className="text-sm font-medium block mb-1.5">Nombre *</label>
               <Input
+                id="cat-nombre"
                 autoFocus
                 placeholder="Ej. Servicios, Sueldos, Material..."
                 value={form.nombre}
@@ -205,8 +206,9 @@ export default function CategoriasGastosPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium block mb-1.5">Descripción</label>
+              <label htmlFor="cat-descripcion" className="text-sm font-medium block mb-1.5">Descripción</label>
               <Textarea
+                id="cat-descripcion"
                 placeholder="Descripción opcional..."
                 value={form.descripcion}
                 onChange={(e) => setForm({ ...form, descripcion: e.target.value })}

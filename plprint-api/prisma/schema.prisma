@@ -39,8 +39,10 @@ model sucursales {
   maquinas             maquinas[]
   impresiones         impresiones[]
   ordenes_produccion   ordenes_produccion[]
+  cortes_maquinas      cortes_maquinas[]
   cortes_caja          cortes_caja[]
   productos            productos[]
+  insumos              insumos[]
 }
 
 model usuarios {
@@ -176,8 +178,8 @@ model maquinas {
   tipo              String       @db.VarChar(50)
   marca             String?      @db.VarChar(50)
   modelo            String?      @db.VarChar(50)
-  contador_total    Int          @default(0)
-  contador_inicial  Int          @default(0)
+  contador_total    Decimal      @default(0) @db.Decimal(12, 2)
+  contador_inicial  Decimal      @default(0) @db.Decimal(12, 2)
   reset_diario      Boolean      @default(false)
   activo            Boolean      @default(true)
   fecha_instalacion DateTime?
@@ -188,6 +190,7 @@ model maquinas {
   productos         productos[]
   ordenes_produccion ordenes_produccion[]
   mermas            mermas[]
+  cortes_maquinas_detalle cortes_maquinas_detalle[]
 
   @@index([sucursal_id])
   @@index([activo])
@@ -206,6 +209,7 @@ model impresiones {
   fecha            DateTime     @default(now())
   maquinas         maquinas     @relation(fields: [maquina_id], references: [id])
   ventas           ventas?      @relation(fields: [venta_id], references: [id], onDelete: SetNull)
+  venta_detalle    venta_detalle? @relation(fields: [venta_detalle_id], references: [id], onDelete: SetNull)
   productos        productos?   @relation(fields: [producto_id], references: [id])
   sucursales       sucursales   @relation(fields: [sucursal_id], references: [id])
   usuarios         usuarios?    @relation(fields: [usuario_id], references: [id])
@@ -293,6 +297,7 @@ model venta_detalle {
   unidad_medida_detalle String?   @db.VarChar(20)
   ventas                ventas    @relation(fields: [venta_id], references: [id], onDelete: Cascade)
   productos             productos? @relation(fields: [producto_id], references: [id])
+  impresiones           impresiones[]
 }
 
 model mermas {
@@ -347,28 +352,32 @@ model kardex_movimientos {
 
 model insumos {
   id               Int                  @id @default(autoincrement())
-  codigo           String               @unique @db.VarChar(50)
+  codigo           String               @db.VarChar(50)
   nombre           String               @db.VarChar(150)
   descripcion      String?              @db.Text
   unidad_medida    String               @default("unidad") @db.VarChar(20)
   ancho_rollo      Decimal?             @db.Decimal(10, 4)
   precio_compra    Decimal?             @db.Decimal(10, 2)
   proveedor_id     Int?
+  sucursal_id      Int
   activo           Boolean              @default(true)
   created_at       DateTime             @default(now())
   updated_at       DateTime             @default(now()) @updatedAt
   proveedores      proveedores?         @relation(fields: [proveedor_id], references: [id])
+  sucursales       sucursales           @relation(fields: [sucursal_id], references: [id])
   inventario       insumos_inventario[]
   producto_insumos producto_insumos[]
   compras_insumos  compras_insumos[]
   mermas           mermas[]
 
+  @@unique([codigo, sucursal_id])
   @@index([activo])
+  @@index([sucursal_id])
 }
 
 model compras_insumos {
   id              Int          @id @default(autoincrement())
-  sucursal_id     Int?
+  sucursal_id     Int
   proveedor_id    Int?
   usuario_id      Int?
   insumo_id       Int
@@ -381,12 +390,13 @@ model compras_insumos {
   created_at      DateTime     @default(now())
   proveedores     proveedores? @relation(fields: [proveedor_id], references: [id])
   insumos         insumos      @relation(fields: [insumo_id], references: [id])
-  sucursales      sucursales?  @relation(fields: [sucursal_id], references: [id])
+  sucursales      sucursales  @relation(fields: [sucursal_id], references: [id])
   usuarios        usuarios?    @relation(fields: [usuario_id], references: [id])
 
   @@index([fecha])
   @@index([proveedor_id])
   @@index([insumo_id])
+  @@index([sucursal_id])
 }
 
 model unidades_medida {
@@ -566,14 +576,15 @@ model metodos_pago {
 }
 
 model audit_log {
-  id         Int       @id @default(autoincrement())
-  usuario_id Int?
-  accion     String    @db.VarChar(50)
-  modulo     String    @db.VarChar(50)
-  detalle    String?   @db.Text
-  ip         String?   @db.VarChar(45)
-  created_at DateTime  @default(now())
-  usuarios   usuarios? @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+  id          Int       @id @default(autoincrement())
+  usuario_id  Int?
+  accion      String    @db.VarChar(50)
+  modulo      String    @db.VarChar(50)
+  descripcion String?   @db.Text
+  detalle     String?   @db.Text
+  ip          String?   @db.VarChar(45)
+  created_at  DateTime  @default(now())
+  usuarios    usuarios? @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
 
   @@index([usuario_id])
   @@index([modulo])
@@ -658,10 +669,46 @@ model cortes_caja {
   sucursales       sucursales @relation(fields: [sucursal_id], references: [id])
   usuario_apertura usuarios   @relation("caja_apertura", fields: [usuario_apertura_id], references: [id])
   usuario_cierre   usuarios?  @relation("caja_cierre", fields: [usuario_cierre_id], references: [id])
+  cortes_maquinas  cortes_maquinas?
 
   @@index([sucursal_id])
   @@index([fecha_apertura])
   @@index([estado])
+}
+
+model cortes_maquinas {
+  id              Int       @id @default(autoincrement())
+  corte_caja_id   Int       @unique
+  sucursal_id     Int
+  fecha_apertura  DateTime
+  fecha_cierre    DateTime
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+
+  cortes_caja  cortes_caja            @relation(fields: [corte_caja_id], references: [id], onDelete: Cascade)
+  sucursales   sucursales             @relation(fields: [sucursal_id], references: [id])
+  detalle      cortes_maquinas_detalle[]
+
+  @@index([sucursal_id])
+}
+
+model cortes_maquinas_detalle {
+  id                  Int      @id @default(autoincrement())
+  cortes_maquinas_id  Int
+  maquina_id          Int
+  nombre              String   @db.VarChar(150)
+  tipo                String   @db.VarChar(50)
+  contador_inicial    Decimal  @db.Decimal(12, 2)
+  contador_actual     Decimal  @db.Decimal(12, 2)
+  contador_final      Decimal  @db.Decimal(12, 2)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @default(now()) @updatedAt
+
+  cortes_maquinas cortes_maquinas @relation(fields: [cortes_maquinas_id], references: [id], onDelete: Cascade)
+  maquinas        maquinas        @relation(fields: [maquina_id], references: [id])
+
+  @@unique([cortes_maquinas_id, maquina_id])
+  @@index([maquina_id])
 }
 
 model folio_counter {

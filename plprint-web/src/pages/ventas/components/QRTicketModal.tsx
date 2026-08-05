@@ -12,16 +12,12 @@ interface QRTicketModalProps {
   onClose: () => void;
 }
 
-function encodeTicketData(data: TicketData): string {
-  const json = JSON.stringify(data);
-  return btoa(unescape(encodeURIComponent(json)));
-}
-
 export default function QRTicketModal({ data, open, onClose }: QRTicketModalProps) {
   if (!data) return null;
 
-  const encoded = encodeTicketData(data);
-  const url = `${window.location.origin}/ticket?d=${encoded}`;
+  // URL corta - ticket se descarga por ID desde el backend publico (sin auth).
+  // NO se envian datos completos en GET URL (evita leaks en logs/history/cache).
+  const url = `${window.location.origin}/ticket?id=${data.ventaId}`;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -59,7 +55,7 @@ export default function QRTicketModal({ data, open, onClose }: QRTicketModalProp
             variant="outline"
             size="sm"
             className="gap-2 border-border text-muted-foreground hover:text-white"
-            onClick={() => window.open(url, '_blank')}
+            onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
           >
             <Icon name="open_in_new" size={13} />
             Abrir en nueva pestaña

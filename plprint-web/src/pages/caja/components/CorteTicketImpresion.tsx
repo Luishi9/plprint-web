@@ -49,7 +49,7 @@ export default function CorteTicketImpresion({ corte, movimientos, resumen }: Pr
         <div className="border-b border-dashed border-gray-300 pb-2 mb-2">
           <p className="font-bold mb-1">MOVIMIENTOS</p>
           {movimientos.map((m, i) => (
-            <p key={i} className="truncate">
+            <p key={`${m.referencia_tipo}-${m.referencia_id}-${m.fecha}-${i}`} className="truncate">
               {new Date(m.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })} | {m.tipo_display} | {m.signo > 0 ? '+' : '-'}{money(m.monto)}
             </p>
           ))}

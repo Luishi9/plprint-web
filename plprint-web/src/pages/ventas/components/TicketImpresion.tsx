@@ -1,7 +1,13 @@
 import { forwardRef } from 'react';
 import logoImage from '@/assets/logo.png';
+import { escapeHtml } from '@/utils/escapeHtml';
 
 const DEFAULT_LOGO_URL = `${typeof window !== 'undefined' ? window.location.origin : ''}${logoImage}`;
+const TICKET_DATE_FMT = new Intl.DateTimeFormat('es-MX', {
+  timeZone: 'America/Mexico_City',
+  day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+});
 
 export interface TicketData {
   ventaId: number;
@@ -39,10 +45,7 @@ export interface TicketData {
 }
 
 export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO_URL): string {
-  const fecha = new Intl.DateTimeFormat('es-MX', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  }).format(data.fecha);
+  const fecha = TICKET_DATE_FMT.format(data.fecha);
 
   const finalLogoUrl = logoUrl || DEFAULT_LOGO_URL;
   const simbolo = data.monedaSimbolo || '$';
@@ -52,11 +55,11 @@ export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO
   const rows = data.items.map((item) => {
     const lineTotal = item.precioUnitario * item.cantidad - item.descuento;
     const medidaInfo = item.esMedida && item.ancho_m != null && item.alto_m != null
-      ? `<div style="font-size:9px;color:#666;">${item.tipoMedida === 'm2' ? `${item.ancho_m}m × ${item.alto_m}m` : `${item.alto_m}m`} = ${item.labelUnidad ?? ''}</div>`
+      ? `<div style="font-size:9px;color:#666;">${item.tipoMedida === 'm2' ? `${item.ancho_m}m × ${item.alto_m}m` : `${item.alto_m}m`} = ${escapeHtml(item.labelUnidad ?? '')}</div>`
       : '';
     return `
       <tr>
-        <td style="padding:3px 2px;font-weight:600;">${item.nombre}${medidaInfo}</td>
+        <td style="padding:3px 2px;font-weight:600;">${escapeHtml(item.nombre)}${medidaInfo}</td>
         <td style="padding:3px 2px;text-align:center;">${item.cantidad}</td>
         <td style="padding:3px 2px;text-align:right;">${fmt(item.precioUnitario)}</td>
         <td style="padding:3px 2px;text-align:right;">${fmt(lineTotal)}</td>
@@ -94,20 +97,20 @@ export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO
 </head>
 <body>
   <div class="center" style="margin-bottom:8px;">
-    <img src="${finalLogoUrl}" width="48" height="48" style="object-fit:contain;" />
+    <img src="${escapeHtml(finalLogoUrl)}" width="48" height="48" style="object-fit:contain;" />
     <div style="font-size:16px;font-weight:bold;letter-spacing:2px;margin-top:4px;">PLPRINT</div>
     <div style="font-size:10px;color:#555;">Punto de Venta</div>
-    <div style="font-size:10px;color:#555;">${data.sucursal}</div>
+    <div style="font-size:10px;color:#555;">${escapeHtml(data.sucursal)}</div>
   </div>
 
   <hr class="divider" />
 
   <div class="row"><strong>TICKET #${String(data.ventaId).padStart(6, '0')}</strong></div>
-  ${data.folio ? `<div class="row" style="font-size:10px;color:#555;"><span>Folio:</span><span>${data.folio}</span></div>` : ''}
+  ${data.folio ? `<div class="row" style="font-size:10px;color:#555;"><span>Folio:</span><span>${escapeHtml(data.folio)}</span></div>` : ''}
   <div style="color:#333;">${fecha}</div>
-  <div class="row" style="margin-top:2px;"><span>Cajero:</span><span>${data.cajero}</span></div>
-  <div class="row"><span>Cliente:</span><span>${data.cliente}</span></div>
-  <div class="row"><span>Pago:</span><span>${data.metodoPagoLabel || data.metodoPago}</span></div>
+  <div class="row" style="margin-top:2px;"><span>Cajero:</span><span>${escapeHtml(data.cajero)}</span></div>
+  <div class="row"><span>Cliente:</span><span>${escapeHtml(data.cliente)}</span></div>
+  <div class="row"><span>Pago:</span><span>${escapeHtml(data.metodoPagoLabel || data.metodoPago)}</span></div>
 
   <hr class="divider" />
 
@@ -154,12 +157,12 @@ export function buildTicketHtml(data: TicketData, logoUrl: string = DEFAULT_LOGO
     ` : ''}
   ` : ''}
 
-  ${data.notas ? `<hr class="divider" /><div style="font-weight:bold;">Notas:</div><div style="color:#444;">${data.notas}</div>` : ''}
+  ${data.notas ? `<hr class="divider" /><div style="font-weight:bold;">Notas:</div><div style="color:#444;">${escapeHtml(data.notas)}</div>` : ''}
 
   <hr class="divider" />
   <div class="center" style="color:#555;">
     <div>¡Gracias por su compra!</div>
-    <div style="margin-top:2px;">PLPrint — ${data.sucursal}</div>
+    <div style="margin-top:2px;">PLPrint — ${escapeHtml(data.sucursal)}</div>
   </div>
 </body>
 </html>`;

@@ -1,5 +1,5 @@
 import { prisma } from '../config/database';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { Prisma } from '@prisma/client';
 
 export interface CompraInsumoInput {
@@ -81,9 +81,13 @@ export class ComprasService {
    * Todo en una transacción para garantizar atomicidad.
    */
   async create(dto: CompraInsumoInput) {
+    if (!dto.sucursal_id) throw new ValidationError('sucursal_id es requerido');
     return prisma.$transaction(async (tx) => {
       const insumo = await tx.insumos.findUnique({ where: { id: dto.insumo_id } });
       if (!insumo) throw new NotFoundError('Insumo');
+      if (insumo.sucursal_id !== dto.sucursal_id) {
+        throw new ValidationError('El insumo no pertenece a la sucursal indicada');
+      }
 
       const total = Number((dto.cantidad * dto.precio_unitario).toFixed(2));
 
@@ -93,8 +97,8 @@ export class ComprasService {
           cantidad: new Prisma.Decimal(dto.cantidad),
           precio_unitario: new Prisma.Decimal(dto.precio_unitario),
           total: new Prisma.Decimal(total),
+          sucursal_id: dto.sucursal_id,
           ...(dto.proveedor_id && { proveedor_id: dto.proveedor_id }),
-          ...(dto.sucursal_id && { sucursal_id: dto.sucursal_id }),
           ...(dto.usuario_id && { usuario_id: dto.usuario_id }),
           ...(dto.notas && { notas: dto.notas }),
           ...(dto.fecha && { fecha: new Date(dto.fecha) }),
@@ -108,24 +112,22 @@ export class ComprasService {
       });
 
       // Sumar al inventario por sucursal
-      if (dto.sucursal_id) {
-        const inv = await tx.insumos_inventario.findUnique({
-          where: { insumo_id_sucursal_id: { insumo_id: dto.insumo_id, sucursal_id: dto.sucursal_id } },
+      const inv = await tx.insumos_inventario.findUnique({
+        where: { insumo_id_sucursal_id: { insumo_id: dto.insumo_id, sucursal_id: dto.sucursal_id } },
+      });
+      if (inv) {
+        await tx.insumos_inventario.update({
+          where: { id: inv.id },
+          data: { cantidad: { increment: Number(dto.cantidad) } },
         });
-        if (inv) {
-          await tx.insumos_inventario.update({
-            where: { id: inv.id },
-            data: { cantidad: { increment: Number(dto.cantidad) } },
-          });
-        } else {
-          await tx.insumos_inventario.create({
-            data: {
-              insumo_id: dto.insumo_id,
-              sucursal_id: dto.sucursal_id,
-              cantidad: Number(dto.cantidad),
-            },
-          });
-        }
+      } else {
+        await tx.insumos_inventario.create({
+          data: {
+            insumo_id: dto.insumo_id,
+            sucursal_id: dto.sucursal_id!,
+            cantidad: Number(dto.cantidad),
+          },
+        });
       }
 
       return compra;
@@ -149,6 +151,9 @@ export class ComprasService {
       for (const item of dto.items) {
         const insumo = await tx.insumos.findUnique({ where: { id: item.insumo_id } });
         if (!insumo) throw new NotFoundError(`Insumo id ${item.insumo_id}`);
+        if (insumo.sucursal_id !== dto.sucursal_id) {
+          throw new ValidationError(`Insumo id ${item.insumo_id} no pertenece a la sucursal indicada`);
+        }
 
         const total = Number((item.cantidad * item.precio_unitario).toFixed(2));
 

@@ -1,23 +1,24 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 
 import { categoriasApi, Categoria } from '@/api/categorias.api';
 import { Button } from '@/components/ui/button';
 import { RequirePermission } from '@/components/RequirePermission';
 import { sileo } from 'sileo';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+import { CategoriasTable } from './CategoriasTable';
+import { CategoriaFormModal } from './CategoriaFormModal';
+import { CategoriaDeleteModal } from './CategoriaDeleteModal';
 
-const emptyForm = { nombre: '', tipo: 'venta' as 'venta' | 'produccion' | 'impresion', descripcion: '' };
+type TipoCategoria = 'venta' | 'produccion' | 'impresion';
+type FiltroTipo = 'todas' | TipoCategoria;
+
+const emptyForm = { nombre: '', tipo: 'venta' as TipoCategoria, descripcion: '' };
 
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtroTipo, setFiltroTipo] = useState<'todas' | 'venta' | 'produccion' | 'impresion'>('todas');
+  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>('todas');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<Categoria | null>(null);
@@ -59,6 +60,8 @@ export default function CategoriasPage() {
     setFormError('');
     setModalOpen(true);
   };
+
+  const cerrarModal = () => setModalOpen(false);
 
   const handleGuardar = async () => {
     if (!form.nombre.trim()) { setFormError('El nombre es requerido.'); return; }
@@ -102,7 +105,7 @@ export default function CategoriasPage() {
   return (
     <div className="w-full h-full flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
+        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <Icon name="sell" size={32} className="text-[#2e9e9b]" />
             Categorías
@@ -110,7 +113,7 @@ export default function CategoriasPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Organiza tus productos por categoría de venta o producción.
           </p>
-        </motion.div>
+        </m.div>
 
         <RequirePermission modulo="categorias" accion="crear">
           <Button
@@ -126,14 +129,14 @@ export default function CategoriasPage() {
       <div className="flex items-center gap-2 text-sm">
         <span className="text-muted-foreground text-xs">Tipo:</span>
         {[
-          { v: 'todas' as const,      label: 'Todas',     icon: 'sell' },
-          { v: 'venta' as const,      label: 'Venta',     icon: 'shopping_bag' },
-          { v: 'produccion' as const, label: 'Producción', icon: 'factory' },
-          { v: 'impresion' as const,  label: 'Impresión', icon: 'print' },
+          { v: 'todas' as FiltroTipo,      label: 'Todas',     icon: 'sell' },
+          { v: 'venta' as FiltroTipo,      label: 'Venta',     icon: 'shopping_bag' },
+          { v: 'produccion' as FiltroTipo, label: 'Producción', icon: 'factory' },
+          { v: 'impresion' as FiltroTipo,  label: 'Impresión', icon: 'print' },
         ].map((opt) => {
           const iconName = opt.icon;
           return (
-            <button
+            <button type="button"
               key={opt.v}
               onClick={() => setFiltroTipo(opt.v)}
               className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors ${
@@ -148,221 +151,32 @@ export default function CategoriasPage() {
         })}
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="rounded-xl border border-border bg-card/50 backdrop-blur-md flex-1 min-h-0 shadow-2xl overflow-y-auto overflow-x-auto"
-      >
-        <div className="relative">
-          <table className="w-full text-sm text-left rtl:text-right text-foreground">
-            <thead className="text-xs font-medium text-muted-foreground bg-background/50 border-b border-border">
-              <tr>
-                <th scope="col" className="px-6 py-4 font-semibold">#</th>
-                <th scope="col" className="px-6 py-4 font-semibold">Nombre</th>
-                <th scope="col" className="px-6 py-4 font-semibold">Tipo</th>
-                <th scope="col" className="px-6 py-4 font-semibold">Descripción</th>
-                <th scope="col" className="px-6 py-4 font-semibold text-center">Productos</th>
-                <th scope="col" className="px-6 py-4 font-semibold text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center">
-                    <Icon name="progress_activity" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
-                    <p className="mt-2 text-xs text-muted-foreground">Cargando categorías...</p>
-                  </td>
-                </tr>
-              ) : categoriasFiltradas.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                    <Icon name="sell" size={32} className="mx-auto mb-2 opacity-20" />
-                    <p>{filtroTipo === 'todas' ? 'No hay categorías aún. ¡Crea la primera!' : 'No hay categorías de este tipo.'}</p>
-                  </td>
-                </tr>
-              ) : (
-                <AnimatePresence>
-                  {categoriasFiltradas.map((cat, i) => {
-                    const isProduccion = cat.tipo === 'produccion';
-                    const isImpresion = cat.tipo === 'impresion';
-                    return (
-                      <motion.tr
-                        key={cat.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-muted-foreground text-xs font-mono">{cat.id}</td>
-                        <td className="px-6 py-4 font-medium text-foreground">{cat.nombre}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                            isProduccion
-                              ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
-                              : isImpresion
-                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                              : 'bg-[#2e9e9b]/10 text-[#2e9e9b] border-[#2e9e9b]/30'
-                          }`}>
-                            {isProduccion ? <Icon name="factory" size={11} /> : isImpresion ? <Icon name="print" size={11} /> : <Icon name="shopping_bag" size={11} />}
-                            {isProduccion ? 'Producción' : isImpresion ? 'Impresión' : 'Venta'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-muted-foreground text-sm">
-                          {cat.descripcion || <span className="text-xs">—</span>}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="text-sm font-mono text-[#2e9e9b]">
-                            {cat._count?.productos ?? 0}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-1">
-                            <RequirePermission modulo="categorias" accion="editar">
-                              <button
-                                onClick={() => abrirEditar(cat)}
-                                title="Editar"
-                                className="p-1.5 rounded-md text-muted-foreground hover:text-[#2e9e9b] hover:bg-[#2e9e9b]/10 transition-colors"
-                              >
-                                <Icon name="edit" size={14} />
-                              </button>
-                            </RequirePermission>
-                            <RequirePermission modulo="categorias" accion="eliminar">
-                              <button
-                                onClick={() => setEliminarItem(cat)}
-                                title="Eliminar"
-                                className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                              >
-                                <Icon name="delete" size={14} />
-                              </button>
-                            </RequirePermission>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </AnimatePresence>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
+      <CategoriasTable
+        isLoading={isLoading}
+        categorias={categoriasFiltradas}
+        filtroTipo={filtroTipo}
+        onEditar={abrirEditar}
+        onEliminar={setEliminarItem}
+      />
 
-      <Dialog open={modalOpen} onOpenChange={(v) => { if (!v) setModalOpen(false); }}>
-        <DialogContent className="max-w-sm bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-[#2e9e9b] text-xl font-bold">
-              {editando ? 'Editar categoría' : 'Nueva categoría'}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {editando ? 'Modifica los datos de la categoría.' : 'Ingresa los datos de la nueva categoría.'}
-            </DialogDescription>
-          </DialogHeader>
+      <CategoriaFormModal
+        open={modalOpen}
+        editando={editando}
+        form={form}
+        formError={formError}
+        isSaving={isSaving}
+        onClose={cerrarModal}
+        onChange={setForm}
+        onErrorChange={setFormError}
+        onGuardar={handleGuardar}
+      />
 
-          <div className="py-2 flex flex-col gap-3">
-            <div>
-              <label className="text-sm font-medium text-foreground block mb-1.5">Nombre *</label>
-              <Input
-                autoFocus
-                placeholder="Ej. Electrónica, Ropa, Impresos..."
-                value={form.nombre}
-                onChange={(e) => { setForm({ ...form, nombre: e.target.value }); setFormError(''); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleGuardar(); }}
-                className="bg-background"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground block mb-1.5">Tipo</label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, tipo: 'venta' })}
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                    form.tipo === 'venta'
-                      ? 'bg-[#2e9e9b]/20 text-[#2e9e9b] border border-[#2e9e9b]/50'
-                      : 'bg-background border border-border text-muted-foreground'
-                  }`}
-                >
-                  <Icon name="shopping_bag" size={14} /> Venta
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, tipo: 'produccion' })}
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                    form.tipo === 'produccion'
-                      ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
-                      : 'bg-background border border-border text-muted-foreground'
-                  }`}
-                >
-                  <Icon name="factory" size={14} /> Producción
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, tipo: 'impresion' })}
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                    form.tipo === 'impresion'
-                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
-                      : 'bg-background border border-border text-muted-foreground'
-                  }`}
-                >
-                  <Icon name="print" size={14} /> Impresión
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground block mb-1.5">Descripción</label>
-              <Textarea
-                placeholder="Descripción opcional..."
-                value={form.descripcion}
-                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                className="bg-background min-h-[50px]"
-              />
-            </div>
-            {formError && <p className="text-red-400 text-xs">{formError}</p>}
-          </div>
-
-          <DialogFooter className="gap-2 flex justify-end">
-            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={isSaving}>
-              <Icon name="close" size={14} className="mr-1" /> Cancelar
-            </Button>
-            <Button
-              onClick={handleGuardar}
-              disabled={isSaving}
-              className="bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold"
-            >
-              {isSaving
-                ? <Icon name="progress_activity" size={14} className="mr-1 animate-spin" />
-                : <Icon name="check" size={14} className="mr-1" />}
-              {editando ? 'Guardar cambios' : 'Crear'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!eliminarItem} onOpenChange={(v) => { if (!v) setEliminarItem(null); }}>
-        <DialogContent className="max-w-sm bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-white">¿Eliminar categoría?</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Se eliminará <span className="text-white font-semibold">{eliminarItem?.nombre}</span>.
-              Los productos asignados quedarán sin categoría.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 flex justify-end pt-2">
-            <Button variant="outline" onClick={() => setEliminarItem(null)} disabled={isDeleting}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleEliminar}
-              disabled={isDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold"
-            >
-              {isDeleting ? <Icon name="progress_activity" size={16} className="animate-spin" /> : <Icon name="delete" size={16} className="mr-1" />}
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CategoriaDeleteModal
+        item={eliminarItem}
+        isDeleting={isDeleting}
+        onClose={() => setEliminarItem(null)}
+        onConfirm={handleEliminar}
+      />
     </div>
   );
 }

@@ -1,0 +1,3 @@
+-- Cambiar tipo de contadores de maquinas de Int a Decimal(12,2) para permitir decimales.
+-- El cast Int -> Decimal(12,2) no causa perdida de datos porque los valores existentes son enteros.
+-- Esta migracion solo registra el cambio en el historial; el schema ya fue sincronizado via `prisma db push --accept-data-loss`.

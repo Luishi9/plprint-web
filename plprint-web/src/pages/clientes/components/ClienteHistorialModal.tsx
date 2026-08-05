@@ -113,7 +113,12 @@ export default function ClienteHistorialModal({ cliente, onClose }: Props) {
                                     <Fragment key={v.id}>
                                         <div
                                             className="rounded-xl border border-border bg-background/50 cursor-pointer hover:border-border/80 transition-colors"
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-expanded={isExpanded}
+                                            aria-label={`${isExpanded ? 'Contraer' : 'Expandir'} venta #${v.id}`}
                                             onClick={() => setExpandedId(isExpanded ? null : v.id)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpandedId(isExpanded ? null : v.id); }}
                                         >
                                             <div className="flex items-center justify-between px-4 py-3 gap-3">
                                                 <div className="flex items-center gap-3 min-w-0">

@@ -1,4 +1,5 @@
 import { Icon } from '@/components/ui/Icon';
+import { todayLocal, firstDayOfCurrentMonthLocal } from '@/utils/localDate';
 
 interface Props {
   desde: string;
@@ -7,24 +8,18 @@ interface Props {
 }
 
 export default function VentasDateFilter({ desde, hasta, onChange }: Props) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayLocal();
 
   const handleHoy = () => {
     onChange(today, today);
   };
 
   const handleEsteMes = () => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    onChange(firstDay, today);
+    onChange(firstDayOfCurrentMonthLocal(), today);
   };
 
   const esHoy = desde === today && hasta === today;
-  const esEsteMes = (() => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    return desde === firstDay && hasta === today;
-  })();
+  const esEsteMes = desde === firstDayOfCurrentMonthLocal() && hasta === today;
   const esPersonalizado = !esHoy && !esEsteMes;
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -33,7 +28,7 @@ export default function VentasDateFilter({ desde, hasta, onChange }: Props) {
         { key: 'hoy', label: 'Hoy', active: esHoy },
         { key: 'esteMes', label: 'Este mes', active: esEsteMes },
       ].map((opt) => (
-        <button
+        <button type="button"
           key={opt.key}
           onClick={() => {
             if (opt.key === 'hoy') handleHoy();
@@ -51,6 +46,7 @@ export default function VentasDateFilter({ desde, hasta, onChange }: Props) {
       <div className="flex items-center gap-1 ml-1">
         <input
           type="date"
+          aria-label="Fecha desde"
           value={desde}
           onChange={(e) => onChange(e.target.value, hasta)}
           className="bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2e9e9b]"
@@ -58,13 +54,14 @@ export default function VentasDateFilter({ desde, hasta, onChange }: Props) {
         <span className="text-muted-foreground text-xs">—</span>
         <input
           type="date"
+          aria-label="Fecha hasta"
           value={hasta}
           onChange={(e) => onChange(desde, e.target.value)}
           className="bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2e9e9b]"
         />
       </div>
       {(esPersonalizado || (!esHoy && !esEsteMes && desde !== '')) && (
-        <button
+        <button type="button"
           onClick={handleHoy}
           className="p-1 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
           title="Restablecer a hoy"

@@ -31,8 +31,16 @@ export interface MaquinaStats {
     merma_id: number | null;
     fue_merma: boolean;
     fecha: string;
-    productos?: { id: number; nombre: string } | null;
+    productos?: { id: number; nombre: string; unidad: string } | null;
     usuarios?: { id: number; nombre: string } | null;
+    venta_detalle?: {
+      id: number;
+      ancho_m: string | null;
+      alto_m: string | null;
+      cantidad: number;
+      unidad_medida_detalle: string | null;
+    } | null;
+    mermas?: { id: number; cantidad: string | null } | null;
   }>;
 }
 

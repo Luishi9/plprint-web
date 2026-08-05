@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from "framer-motion";
 import { Icon } from '@/components/ui/Icon';
 
 import { cotizacionesApi, Cotizacion } from '@/api/cotizaciones.api';
@@ -28,23 +28,24 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
 
-  const fetchCotizaciones = async () => {
-    try {
-      setIsLoading(true);
-      const res = await cotizacionesApi.getAll({
-        estado: 'pendiente',
-        limit: 100,
-      });
-      setCotizaciones((res.data as { data: Cotizacion[] }).data || []);
-    } catch (e) { console.error(e); }
-    finally { setIsLoading(false); }
-  };
-
   useEffect(() => {
+    let cancelled = false;
     if (open) {
-      fetchCotizaciones();
+      (async () => {
+        try {
+          setIsLoading(true);
+          const res = await cotizacionesApi.getAll({
+            estado: 'pendiente',
+            limit: 100,
+          });
+          if (cancelled) return;
+          setCotizaciones((res.data as { data: Cotizacion[] }).data || []);
+        } catch (e) { if (!cancelled) console.error(e); }
+        finally { if (!cancelled) setIsLoading(false); }
+      })();
       setFolio(''); setCliente(''); setUsuario(''); setFechaDesde(''); setFechaHasta('');
     }
+    return () => { cancelled = true; };
   }, [open]);
 
   const filtradas = cotizaciones.filter((c) => {
@@ -88,8 +89,9 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
         {/* Filtros */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 py-2">
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">Folio</label>
+            <label htmlFor="cot-sel-folio" className="text-[10px] text-muted-foreground block mb-1">Folio</label>
             <Input
+              id="cot-sel-folio"
               placeholder="COT-..."
               value={folio}
               onChange={(e) => setFolio(e.target.value)}
@@ -97,8 +99,9 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
             />
           </div>
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">Cliente</label>
+            <label htmlFor="cot-sel-cliente" className="text-[10px] text-muted-foreground block mb-1">Cliente</label>
             <Input
+              id="cot-sel-cliente"
               placeholder="Nombre..."
               value={cliente}
               onChange={(e) => setCliente(e.target.value)}
@@ -106,8 +109,9 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
             />
           </div>
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">Vendedor</label>
+            <label htmlFor="cot-sel-vendedor" className="text-[10px] text-muted-foreground block mb-1">Vendedor</label>
             <Input
+              id="cot-sel-vendedor"
               placeholder="Nombre..."
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
@@ -115,8 +119,9 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
             />
           </div>
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">Desde</label>
+            <label htmlFor="cot-sel-desde" className="text-[10px] text-muted-foreground block mb-1">Desde</label>
             <Input
+              id="cot-sel-desde"
               type="date"
               value={fechaDesde}
               onChange={(e) => setFechaDesde(e.target.value)}
@@ -124,8 +129,9 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
             />
           </div>
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">Hasta</label>
+            <label htmlFor="cot-sel-hasta" className="text-[10px] text-muted-foreground block mb-1">Hasta</label>
             <Input
+              id="cot-sel-hasta"
               type="date"
               value={fechaHasta}
               onChange={(e) => setFechaHasta(e.target.value)}
@@ -163,7 +169,7 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
                 <tbody>
                   <AnimatePresence>
                     {filtradas.map((c, i) => (
-                      <motion.tr
+                      <m.tr
                         key={c.id}
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -191,7 +197,7 @@ export default function CotizacionSelectorModal({ open, onOpenChange, onSeleccio
                             <Icon name="arrow_forward" size={12} className="mr-1" /> Cargar
                           </Button>
                         </td>
-                      </motion.tr>
+                      </m.tr>
                     ))}
                   </AnimatePresence>
                 </tbody>

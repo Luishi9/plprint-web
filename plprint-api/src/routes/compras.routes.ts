@@ -4,6 +4,7 @@ import { ComprasController } from '../controllers/compras.controller';
 import { ComprasService } from '../services/compras.service';
 import { validate } from '../middleware/validate.middleware';
 import { authorizePermission } from '../middleware/rbac.middleware';
+import { audit } from '../middleware/audit.middleware';
 
 const router = Router();
 const controller = new ComprasController(new ComprasService());
@@ -33,8 +34,8 @@ const compraBatchSchema = z.object({
 
 router.get('/', authorizePermission('compras', 'ver'), controller.getAll);
 router.get('/:id', authorizePermission('compras', 'ver'), controller.getById);
-router.post('/', authorizePermission('compras', 'crear'), validate(compraSchema), controller.create);
-router.post('/batch', authorizePermission('compras', 'crear'), validate(compraBatchSchema), controller.createBatch);
-router.delete('/:id', authorizePermission('compras', 'anular'), controller.remove);
+router.post('/', authorizePermission('compras', 'crear'), validate(compraSchema), audit('compras', 'CREATE'), controller.create);
+router.post('/batch', authorizePermission('compras', 'crear'), validate(compraBatchSchema), audit('compras', 'IMPORT'), controller.createBatch);
+router.delete('/:id', authorizePermission('compras', 'anular'), audit('compras', 'DELETE'), controller.remove);
 
 export default router;

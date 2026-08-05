@@ -4,6 +4,7 @@ import { OrdenesProduccionController } from '../controllers/ordenesProduccion.co
 import { OrdenesProduccionService } from '../services/ordenesProduccion.service';
 import { validate } from '../middleware/validate.middleware';
 import { authorizePermission } from '../middleware/rbac.middleware';
+import { audit } from '../middleware/audit.middleware';
 
 const router = Router();
 const controller = new OrdenesProduccionController(new OrdenesProduccionService());
@@ -41,14 +42,15 @@ const cambiarEstatusSchema = z.object({
 router.get('/', authorizePermission('produccion', 'ver'), controller.getAll);
 router.get('/estadisticas', authorizePermission('produccion', 'ver'), controller.getEstadisticas);
 router.get('/:id', authorizePermission('produccion', 'ver'), controller.getById);
-router.post('/', authorizePermission('produccion', 'crear'), validate(createSchema), controller.create);
-router.put('/:id', authorizePermission('produccion', 'editar'), validate(updateSchema), controller.update);
+router.post('/', authorizePermission('produccion', 'crear'), validate(createSchema), audit('produccion', 'CREATE'), controller.create);
+router.put('/:id', authorizePermission('produccion', 'editar'), validate(updateSchema), audit('produccion', 'UPDATE'), controller.update);
 router.patch(
   '/:id/estatus',
   authorizePermission('produccion', 'cambiar_estatus'),
   validate(cambiarEstatusSchema),
+  audit('produccion', 'CAMBIAR_ESTATUS'),
   controller.cambiarEstatus,
 );
-router.delete('/:id', authorizePermission('produccion', 'cancelar'), controller.remove);
+router.delete('/:id', authorizePermission('produccion', 'cancelar'), audit('produccion', 'DELETE'), controller.remove);
 
 export default router;

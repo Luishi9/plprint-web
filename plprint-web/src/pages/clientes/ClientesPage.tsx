@@ -1,18 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 
 import { clientesApi } from '@/api/clientes.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import ClienteFormModal from './components/ClienteFormModal';
 import ClienteHistorialModal from './components/ClienteHistorialModal';
+import { ClientesTable } from './components/ClientesTable';
 
 export interface Cliente {
   id: number;
@@ -32,12 +30,11 @@ export default function ClientesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const LIMIT = 20;
+  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<Cliente | null>(null);
-
   const [historialCliente, setHistorialCliente] = useState<Cliente | null>(null);
-
   const [eliminarItem, setEliminarItem] = useState<Cliente | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -61,12 +58,28 @@ export default function ClientesPage() {
     }
   };
 
-  useEffect(() => { fetchClientes(true); }, []);
   useEffect(() => {
-    const t = setTimeout(() => { setPage(1); fetchClientes(); }, 350);
-    return () => clearTimeout(t);
-  }, [search]);
-  useEffect(() => { fetchClientes(); }, [page]);
+    let cancelled = false;
+    const abort = new AbortController();
+    abortRef.current = abort;
+    const t = setTimeout(() => {
+      (async () => {
+        try {
+          setIsLoading(true);
+          const res = await clientesApi.getAll({ search: search || '', page, limit: LIMIT });
+          if (cancelled) return;
+          const body = res.data?.data ?? res.data;
+          setClientes(Array.isArray(body) ? body : body.data ?? []);
+          setTotal(body.total ?? (Array.isArray(body) ? body.length : 0));
+        } catch (err: any) {
+          if (err?.code !== 'ERR_CANCELED' && err?.name !== 'AbortError' && !cancelled) console.error(err);
+        } finally {
+          if (!cancelled) setIsLoading(false);
+        }
+      })();
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); abort.abort(); };
+  }, [search, page]);
 
   const handleSaved = () => {
     setModalOpen(false);
@@ -81,22 +94,28 @@ export default function ClientesPage() {
       await clientesApi.remove(eliminarItem.id);
       setEliminarItem(null);
       fetchClientes(true);
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const totalPages = Math.ceil(total / LIMIT);
+  const abrirCrear = () => { setEditando(null); setModalOpen(true); };
+  const abrirEditar = (c: Cliente) => { setEditando(c); setModalOpen(true); };
+
+  const stats = [
+    { label: 'Total clientes', value: total, cls: 'text-[#2e9e9b]' },
+    { label: 'Con teléfono', value: clientes.filter((c) => c.telefono).length, cls: 'text-blue-400' },
+    { label: 'Con correo', value: clientes.filter((c) => c.email).length, cls: 'text-purple-400' },
+  ];
 
   return (
-    <div className="flex flex-col gap-6 h-full">
-      {/* HEADER */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    <div className="flex flex-col gap-5 h-full min-h-0">
+      <m.div
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
       >
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
@@ -118,23 +137,18 @@ export default function ClientesPage() {
             />
           </div>
           <Button
-            onClick={() => { setEditando(null); setModalOpen(true); }}
+            onClick={abrirCrear}
             className="h-9 px-4 bg-[#2e9e9b] hover:bg-[#48b9b4] text-black font-semibold shadow-[0_0_15px_rgba(153,255,61,0.2)] whitespace-nowrap"
           >
             <Icon name="add" size={16} className="mr-1.5" />
             Nuevo cliente
           </Button>
         </div>
-      </motion.div>
+      </m.div>
 
-      {/* STAT CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {[
-          { label: 'Total clientes', value: total, cls: 'text-[#2e9e9b]' },
-          { label: 'Con teléfono', value: clientes.filter((c) => c.telefono).length, cls: 'text-blue-400' },
-          { label: 'Con correo', value: clientes.filter((c) => c.email).length, cls: 'text-purple-400' },
-        ].map((stat, i) => (
-          <motion.div
+        {stats.map((stat, i) => (
+          <m.div
             key={stat.label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -143,130 +157,20 @@ export default function ClientesPage() {
           >
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{stat.label}</span>
             <span className={`text-2xl font-bold ${stat.cls}`}>{stat.value}</span>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 
-      {/* TABLE */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className={`rounded-xl border border-border bg-card/50 backdrop-blur-md overflow-hidden flex-1 shadow-2xl transition-opacity duration-200 ${isSearching ? 'opacity-60' : 'opacity-100'}`}
-      >
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-border">
-              {['#', 'Nombre', 'Teléfono', 'Correo', 'Dirección', 'Registrado', ''].map((h) => (
-                <TableHead key={h} className="bg-background/50 text-xs uppercase tracking-wider">
-                  {h}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center">
-                  <Icon name="hourglass_top" size={24} className="mx-auto animate-spin text-[#2e9e9b]" />
-                  <p className="mt-2 text-xs text-muted-foreground">Cargando clientes…</p>
-                </TableCell>
-              </TableRow>
-            ) : clientes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
-                  <Icon name="group" size={36} className="mx-auto mb-3 opacity-20" />
-                  <p>{search ? 'Sin resultados.' : 'Aún no hay clientes registrados.'}</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              <AnimatePresence>
-                {clientes.map((c, i) => (
-                  <motion.tr
-                    key={c.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.025 }}
-                    className="border-b border-border hover:bg-white/[0.02] transition-colors"
-                  >
-                    <TableCell className="font-mono text-xs text-muted-foreground">#{c.id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs shrink-0">
-                          {c.nombre.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="font-medium text-sm text-white">{c.nombre}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {c.telefono ? (
-                        <span className="flex items-center gap-1.5">
-                          <Icon name="phone" size={11} className="text-muted-foreground/50" />
-                          {c.telefono}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/30">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {c.email ? (
-                        <span className="flex items-center gap-1.5">
-                          <Icon name="mail" size={11} className="text-muted-foreground/50" />
-                          {c.email}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/30">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[180px] truncate">
-                      {c.direccion ? (
-                        <span className="flex items-center gap-1.5 truncate">
-                          <Icon name="location_on" size={11} className="text-muted-foreground/50 shrink-0" />
-                          <span className="truncate">{c.direccion}</span>
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/30">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(c.created_at).toLocaleDateString('es-MX', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => setHistorialCliente(c)}
-                          className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-blue-400 transition-colors"
-                          title="Ver historial de compras"
-                        >
-                          <Icon name="history" size={13} />
-                        </button>
-                        <button
-                          onClick={() => { setEditando(c); setModalOpen(true); }}
-                          className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-[#2e9e9b] transition-colors"
-                          title="Editar"
-                        >
-                          <Icon name="edit" size={13} />
-                        </button>
-                        <button
-                          onClick={() => setEliminarItem(c)}
-                          className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
-                          title="Eliminar"
-                        >
-                          <Icon name="delete" size={13} />
-                        </button>
-                      </div>
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-            )}
-          </TableBody>
-        </Table>
-      </motion.div>
+      <ClientesTable
+        isLoading={isLoading}
+        isSearching={isSearching}
+        clientes={clientes}
+        search={search}
+        onVerHistorial={setHistorialCliente}
+        onEditar={abrirEditar}
+        onEliminar={setEliminarItem}
+      />
 
-      {/* PAGINACIÓN */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
           <span>{total} clientes en total</span>
@@ -292,7 +196,6 @@ export default function ClientesPage() {
         </div>
       )}
 
-      {/* FORM MODAL */}
       <ClienteFormModal
         open={modalOpen}
         cliente={editando}
@@ -300,13 +203,11 @@ export default function ClientesPage() {
         onSaved={handleSaved}
       />
 
-      {/* HISTORIAL MODAL */}
       <ClienteHistorialModal
         cliente={historialCliente}
         onClose={() => setHistorialCliente(null)}
       />
 
-      {/* CONFIRM DELETE */}
       <Dialog open={!!eliminarItem} onOpenChange={() => setEliminarItem(null)}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>

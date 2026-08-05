@@ -4,6 +4,7 @@ import { UsuariosController } from '../controllers/usuarios.controller';
 import { UsuariosService } from '../services/usuarios.service';
 import { validate } from '../middleware/validate.middleware';
 import { authorize, ROLES } from '../middleware/rbac.middleware';
+import { audit } from '../middleware/audit.middleware';
 
 const router = Router();
 const controller = new UsuariosController(new UsuariosService());
@@ -22,9 +23,9 @@ const asignarSchema = z.object({
 // Solo admin puede gestionar usuarios
 router.get('/', authorize(ROLES.ADMIN), controller.getAll);
 router.get('/:id', authorize(ROLES.ADMIN), controller.getById);
-router.post('/', authorize(ROLES.ADMIN), validate(createSchema), controller.create);
-router.put('/:id', authorize(ROLES.ADMIN), validate(createSchema.partial()), controller.update);
-router.delete('/:id', authorize(ROLES.ADMIN), controller.remove);
+router.post('/', authorize(ROLES.ADMIN), validate(createSchema), audit('usuarios', 'CREATE'), controller.create);
+router.put('/:id', authorize(ROLES.ADMIN), validate(createSchema.partial()), audit('usuarios', 'UPDATE'), controller.update);
+router.delete('/:id', authorize(ROLES.ADMIN), audit('usuarios', 'DELETE'), controller.remove);
 router.post('/:id/sucursales', authorize(ROLES.ADMIN), validate(asignarSchema), controller.asignarSucursal);
 router.delete('/:id/sucursales/:sucursalId', authorize(ROLES.ADMIN), controller.removerSucursal);
 
