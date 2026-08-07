@@ -71,7 +71,7 @@ export function GastosTable({ isLoading, gastos, search, filterTipo, filterCateg
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }}
-                    className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
+                    className="bg-background/30 border-b border-border hover:bg-[#2e9e9b]/10 transition-colors"
                   >
                     <td className="px-6 py-4 text-muted-foreground text-xs font-mono">
                       {new Date(g.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' })}

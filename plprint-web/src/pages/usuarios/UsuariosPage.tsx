@@ -93,7 +93,7 @@ export default function UsuariosPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             <Icon name="group" size={24} className="text-[#2e9e9b]" />
             Usuarios
           </h2>
@@ -188,7 +188,7 @@ export default function UsuariosPage() {
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03 }}
-                        className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
+                        className="bg-background/30 border-b border-border hover:bg-[#2e9e9b]/10 transition-colors"
                       >
                         <td className="px-6 py-4 font-mono text-xs text-muted-foreground">#{u.id}</td>
                         <td className="px-6 py-4">

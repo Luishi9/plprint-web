@@ -123,7 +123,7 @@ export function TablaOrdenes({
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="border-b border-border hover:bg-background/30 transition-colors"
+                      className="border-b border-border hover:bg-[#2e9e9b]/10 transition-colors"
                     >
                       <td className="px-4 py-3">
                         <button type="button"

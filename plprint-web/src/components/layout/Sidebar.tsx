@@ -88,7 +88,7 @@ export function AppSidebar() {
           className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
           title="Ocultar menú"
         >
-          <Icon name="dock_to_left" size={20} />
+          <Icon name="dock_to_left" size={26} />
         </button>
       </SidebarHeader>
 

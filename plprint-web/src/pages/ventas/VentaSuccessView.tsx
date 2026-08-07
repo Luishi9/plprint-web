@@ -53,7 +53,7 @@ export function VentaSuccessView({
           <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
             <Icon name="check" size={40} className="text-[#2e9e9b]" />
           </div>
-          <h2 className="text-2xl font-bold text-white">¡Venta registrada!</h2>
+          <h2 className="text-2xl font-bold text-foreground">¡Venta registrada!</h2>
           <p className="text-muted-foreground">Venta #{ventaId} completada correctamente.</p>
           <p className="text-3xl font-bold text-[#2e9e9b]">{money(total)}</p>
           <div className="flex gap-3 mt-2 flex-wrap justify-center">

@@ -103,7 +103,7 @@ export function AjusteInsumoModal({ open, insumo, onClose, onSaved }: AjusteInsu
             Ajuste de Inventario
           </DialogTitle>
           <DialogDescription>
-            Ajustar stock de <strong className="text-white">{insumo.nombre}</strong>
+            Ajustar stock de <strong className="text-foreground">{insumo.nombre}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -114,10 +114,10 @@ export function AjusteInsumoModal({ open, insumo, onClose, onSaved }: AjusteInsu
               name="tipo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Tipo de movimiento</FormLabel>
+                  <FormLabel className="text-foreground/80">Tipo de movimiento</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-white/5 border-border text-white">
+                      <SelectTrigger className="bg-white/5 border-border text-foreground">
                         <SelectValue placeholder="Seleccionar" />
                       </SelectTrigger>
                     </FormControl>
@@ -146,13 +146,13 @@ export function AjusteInsumoModal({ open, insumo, onClose, onSaved }: AjusteInsu
               name="cantidad"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Cantidad</FormLabel>
+                  <FormLabel className="text-foreground/80">Cantidad</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.001"
                       placeholder="0"
-                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                      className="bg-white/5 border-border text-foreground placeholder:text-muted-foreground"
                       {...field}
                       value={field.value || ''}
                     />

@@ -37,7 +37,7 @@ export function VentasHeader({
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
             <Icon name="shopping_cart" size={32} className="text-[#2e9e9b]" />
             Historial de Ventas
           </h2>

@@ -65,11 +65,11 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3 flex-wrap">
           {sucursalActiva && (
             <Badge variant="lime" className="gap-1.5">
-              <Icon name="apartment" size={12} /> {sucursalActiva.nombre}
+              <Icon name="apartment" size={20} /> {sucursalActiva.nombre}
             </Badge>
           )}
           <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-            <Icon name="group" size={12} /> {usuario?.nombre}
+            <Icon name="group" size={20} /> {usuario?.nombre}
           </Badge>
 
           <div className="flex items-center gap-1 rounded-lg border border-border bg-card px-1 py-1">
@@ -78,10 +78,10 @@ export default function DashboardPage() {
               className="p-1 rounded hover:bg-white/10 text-muted-foreground hover:text-white transition-colors"
               title="Día anterior"
             >
-              <Icon name="chevron_left" size={14} />
+              <Icon name="chevron_left" size={20} />
             </button>
             <div className="relative flex items-center">
-              <Icon name="calendar_month" size={13} className="absolute left-2 text-[#2e9e9b] pointer-events-none" />
+              <Icon name="calendar_month" size={16} className="absolute left-2 text-[#2e9e9b] pointer-events-none" />
               <input
                 type="date"
                 aria-label="Fecha a visualizar"
@@ -97,14 +97,14 @@ export default function DashboardPage() {
               className="p-1 rounded hover:bg-white/10 text-muted-foreground hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Día siguiente"
             >
-              <Icon name="chevron_right" size={14} />
+              <Icon name="chevron_right" size={20} />
             </button>
           </div>
 
           <Button size="icon" variant="ghost" onClick={refresh} disabled={loading}
             className="text-muted-foreground hover:text-[#2e9e9b]" title="Actualizar"
           >
-            <Icon name="refresh" size={16} className={loading ? 'animate-spin' : ''} />
+            <Icon name="refresh" size={28} className={loading ? 'animate-spin' : ''} />
           </Button>
         </div>
       </div>

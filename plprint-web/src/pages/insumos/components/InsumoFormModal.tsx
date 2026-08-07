@@ -147,11 +147,11 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
               name="nombre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Nombre *</FormLabel>
+                  <FormLabel className="text-foreground/80">Nombre *</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Ej: Papel bond"
-                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                      className="bg-white/5 border-border text-foreground placeholder:text-muted-foreground"
                       {...field}
                     />
                   </FormControl>
@@ -166,11 +166,11 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
                 name="codigo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white/80">Código</FormLabel>
+                    <FormLabel className="text-foreground/80">Código</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Se genera automáticamente"
-                        className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                        className="bg-white/5 border-border text-foreground placeholder:text-muted-foreground"
                         readOnly
                         {...field}
                       />
@@ -188,10 +188,10 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
                 name="unidadMedida"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white/80">Unidad de medida *</FormLabel>
+                    <FormLabel className="text-foreground/80">Unidad de medida *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-white/5 border-border text-white">
+                        <SelectTrigger className="bg-white/5 border-border text-foreground">
                           <SelectValue placeholder="Selecciona una unidad" />
                         </SelectTrigger>
                       </FormControl>
@@ -220,13 +220,13 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
               name="anchoRollo"
               render={({ field }) => (
                 <FormItem className={!esM2 ? 'hidden' : ''}>
-                  <FormLabel className="text-white/80">Ancho del rollo (m)</FormLabel>
+                  <FormLabel className="text-foreground/80">Ancho del rollo (m)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.0001"
                       placeholder="Ej: 1.20"
-                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                      className="bg-white/5 border-border text-foreground placeholder:text-muted-foreground"
                       {...field}
                     />
                   </FormControl>
@@ -243,13 +243,13 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
               name="precioCompra"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Precio de compra</FormLabel>
+                  <FormLabel className="text-foreground/80">Precio de compra</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.01"
                       placeholder="0.00"
-                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground"
+                      className="bg-white/5 border-border text-foreground placeholder:text-muted-foreground"
                       {...field}
                       value={field.value ?? ''}
                     />
@@ -264,11 +264,11 @@ export function InsumoFormModal({ open, insumo, onClose, onSaved }: InsumoFormMo
               name="descripcion"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Descripción</FormLabel>
+                  <FormLabel className="text-foreground/80">Descripción</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Descripción opcional del insumo..."
-                      className="bg-white/5 border-border text-white placeholder:text-muted-foreground resize-none"
+                      className="bg-white/5 border-border text-foreground placeholder:text-muted-foreground resize-none"
                       rows={3}
                       {...field}
                     />

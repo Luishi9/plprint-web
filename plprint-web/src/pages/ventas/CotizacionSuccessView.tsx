@@ -26,7 +26,7 @@ export function CotizacionSuccessView({
         <div className="w-20 h-20 rounded-full bg-[#2e9e9b]/10 border border-[#2e9e9b]/30 flex items-center justify-center">
           <Icon name="draw" size={40} className="text-[#2e9e9b]" />
         </div>
-        <h2 className="text-2xl font-bold text-white">¡Cotización guardada!</h2>
+        <h2 className="text-2xl font-bold text-foreground">¡Cotización guardada!</h2>
         <p className="text-muted-foreground">
           Folio: <span className="text-[#2e9e9b] font-mono font-bold">{folio}</span>
         </p>

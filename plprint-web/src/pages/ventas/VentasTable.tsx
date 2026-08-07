@@ -85,7 +85,7 @@ export function VentasTable({
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors cursor-pointer"
+                        className="bg-background/30 border-b border-border hover:bg-[#2e9e9b]/10 transition-colors cursor-pointer"
                         onClick={() => setExpandedId(isExpanded ? null : venta.id)}
                       >
                         <td className="px-4 py-4">

@@ -68,13 +68,13 @@ export function InsumosTable({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ delay: i * 0.02 }}
-                  className="hover:bg-white/5 transition-colors"
+                  className="hover:bg-[#2e9e9b]/10 transition-colors"
                 >
                   <td className="px-6 py-4 text-sm font-mono text-muted-foreground">
                     {insumo.codigo ?? '—'}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-semibold text-white">{insumo.nombre}</div>
+                    <div className="font-semibold text-foreground">{insumo.nombre}</div>
                     {insumo.descripcion && (
                       <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                         {insumo.descripcion}

@@ -16,7 +16,7 @@ export function InsumosToolbar({
 }: InsumosToolbarProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+      <h2 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
         <Icon name="inventory" className="text-[#2e9e9b]" size={32} />
         Insumos
       </h2>

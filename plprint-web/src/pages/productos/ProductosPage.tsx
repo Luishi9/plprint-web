@@ -116,10 +116,10 @@ export default function ProductosPage() {
           animate={{ opacity: 1, x: 0 }}
           className="flex flex-col"
         >
-          <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
             <Icon name="inventory_2" className="text-[#2e9e9b]" size={32} />
             Catálogo Estelar
-          </h2>
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Gestión global de productos e inventario.
           </p>

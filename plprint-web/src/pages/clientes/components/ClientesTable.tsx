@@ -59,7 +59,7 @@ export function ClientesTable({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.025 }}
-                  className="border-b border-border hover:bg-white/[0.02] transition-colors"
+                  className="border-b border-border hover:bg-[#2e9e9b]/10 transition-colors"
                 >
                   <TableCell className="font-mono text-xs text-muted-foreground">#{c.id}</TableCell>
                   <TableCell>

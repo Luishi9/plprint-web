@@ -17,7 +17,7 @@ export const Header = () => {
 
         {sucursalActiva ? (
           <Badge variant="lime" className="gap-1.5">
-            <Icon name="apartment" size={11} />
+            <Icon name="apartment" size={22} />
             {sucursalActiva.nombre}
           </Badge>
         ) : (

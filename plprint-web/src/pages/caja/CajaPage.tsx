@@ -278,7 +278,7 @@ export default function CajaPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
             <Icon name="account_balance_wallet" size={32} className="text-[#2e9e9b]" />
             Caja
           </h2>

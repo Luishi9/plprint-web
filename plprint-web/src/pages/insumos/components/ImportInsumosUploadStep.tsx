@@ -39,12 +39,12 @@ export function ImportInsumosUploadStep({
 
       {mostrarSelectorSucursal && (
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-white/80">Sucursal destino</label>
+          <label className="text-sm font-medium text-foreground/80">Sucursal destino</label>
           <Select
             value={String(sucursalSeleccionada ?? '')}
             onValueChange={(v) => onSucursalChange(Number(v))}
           >
-            <SelectTrigger className="bg-white/5 border-border text-white">
+            <SelectTrigger className="bg-white/5 border-border text-foreground">
               <SelectValue placeholder="Selecciona una sucursal" />
             </SelectTrigger>
             <SelectContent className="bg-card border border-border text-foreground z-[200]">

@@ -68,7 +68,7 @@ export function ProductosTable({ isLoading, isSearching, productos, money, onEdi
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ delay: i * 0.05 }}
-                    className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
+                    className="bg-background/30 border-b border-border hover:bg-[#2e9e9b]/10 transition-colors"
                   >
                     <td className="p-4">
                       {producto.imagen_url ? (

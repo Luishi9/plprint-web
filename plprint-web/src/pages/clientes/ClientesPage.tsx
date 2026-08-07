@@ -118,7 +118,7 @@ export default function ClientesPage() {
         className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
       >
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             <Icon name="group" size={24} className="text-[#2e9e9b]" />
             Clientes
           </h2>

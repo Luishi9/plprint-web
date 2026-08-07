@@ -94,7 +94,7 @@ export default function CategoriasGastosPage() {
     <div className="w-full h-full flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
             <Icon name="account_tree" className="text-[#2e9e9b]" size={32} />
             Categorías de Gastos
           </h2>
@@ -148,7 +148,7 @@ export default function CategoriasGastosPage() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}
-                    className="bg-background/30 border-b border-border hover:bg-background/50 transition-colors"
+                    className="bg-background/30 border-b border-border hover:bg-[#2e9e9b]/10 transition-colors"
                   >
                     <td className="px-6 py-4 text-muted-foreground text-xs font-mono">{c.id}</td>
                     <td className="px-6 py-4 font-medium text-foreground">{c.nombre}</td>

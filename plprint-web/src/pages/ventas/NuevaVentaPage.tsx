@@ -173,7 +173,7 @@ export default function NuevaVentaPage() {
             <Icon name="arrow_back" size={18} />
           </Button>
           <div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+            <h2 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
               <Icon name="shopping_cart" className="text-[#2e9e9b]" size={24} />
               Nueva Venta
             </h2>

@@ -215,7 +215,7 @@ export default function InsumosPage() {
       <Dialog open={!!insumoAEliminar} onOpenChange={() => setInsumoAEliminar(null)}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">¿Eliminar insumo?</DialogTitle>
+            <DialogTitle className="text-foreground">¿Eliminar insumo?</DialogTitle>
             <DialogDescription>
               El insumo <strong>{insumoAEliminar?.nombre}</strong> se desactivará. Los datos históricos se conservarán.
             </DialogDescription>

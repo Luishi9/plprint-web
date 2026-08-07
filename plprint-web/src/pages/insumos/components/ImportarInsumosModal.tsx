@@ -133,7 +133,7 @@ export function ImportarInsumosModal({ open, onOpenChange, onSuccess }: Importar
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
+          <DialogTitle className="text-foreground ms-center gap-2">
             <Icon name="upload_file" size={20} className="text-[#2e9e9b]" />
             Importar insumos desde Excel
           </DialogTitle>

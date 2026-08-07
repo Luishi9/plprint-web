@@ -68,7 +68,7 @@ export default function SucursalesPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             <Icon name="business" size={24} className="text-[#2e9e9b]" />
             Sucursales
           </h2>

@@ -314,13 +314,13 @@ export class InsumosService {
         pattern: 'solid',
         fgColor: { argb: 'FF225C5E' },
       };
-      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 14 };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
     });
 
-    ws.addRow(['', 'Ejemplo de insumo', '', 'PZ', '', '']);
+    ws.addRow(['', 'Ejemplo de insumo', '', 'PZ', '', '']); // fila de ejemplo
 
-    ws.columns = [
+    ws.columns = [ // ancho de columnas
       { width: 12 }, { width: 30 }, { width: 40 }, { width: 18 },
       { width: 14 }, { width: 14 },
     ];
@@ -333,7 +333,7 @@ export class InsumosService {
     headerU.eachCell((cell) => {
       cell.font = { bold: true };
     });
-    for (const u of unidades) {
+    for (const u of unidades) { // agregar unidades a la hoja auxiliar
       wsU.addRow([u.abreviatura, u.nombre]);
     }
     wsU.columns = [{ width: 14 }, { width: 30 }];
@@ -352,8 +352,8 @@ export class InsumosService {
       error: 'Selecciona una unidad de la lista o deja en blanco',
       formulae: [`Unidades!$A$2:$A$${filaFinUnidades}`],
     };
-    const wsDv = ws as unknown as { dataValidations: { add: (addr: string, dv: typeof dvConfig) => void } };
-    for (let r = 2; r <= 1000; r++) {
+    const wsDv = ws as unknown as { dataValidations: { add: (addr: string, dv: typeof dvConfig) => void } }; // cast para acceder a dataValidations
+    for (let r = 2; r <= 1000; r++) { // agregar validacion a cada fila de la columna D
       wsDv.dataValidations.add(`D${r}`, dvConfig);
     }
 
@@ -369,9 +369,9 @@ export class InsumosService {
     });
 
     const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Insumos');
+    const ws = wb.addWorksheet('Insumos'); // hoja principal
 
-    const headers = [
+    const headers = [ // encabezado del excel
       'codigo', 'Nombre', 'Descripcion', 'Unidad de medida', 'Ancho rollo', 'Precio compra',
     ];
 
@@ -399,17 +399,17 @@ export class InsumosService {
     ];
 
     // Hoja auxiliar "Unidades" (referencia para el dropdown)
-    const unidades = await prisma.unidades_medida.findMany();
-    const wsU = wb.addWorksheet('Unidades');
-    wsU.addRow(['Abreviatura', 'Nombre']);
+    const unidades = await prisma.unidades_medida.findMany(); // obtener unidades de medida
+    const wsU = wb.addWorksheet('Unidades'); // hoja auxiliar
+    wsU.addRow(['Abreviatura', 'Nombre']); // encabezado de la hoja auxiliar
     const headerU = wsU.getRow(1);
-    headerU.eachCell((cell) => {
+    headerU.eachCell((cell) => { // estilo de encabezado de la hoja auxiliar
       cell.font = { bold: true };
     });
-    for (const u of unidades) {
+    for (const u of unidades) { // agregar unidades a la hoja auxiliar
       wsU.addRow([u.abreviatura, u.nombre]);
     }
-    wsU.columns = [{ width: 14 }, { width: 30 }];
+    wsU.columns = [{ width: 14 }, { width: 30 }]; // ancho de columnas de la hoja auxiliar
 
     // Validacion de datos (dropdown) en columna "Unidad de medida" (D)
     const filaFinUnidades = Math.max(unidades.length + 1 + 50, 200);
@@ -425,7 +425,7 @@ export class InsumosService {
       error: 'Selecciona una unidad de la lista o deja en blanco',
       formulae: [`Unidades!$A$2:$A$${filaFinUnidades}`],
     };
-    const wsDv = ws as unknown as { dataValidations: { add: (addr: string, dv: typeof dvConfig) => void } };
+    const wsDv = ws as unknown as { dataValidations: { add: (addr: string, dv: typeof dvConfig) => void } }; // cast para acceder a dataValidations
     const filaFin = Math.max(insumos.length + 1, 100);
     for (let r = 2; r <= filaFin; r++) {
       wsDv.dataValidations.add(`D${r}`, dvConfig);
