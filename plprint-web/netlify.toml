@@ -4,6 +4,18 @@
   to = "/index.html"
   status = 200
 
+# index.html SIEMPRE revalida (evita chunks con hash viejo tras redeploy)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Assets con hash: cache inmutable 1 año
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [build]
   command = "npm run build"
   publish = "dist"
