@@ -148,6 +148,8 @@ interface CreateProductoDTO {
   usuarioId?: number;
   cobrarMinimo1?: boolean;
   maquinaId?: number;
+  claveProdServ?: string;
+  claveUnidad?: string;
   insumos?: Array<{ insumoId: number; cantidadRequerida: number }>;
 }
 
@@ -245,6 +247,8 @@ export class ProductosService {
           imagen_url: data.imagenUrl,
           cobrar_minimo_1: data.cobrarMinimo1 ?? false,
           maquina_id: data.maquinaId,
+          clave_prod_serv: data.claveProdServ || null,
+          clave_unidad: data.claveUnidad || null,
           sucursal_id: data.sucursalId ?? 1,
         },
       });
@@ -318,6 +322,8 @@ export class ProductosService {
           ...(data.codigo && { codigo: data.codigo }),
           ...(data.cobrarMinimo1 !== undefined && { cobrar_minimo_1: data.cobrarMinimo1 }),
           ...(data.maquinaId !== undefined && { maquina_id: data.maquinaId }),
+          ...(data.claveProdServ !== undefined && { clave_prod_serv: data.claveProdServ || null }),
+          ...(data.claveUnidad !== undefined && { clave_unidad: data.claveUnidad || null }),
         },
       });
 

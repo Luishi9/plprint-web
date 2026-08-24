@@ -8,11 +8,13 @@ import { authorizeSucursal } from '../middleware/rbac.middleware';
 import { audit } from '../middleware/audit.middleware';
 
 const router = Router();
-const controller = new VentasController(new VentasService());
+export const ventasController = new VentasController(new VentasService());
+const controller = ventasController;
 
 // Limite estricto para el endpoint publico del ticket (anti-enumeracion).
 // 30 requests por 5 minutos por IP.
-const publicTicketRateLimiter = rateLimit({
+// Exportado para montarse en routes/index.ts ANTES del authenticate global.
+export const publicTicketRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 30,
   standardHeaders: true,
@@ -77,7 +79,6 @@ const cancelVentaSchema = z
   .optional();
 
 router.get('/', controller.getAll);
-router.get('/public/:id', publicTicketRateLimiter, controller.getPublicById);
 router.get('/:id', controller.getById);
 router.get('/:id/productos-con-insumos', controller.getProductosConInsumos);
 router.post('/', validate(createVentaSchema), authorizeSucursal, audit('ventas', 'CREATE'), controller.create);

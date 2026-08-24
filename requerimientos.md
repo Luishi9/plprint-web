@@ -1239,3 +1239,12 @@ Cualquier duda podemos checarlo por inbox.
 14. error al hacer corte de maquinas:
 al hacer el proceso de cierre de caja, al ingreso del modal "Reporte de Máquinas y Categorías", modifique "contador final" -> pdf  corte de caja, ERROR: no se actualizo el "contador final", explicacion:
 al entrar al modal "Reporte de Máquinas y Categorías" ya estaba un valor en "contador final" de las maquinas, si lo modifico no toma en cuenta el valor que se modifico para generar el pdf se queda con el valor en el que se abrio el modal, si se abrio con 35 y 12, y pongo 50 y 13.60, imprime 35 y 12 en el pdf ✅
+
+
+### FACTURACION ELECTRONICA
+
+- Upload archivos CSD (.cer/.key) vía UI — endpoint POST /configuracion/csd con multer
+- Campo objeto_imp en productos + columnas CFDI en Excel exportar/importar
+- Endpoint POST /ventas/:id/facturar → XML CFDI + sellado + Finkok
+- Columnas uuid_timbre/xml_cfdi_path/estado_factura en ventas
+- Catálogos SAT completos (hoy hardcodeados en selects)

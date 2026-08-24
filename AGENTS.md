@@ -85,6 +85,16 @@ Nunca mover lógica de negocio a Controllers.
 
 ---
 
+# CFDI / SAT
+
+El modelo `productos` incluye los campos `clave_prod_serv` (VarChar 20) y `clave_unidad` (VarChar 10) para facturación CFDI 4.0. Son opcionales (nullable). Se guardan via `ProductosService` (create/update) y via `ProductoFormModal` (form fields `claveProdServ`/`claveUnidad`). Campos pendientes de agregar al Excel de exportar/importar.
+
+El modelo `clientes` incluye los campos CFDI del receptor: `rfc` (VarChar 39), `uso_cfdi` (VarChar 3), `regimen_fiscal_receptor` (VarChar 3), `domicilio_fiscal_cp` (VarChar 5). Todos opcionales (nullable). Se guardan via `ClientesService` (create/update) y via `ClienteFormModal` sección "Datos de facturación (CFDI 4.0)".
+
+Los datos del emisor se guardan en la tabla `configuracion` bajo el grupo `facturacion` (claves: `empresa_rfc` reusado de grupo `empresa`, `razon_social_emisor`, `regimen_fiscal_emisor`, `lugar_expedicion_cp`, `no_certificado`, `password_llave`, `certificado_cer_path`, `llave_key_path`). Editables en `GeneralTab.tsx` grupo "Facturación (CFDI)".
+
+---
+
 # Frontend
 
 La arquitectura es:

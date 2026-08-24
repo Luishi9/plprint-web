@@ -145,6 +145,9 @@ export class VentasService {
         estado: true,
         estado_pago: true,
         saldo_pendiente: true,
+        iva_porcentaje: true,
+        base_gravable: true,
+        iva: true,
         sucursales: { select: { nombre: true } },
         clientes: {
           select: {
@@ -230,7 +233,33 @@ export class VentasService {
       const subtotal = i.cantidad * i.precioUnitario - (i.descuento ?? 0);
       return { ...i, subtotal };
     });
-    const total = subtotales.reduce((acc, i) => acc + i.subtotal, 0) - (dto.descuento ?? 0);
+    const base = subtotales.reduce((acc, i) => acc + i.subtotal, 0) - (dto.descuento ?? 0);
+
+    // Calcular IVA segun configuracion (fuente de verdad: tabla configuracion).
+    // - iva_activo=false o pct<=0  -> sin IVA.
+    // - iva_incluido_en_precios=false (default) -> IVA adicional: total = base + iva.
+    // - iva_incluido_en_precios=true            -> IVA incluido: desglosa base, total = base original.
+    const configIva = await prisma.configuracion.findMany({
+      where: { clave: { in: ['iva_activo', 'iva_porcentaje', 'iva_incluido_en_precios'] } },
+    });
+    const ivaActivoCfg = configIva.find((c) => c.clave === 'iva_activo')?.valor === 'true';
+    const ivaPorcentajeCfg = Number(configIva.find((c) => c.clave === 'iva_porcentaje')?.valor ?? 0);
+    const ivaIncluidoCfg = configIva.find((c) => c.clave === 'iva_incluido_en_precios')?.valor === 'true';
+
+    let iva = 0;
+    let baseGrabable: number | null = null;
+    let total = base;
+    if (ivaActivoCfg && ivaPorcentajeCfg > 0) {
+      if (ivaIncluidoCfg) {
+        baseGrabable = base / (1 + ivaPorcentajeCfg / 100);
+        iva = base - baseGrabable;
+        total = base;
+      } else {
+        baseGrabable = base;
+        iva = base * (ivaPorcentajeCfg / 100);
+        total = base + iva;
+      }
+    }
 
     return prisma.$transaction(async (tx) => {
       const estadoPago = dto.estadoPago || 'pagada';
@@ -250,6 +279,9 @@ export class VentasService {
           notas: dto.notas,
           estado_pago: estadoPago,
           saldo_pendiente: saldo,
+          iva_porcentaje: ivaActivoCfg ? ivaPorcentajeCfg : null,
+          base_gravable: baseGrabable,
+          iva,
           venta_detalle: {
             create: subtotales.map((i) => ({
               producto_id: i.productoId,

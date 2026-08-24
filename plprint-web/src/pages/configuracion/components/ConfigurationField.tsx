@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { ConfigValue } from '@/api/configuracion.api';
 
 const SWITCH_CAMPOS = new Set([
-  'iva_activo', 'reportes_incluir_logo',
+  'iva_activo', 'iva_incluido_en_precios', 'reportes_incluir_logo',
   'ticket_mostrar_logo', 'ticket_mostrar_direccion', 'ticket_mostrar_telefono', 'ticket_mostrar_rfc',
   'somos_centro_impresion',
 ]);
@@ -14,7 +14,14 @@ const SWITCH_CAMPOS = new Set([
 const CAMPO_LABEL: Record<string, string> = {
   empresa_nombre: 'Nombre', empresa_rfc: 'RFC', empresa_telefono: 'Teléfono',
   empresa_email: 'Email', empresa_direccion: 'Dirección',
-  iva_porcentaje: 'IVA (%)', iva_activo: 'Activar IVA',
+  iva_porcentaje: 'IVA (%)', iva_activo: 'Activar IVA', iva_incluido_en_precios: 'Precios ya incluyen IVA',
+  razon_social_emisor: 'Razón social emisor',
+  regimen_fiscal_emisor: 'Régimen fiscal emisor',
+  lugar_expedicion_cp: 'Lugar de expedición (CP)',
+  no_certificado: 'No. de certificado',
+  password_llave: 'Password llave (.key)',
+  certificado_cer_path: 'Ruta archivo .cer',
+  llave_key_path: 'Ruta archivo .key',
   moneda_simbolo: 'Símbolo', moneda_codigo: 'Código ISO', moneda_decimales: 'Decimales',
   moneda_separador_decimal: 'Separador decimal', moneda_separador_miles: 'Separador de miles',
   reportes_formato: 'Formato por defecto', reportes_incluir_logo: 'Incluir logo',
@@ -134,6 +141,53 @@ export function ConfigurationField({ clave, value, onChange }: ConfigurationFiel
             <SelectItem value="12h">12 horas (hh:mm a)</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+    );
+  }
+
+  if (clave === 'regimen_fiscal_emisor') {
+    return (
+      <div key={clave} className="space-y-1.5">
+        <Label htmlFor={id} className="text-sm">{label}</Label>
+        <Select value={String(value)} onValueChange={(v) => onChange(clave, v)}>
+          <SelectTrigger id={id}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="601">601 - General de Ley Personas Morales</SelectItem>
+            <SelectItem value="603">603 - Personas Morales con Fines no Lucrativos</SelectItem>
+            <SelectItem value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</SelectItem>
+            <SelectItem value="606">606 - Arrendamiento</SelectItem>
+            <SelectItem value="607">607 - Régimen de Enajenación o Adquisición de Bienes</SelectItem>
+            <SelectItem value="608">608 - Demás Ingresos</SelectItem>
+            <SelectItem value="610">610 - Residentes en el Extranjero sin Establecimiento Permanente en México</SelectItem>
+            <SelectItem value="611">611 - Ingresos por Dividendos, Sociedades y Personas Morales</SelectItem>
+            <SelectItem value="612">612 - Personas Físicas con Actividades Empresariales y Profesionales</SelectItem>
+            <SelectItem value="614">614 - Personas Físicas con Actividades Empresariales</SelectItem>
+            <SelectItem value="616">616 - Sin Obligaciones Fiscales</SelectItem>
+            <SelectItem value="621">621 - Incorporación Fiscal</SelectItem>
+            <SelectItem value="622">622 - Actividades Agrícolas, Ganaderas, Silvícolas o Pesqueras</SelectItem>
+            <SelectItem value="623">623 - Opcional para Grupos de Sociedades</SelectItem>
+            <SelectItem value="624">624 - Coordinados</SelectItem>
+            <SelectItem value="625">625 - Régimen de las Actividades Productivas del Estado</SelectItem>
+            <SelectItem value="626">626 - Régimen de los Ingresos por Intereses</SelectItem>
+            <SelectItem value="628">628 - Régimen de las Personas Físicas con Actividades Empresariales y Profesionales</SelectItem>
+            <SelectItem value="629">629 - Régimen de Causantes Menores</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  if (clave === 'certificado_cer_path' || clave === 'llave_key_path') {
+    return (
+      <div key={clave} className="space-y-1.5 md:col-span-2">
+        <Label htmlFor={id} className="text-sm">{label}</Label>
+        <Input
+          id={id}
+          value={String(value)}
+          onChange={(e) => onChange(clave, e.target.value)}
+          placeholder={clave === 'certificado_cer_path' ? 'Ej: /uploads/csd/certificado.cer' : 'Ej: /uploads/csd/llave.key'}
+        />
+        <p className="text-[11px] text-muted-foreground">Sube el archivo al servidor e indica la ruta. (Carga vía UI próximamente.)</p>
       </div>
     );
   }

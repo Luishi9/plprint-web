@@ -26,6 +26,24 @@ const upload = multer({
   },
 });
 
+// Multer para CSD (CFDI 4.0): .cer y .key en uploads/csd/
+const csdStorage = multer.diskStorage({
+  destination: 'uploads/csd/',
+  filename: (_req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${unique}${path.extname(file.originalname)}`);
+  },
+});
+const csdUpload = multer({
+  storage: csdStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.cer' || ext === '.key') cb(null, true);
+    else cb(new Error('Solo se permiten archivos .cer o .key'));
+  },
+});
+
 const updateSchema = z.object({
   updates: z
     .array(
@@ -50,6 +68,12 @@ router.post(
   authorize(ROLES.ADMIN),
   upload.single('logo'),
   controller.uploadLogo,
+);
+router.post(
+  '/csd',
+  authorize(ROLES.ADMIN),
+  csdUpload.single('file'),
+  controller.uploadCsd,
 );
 
 export default router;

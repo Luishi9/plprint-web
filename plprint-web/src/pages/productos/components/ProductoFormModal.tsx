@@ -50,6 +50,8 @@ const formSchema = z.object({
   stockMinimo: z.preprocess((val) => val ? Number(val) : undefined, z.number().min(0).optional()),
   cobrarMinimo1: z.boolean().optional(),
   maquinaId: z.preprocess((val) => val ? Number(val) : undefined, z.number().int().positive().optional().nullable()),
+  claveProdServ: z.string().max(20).optional().or(z.literal('')),
+  claveUnidad: z.string().max(10).optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -141,6 +143,8 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         stockMinimo,
         cobrarMinimo1: producto.cobrar_minimo_1 ?? false,
         maquinaId: producto.maquina_id ?? undefined,
+        claveProdServ: producto.clave_prod_serv ?? '',
+        claveUnidad: producto.clave_unidad ?? '',
       });
     } else {
       setInsumos([]);
@@ -157,6 +161,8 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
         stockMinimo: undefined,
         cobrarMinimo1: false,
         maquinaId: undefined,
+        claveProdServ: '',
+        claveUnidad: '',
       });
     }
   }, [open, producto?.id, sucursalEfectiva?.id]);
@@ -176,6 +182,8 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
           stockMinimo: undefined,
           cobrarMinimo1: producto.cobrar_minimo_1 ?? false,
           maquinaId: producto.maquina_id ?? undefined,
+          claveProdServ: producto.clave_prod_serv ?? '',
+          claveUnidad: producto.clave_unidad ?? '',
         }
       : {
           nombre: '',
@@ -189,6 +197,8 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
           stockMinimo: undefined,
           cobrarMinimo1: false,
           maquinaId: undefined,
+          claveProdServ: '',
+          claveUnidad: '',
         },
   });
 
@@ -226,6 +236,10 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
       if (values.unidadMedida) formData.append('unidadMedida', values.unidadMedida);
       formData.append('cobrarMinimo1', values.cobrarMinimo1 ? 'true' : 'false');
       if (values.descripcion) formData.append('descripcion', values.descripcion);
+
+      // Claves SAT (CFDI 4.0)
+      if (values.claveProdServ) formData.append('claveProdServ', values.claveProdServ);
+      if (values.claveUnidad) formData.append('claveUnidad', values.claveUnidad);
 
       // Incluir maquinaId si la categoría es de tipo impresión
       const categoriaSeleccionada = categorias.find(c => c.id === values.categoriaId);
@@ -317,7 +331,7 @@ export function ProductoFormModal({ open, onOpenChange, onSuccess, producto }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-card border-border">
         {/* <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border"> */}
 
         <DialogHeader>

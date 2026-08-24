@@ -6,6 +6,8 @@ export interface Producto {
   precio_venta: number;
   precio_compra?: number;
   unidad_medida: string;
+  clave_prod_serv?: string;
+  clave_unidad?: string;
   imagen_url?: string;
   activo: boolean;
   cobrar_minimo_1?: boolean;

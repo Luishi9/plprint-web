@@ -79,6 +79,14 @@ export class ConfiguracionService {
     });
   }
 
+  async updateCsdPath(clave: string, filePath: string): Promise<void> {
+    await this.findByClave(clave);
+    await prisma.configuracion.update({
+      where: { clave },
+      data: { valor: filePath },
+    });
+  }
+
   private parseValue(valor: string | null, tipo: string): string | number | boolean {
     if (valor === null) {
       return tipo === 'boolean' ? false : tipo === 'number' ? 0 : '';

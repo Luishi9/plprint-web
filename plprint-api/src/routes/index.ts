@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes';
 import productosRoutes from './productos.routes';
-import ventasRoutes from './ventas.routes';
+import ventasRoutes, { ventasController } from './ventas.routes';
 import inventarioRoutes from './inventario.routes';
 import clientesRoutes from './clientes.routes';
 import usuariosRoutes from './usuarios.routes';
@@ -27,11 +27,14 @@ import ordenesProduccionRoutes from './ordenesProduccion.routes';
 import preciosProductoRoutes from './preciosProducto.routes';
 import cajaRoutes from './caja.routes';
 import { authenticate } from '../middleware/auth.middleware';
+import { publicTicketRateLimiter } from './ventas.routes';
 
 const router = Router();
 
-// Ruta publica
+// Rutas publicas (sin auth)
 router.use('/auth', authRoutes);
+// Ticket publico via QR: rate-limited, sin auth. Se monta antes del authenticate global.
+router.get('/ventas/public/:id', publicTicketRateLimiter, ventasController.getPublicById);
 
 // Rutas protegidas
 router.use(authenticate);

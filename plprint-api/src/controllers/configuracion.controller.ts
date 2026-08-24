@@ -53,4 +53,34 @@ export class ConfiguracionController {
       next(err);
     }
   };
+
+  uploadCsd = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const tipo = String(req.body.tipo || '');
+      if (tipo !== 'cer' && tipo !== 'key') {
+        res.status(400).json({
+          success: false,
+          message: "tipo debe ser 'cer' o 'key'",
+          code: 'VALIDATION_ERROR',
+        });
+        return;
+      }
+      if (!req.file) {
+        res.status(400).json({
+          success: false,
+          message: 'No se proporciono ningun archivo CSD (.cer/.key)',
+          code: 'VALIDATION_ERROR',
+        });
+        return;
+      }
+
+      const fileUrl = `/uploads/csd/${req.file.filename}`;
+      const clave = tipo === 'cer' ? 'certificado_cer_path' : 'llave_key_path';
+      await this.configuracionService.updateCsdPath(clave, fileUrl);
+
+      sendSuccess(res, { path: fileUrl, tipo });
+    } catch (err) {
+      next(err);
+    }
+  };
 }

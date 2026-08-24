@@ -16,6 +16,16 @@ const PUBLIC_TICKET_FMT = new Intl.DateTimeFormat('es-MX', {
  * La forma que retorna el backend es "limpia" - solo campos seguros para mostrar.
  */
 function ventaToTicketData(v: Venta): TicketData {
+  const ivaPorcentajeNum = v.iva_porcentaje != null ? Number(v.iva_porcentaje) : 0;
+  const ivaNum = Number(v.iva ?? 0);
+  const baseGrabableNum = v.base_gravable != null ? Number(v.base_gravable) : null;
+  const ivaActivo = ivaPorcentajeNum > 0 && ivaNum > 0;
+  const totalNum = Number(v.total);
+  // Subtotal mostrado = base + descuento (si IVA activo en modo incluido) o total + descuento (sin IVA / adicional)
+  const subtotalMostrar = ivaActivo && baseGrabableNum != null
+    ? baseGrabableNum + Number(v.descuento ?? 0)
+    : totalNum + Number(v.descuento ?? 0);
+
   return {
     ventaId: v.id,
     folio: v.folio ?? undefined,
@@ -30,13 +40,13 @@ function ventaToTicketData(v: Venta): TicketData {
       precioUnitario: Number(d.precio_unitario),
       descuento: Number(d.descuento ?? 0),
     })),
-    subtotal: Number(v.total) + Number(v.descuento ?? 0),
+    subtotal: subtotalMostrar,
     descuentoGlobal: Number(v.descuento ?? 0),
-    base: Number(v.total),
-    iva: 0,
-    ivaPorcentaje: 0,
-    ivaActivo: false,
-    total: Number(v.total),
+    base: ivaActivo && baseGrabableNum != null ? baseGrabableNum : subtotalMostrar,
+    iva: ivaNum,
+    ivaPorcentaje: ivaPorcentajeNum,
+    ivaActivo,
+    total: totalNum,
     notas: v.notas ?? undefined,
   };
 }
@@ -276,6 +286,18 @@ export default function TicketPublicoPage() {
                 <span>Descuento</span>
                 <span>-{fmt(data.descuentoGlobal)}</span>
               </div>
+            )}
+            {data.ivaActivo && data.ivaPorcentaje > 0 && (
+              <>
+                <div className="total-row" style={{ fontSize: 11, color: '#777' }}>
+                  <span>Base</span>
+                  <span>{fmt(data.base)}</span>
+                </div>
+                <div className="total-row" style={{ fontSize: 11, color: '#777' }}>
+                  <span>IVA ({data.ivaPorcentaje}%)</span>
+                  <span>{fmt(data.iva)}</span>
+                </div>
+              </>
             )}
             <div className="total-final">
               <span>TOTAL</span>

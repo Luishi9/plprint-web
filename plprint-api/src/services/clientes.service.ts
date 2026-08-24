@@ -39,11 +39,11 @@ export class ClientesService {
     });
   }
 
-  async create(dto: { nombre: string; telefono?: string; email?: string; direccion?: string }) {
+  async create(dto: { nombre: string; telefono?: string; email?: string; direccion?: string; rfc?: string; uso_cfdi?: string; regimen_fiscal_receptor?: string; domicilio_fiscal_cp?: string }) {
     return prisma.clientes.create({ data: dto });
   }
 
-  async update(id: number, dto: Partial<{ nombre: string; telefono: string; email: string; direccion: string }>) {
+  async update(id: number, dto: Partial<{ nombre: string; telefono: string; email: string; direccion: string; rfc: string; uso_cfdi: string; regimen_fiscal_receptor: string; domicilio_fiscal_cp: string }>) {
     await this.findById(id);
     return prisma.clientes.update({ where: { id }, data: dto });
   }

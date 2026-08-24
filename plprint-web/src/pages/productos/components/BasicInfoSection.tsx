@@ -246,6 +246,39 @@ export function BasicInfoSection({
           );
         }}
       />
+
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="claveProdServ"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Clave de Producto o Servicio SAT</FormLabel>
+              <FormControl>
+                <Input placeholder="Ej. 10101500" {...field} className="bg-background" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="claveUnidad"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Clave de Unidad SAT</FormLabel>
+              <FormControl>
+                <Input placeholder="Ej. H87" {...field} className="bg-background" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+
     </div>
   );
 }

@@ -50,6 +50,8 @@ const createSchema = z.object({
   cantidadInicial: z.coerce.number().int().min(0).optional(),
   sucursalId: z.coerce.number().int().positive().optional(),
   cobrarMinimo1: z.coerce.boolean().optional(),
+  claveProdServ: z.string().max(20).optional(),
+  claveUnidad: z.string().max(10).optional(),
   insumos: z.preprocess(
     (val) => {
       if (typeof val === 'string') {

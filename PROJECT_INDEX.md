@@ -88,7 +88,7 @@ plprint/
 | `routes/sucursales.routes.ts` | SucursalesController | SucursalesService | CRUD + copiar productos/insumos |
 | `routes/categorias.routes.ts` | CategoriasController | CategoriasService | CRUD, filtro por tipo |
 | `routes/insumos.routes.ts` | InsumosController | InsumosService | CRUD + inventario por sucursal, ajuste de stock + plantilla, exportar, importar (preview/confirm) (pendiente) |
-| `routes/configuracion.routes.ts` | ConfiguracionController | ConfiguracionService | GET (todos/por grupo), PUT batch, POST logo |
+| `routes/configuracion.routes.ts` | ConfiguracionController | ConfiguracionService | GET (todos/por grupo), PUT batch, POST logo, POST csd |
 | `routes/roles.routes.ts` | RolesController | RolesService | CRUD + listar permisos |
 | `routes/metodosPago.routes.ts` | MetodosPagoController | MetodosPagoService | CRUD + toggle activo |
 | `routes/auditLog.routes.ts` | AuditLogController | AuditLogService | GET (lista/estadísticas/por ID) |
@@ -112,7 +112,7 @@ plprint/
 | Servicio | Comportamiento relevante |
 |---|---|
 | **AuthService** | Login con bcrypt, JWT con permisos agregados (admin obtiene todos), logout incrementa token_version |
-| **ProductosService** | CRUD soft delete, código auto-generado, BOM (producto_insumos), plantilla/export/import Excel |
+| **ProductosService** | CRUD soft delete, código auto-generado, BOM (producto_insumos), claves SAT CFDI 4.0 (`clave_prod_serv`/`clave_unidad`), plantilla/export/import Excel |
 | **VentasService** | Folio auto (VEN-YYYYMMDD-NNNN), valida stock, decrementa inventario + kardex + impresiones + contador máquina + auto-crea OP si categoría=producción, reversión al cancelar |
 | **OrdenesProduccionService** | Máquina de estados (pendiente→en_proceso→terminado→entregado + cancelado), consume insumos al iniciar, crea inventario al terminar, retorna insumos al cancelar |
 | **CotizacionesService** | Convertir a venta = crea venta + decrementa inventario + registra impresiones + kardex |
@@ -133,12 +133,12 @@ plprint/
 | `usuarios_sucursales` | Asignación usuario-sucursal | N:M usuarios ↔ sucursales |
 | `categorias` | Categorías (venta/produccion/impresion) | → productos |
 | `proveedores` | Proveedores | → compras_insumos |
-| `productos` | Productos (catálogo) | → categorias, sucursales, maquinas, inventario, venta_detalle |
+| `productos` | Productos (catálogo). Campos CFDI: `clave_prod_serv` VarChar(20), `clave_unidad` VarChar(10) (nullable, opcionales) | → categorias, sucursales, maquinas, inventario, venta_detalle |
 | `producto_precios` | Precios por volumen | → productos |
 | `maquinas` | Máquinas de producción/impresión | → sucursales, impresiones, ordenes_produccion |
 | `impresiones` | Registro de impresiones (ventas/mermas) | → maquinas, ventas, productos |
 | `inventario` | Stock de productos por sucursal | → productos, sucursales |
-| `clientes` | Clientes | → ventas |
+| `clientes` | Clientes. Campos CFDI (receptor): `rfc` VarChar(39), `uso_cfdi` VarChar(3), `regimen_fiscal_receptor` VarChar(3), `domicilio_fiscal_cp` VarChar(5) (todos nullable) | → ventas |
 | `ventas` | Ventas/ facturas | → sucursales, clientes, usuarios, cotizaciones |
 | `venta_detalle` | Líneas de venta (producto + cant + dimensiones) | → ventas, productos |
 | `mermas` | Mermas / desperdicios | → productos, insumos, sucursales |
@@ -465,6 +465,7 @@ ImportarXxxModal (orquestador):
 | `categoria_id` | ✅ | ❌ |
 | `ancho_rollo` | ❌ | ✅ Decimal(10,4) |
 | `imagen_url` | ✅ | ❌ |
+| Claves SAT (CFDI 4.0) | ✅ `clave_prod_serv`, `clave_unidad` | ❌ |
 | Multi-sucursal | Catálogo por sucursal | Catálogo global + stock por sucursal |
 | Código único | `@@unique([codigo, sucursal_id])` | `@unique` global |
 | Stock al importar | Crear inventario inicial con `cantidadInicial` + `stockMinimo` | NO crear stock (se hace via CompraInsumoModal después) |
@@ -478,6 +479,27 @@ ImportarXxxModal (orquestador):
 - Backend: `plprint-api/src/services/productos.service.ts` (`generateTemplate`, `exportCatalog`, `previewImport`, `confirmImport`)
 - Backend: `plprint-api/src/routes/productos.routes.ts` (4 endpoints + multer)
 - Frontend: `plprint-web/src/pages/productos/components/ImportarProductosModal.tsx` (+ UploadStep, ImportPreviewView, ImportDoneView)
+
+### 6.6 Facturación CFDI 4.0 (Finkok) — datos capturados, timbrado pendiente
+
+Captura de datos del emisor y receptor lista. Timbrado vía API Finkok pendiente de implementar.
+
+**Emisor** (tabla `configuracion`, grupo `facturacion`):
+- Claves: `razon_social_emisor`, `regimen_fiscal_emisor` (select SAT c_RegimenFiscal), `lugar_expedicion_cp`, `no_certificado`, `password_llave`, `certificado_cer_path`, `llave_key_path`. RFC emisor reusa `empresa_rfc` (grupo `empresa`).
+- UI: `GeneralTab.tsx` grupo "Facturación (CFDI)" + `ConfigurationField.tsx` (select régimen + inputs rutas CSD).
+- CSD (`.cer`/`.key`): upload vía UI implementado (endpoint `POST /configuracion/csd` con multer, patrón `uploadLogo`). Guarda en `uploads/csd/<timestamp>-<random>.<ext>`, ruta persistida en `certificado_cer_path` / `llave_key_path` (grupo `facturacion`). UI: `GeneralTab.tsx` Card "Certificados de Sello Digital (CSD)" con 2 inputs `.cer`/`.key`.
+
+**Receptor** (campos en tabla `clientes`, nullable):
+- `rfc` VarChar(39), `uso_cfdi` VarChar(3) (select SAT c_UsoCFDI), `regimen_fiscal_receptor` VarChar(3) (select SAT), `domicilio_fiscal_cp` VarChar(5).
+- UI: `ClienteFormModal.tsx` sección "Datos de facturación (CFDI 4.0)" con 2 selects + 2 inputs.
+- Backend: `clientes.service.ts` create/update dto + `clientes.routes.ts` zod schema.
+
+**Conceptos** (tabla `productos`): `clave_prod_serv` VarChar(20), `clave_unidad` VarChar(10) ya existen (ver sección CFDI/SAT de AGENTS.md). Pendiente `objeto_imp` VarChar(2) default '02' y columnas en Excel de exportar/importar.
+
+**Faltante para timbrar** (no implementado):
+- Endpoint `POST /ventas/:id/facturar` que genere XML CFDI, selle, y consuma Finkok (`FINKOK_USERNAME`/`FINKOK_PASSWORD`/`FINKOK_URL` en `.env`).
+- Guardar UUID + XML timbrado (sugerencia: tabla `ventas` columnas `uuid_timbre`, `xml_cfdi_path`, `estado_factura`).
+- Catálogos SAT completos (hoy hardcodeados en selects).
 
 ---
 

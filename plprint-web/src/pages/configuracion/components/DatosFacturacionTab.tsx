@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { configuracionApi, ConfigAll, ConfigValue } from '@/api/configuracion.api';
-import { useConfigStore } from '@/store/configStore';
 import { ConfigurationField } from './ConfigurationField';
 
 type MetaGrupo = {
@@ -18,45 +17,28 @@ type MetaGrupo = {
 
 const GRUPOS_META: MetaGrupo[] = [
   {
-    label: 'Empresa', icon: <Icon name="apartment" size={16} />, desc: 'Datos de la empresa que aparecen en tickets y reportes',
-    grupo: 'empresa',
-    campos: ['empresa_nombre', 'empresa_telefono', 'empresa_email', 'empresa_direccion'],
-  },
-  {
-    label: 'Impuestos', icon: <Icon name="receipt" size={16} />, desc: 'Configuración de IVA y facturación',
-    grupo: 'impuestos',
-    campos: ['iva_porcentaje', 'iva_activo', 'iva_incluido_en_precios'],
-  },
-  {
-    label: 'Moneda', icon: <Icon name="payments" size={16} />, desc: 'Formato y símbolo de la moneda',
-    grupo: 'moneda',
-    campos: ['moneda_simbolo', 'moneda_codigo', 'moneda_decimales', 'moneda_separador_decimal', 'moneda_separador_miles'],
-  },
-  {
-    label: 'Reportes', icon: <Icon name="description" size={16} />, desc: 'Formato de los reportes generados',
-    grupo: 'reportes',
-    campos: ['reportes_formato', 'reportes_incluir_logo'],
-  },
-  {
-    label: 'Ticket', icon: <Icon name="receipt" size={16} />, desc: 'Personalización del ticket de venta',
-    grupo: 'ticket',
-    campos: ['ticket_encabezado', 'ticket_subtitulo', 'ticket_mensaje_pie', 'ticket_mostrar_logo', 'ticket_mostrar_direccion', 'ticket_mostrar_telefono', 'ticket_mostrar_rfc', 'ticket_formato_fecha', 'ticket_formato_hora'],
-  },
-  {
-    label: 'Máquinas', icon: <Icon name="precision_manufacturing" size={16} />, desc: 'Configuración de máquinas de impresión',
-    grupo: 'maquinas',
-    campos: ['somos_centro_impresion'],
+    label: 'Facturación (CFDI)',
+    icon: <Icon name="verified" size={16} />,
+    desc: 'Datos del emisor para timbrado Finkok CFDI 4.0',
+    grupo: 'facturacion',
+    campos: [
+      'empresa_rfc',
+      'razon_social_emisor',
+      'regimen_fiscal_emisor',
+      'lugar_expedicion_cp',
+      'no_certificado',
+      'password_llave',
+    ],
   },
 ];
 
-export default function GeneralTab() {
+export default function DatosFacturacionTab() {
   const [config, setConfig] = useState<ConfigAll>({});
   const [original, setOriginal] = useState<ConfigAll>({});
   const [pending, setPending] = useState<Record<string, ConfigValue>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [isUploadingCsd, setIsUploadingCsd] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   const fetchConfig = async () => {
@@ -64,7 +46,6 @@ export default function GeneralTab() {
       const res = await configuracionApi.getAll();
       setConfig(res.data.data);
       setOriginal(res.data.data);
-      setLogoUrl((res.data.data.empresa?.empresa_logo_url as string) ?? null);
     } catch (err) {
       console.error(err);
     } finally {
@@ -96,7 +77,6 @@ export default function GeneralTab() {
       await configuracionApi.updateBatch(updates);
       setPending({});
       await fetchConfig();
-      useConfigStore.getState().fetch();
       setMessage({ type: 'ok', text: `Guardado: ${updates.length} cambio(s)` });
       setTimeout(() => setMessage(null), 2500);
     } catch (err: any) {
@@ -106,20 +86,19 @@ export default function GeneralTab() {
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCsdUpload = async (e: React.ChangeEvent<HTMLInputElement>, tipo: 'cer' | 'key') => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploadingLogo(true);
+    setIsUploadingCsd(true);
     try {
-      await configuracionApi.uploadLogo(file);
+      await configuracionApi.uploadCsd(file, tipo);
       await fetchConfig();
-      useConfigStore.getState().fetch();
-      setMessage({ type: 'ok', text: 'Logo actualizado' });
+      setMessage({ type: 'ok', text: `Archivo ${tipo === 'cer' ? '.cer' : '.key'} subido correctamente` });
       setTimeout(() => setMessage(null), 2500);
     } catch (err: any) {
-      setMessage({ type: 'err', text: err?.response?.data?.message ?? 'Error al subir logo' });
+      setMessage({ type: 'err', text: err?.response?.data?.message ?? `Error al subir .${tipo}` });
     } finally {
-      setIsUploadingLogo(false);
+      setIsUploadingCsd(false);
       e.target.value = '';
     }
   };
@@ -136,34 +115,6 @@ export default function GeneralTab() {
 
   return (
     <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pb-24">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Icon name="image" size={16} /> Logo de la empresa
-          </CardTitle>
-          <CardDescription>Aparece en tickets, login y reportes</CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-lg border border-border flex items-center justify-center overflow-hidden bg-muted shrink-0">
-            {logoUrl ? (
-              <img src={logoUrl} alt="logo" className="w-full h-full object-contain" />
-            ) : (
-              <Icon name="image" size={28} className="text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex-1">
-            <Label htmlFor="logo-upload" className="cursor-pointer">
-              <div className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background hover:bg-accent text-sm">
-                {isUploadingLogo ? <Icon name="progress_activity" className="animate-spin" size={14} /> : <Icon name="upload" size={14} />}
-                {isUploadingLogo ? 'Subiendo...' : 'Subir logo'}
-              </div>
-              <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={isUploadingLogo} />
-            </Label>
-            <p className="text-xs text-muted-foreground mt-2">PNG, JPG o SVG. Máx 2MB.</p>
-          </div>
-        </CardContent>
-      </Card>
-
       {GRUPOS_META.map((g) => (
         <Card key={g.label}>
           <CardHeader>
@@ -187,6 +138,50 @@ export default function GeneralTab() {
           </CardContent>
         </Card>
       ))}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Icon name="verified" size={16} /> Certificados de Sello Digital (CSD)
+          </CardTitle>
+          <CardDescription>Archivos .cer y .key del SAT para timbrado Finkok CFDI 4.0</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="csd-cer" className="text-sm">Certificado (.cer)</Label>
+              <Label htmlFor="csd-cer-upload" className="cursor-pointer">
+                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background hover:bg-accent text-sm">
+                  {isUploadingCsd ? <Icon name="progress_activity" className="animate-spin" size={14} /> : <Icon name="upload" size={14} />}
+                  {isUploadingCsd ? 'Subiendo...' : 'Subir .cer'}
+                </div>
+                <input id="csd-cer-upload" type="file" accept=".cer" className="hidden" onChange={(e) => handleCsdUpload(e, 'cer')} disabled={isUploadingCsd} />
+              </Label>
+              {config.facturacion?.certificado_cer_path ? (
+                <p className="text-xs text-[#2e9e9b] truncate">✓ {String(config.facturacion.certificado_cer_path)}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Sin archivo</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="csd-key" className="text-sm">Llave privada (.key)</Label>
+              <Label htmlFor="csd-key-upload" className="cursor-pointer">
+                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background hover:bg-accent text-sm">
+                  {isUploadingCsd ? <Icon name="progress_activity" className="animate-spin" size={14} /> : <Icon name="upload" size={14} />}
+                  {isUploadingCsd ? 'Subiendo...' : 'Subir .key'}
+                </div>
+                <input id="csd-key-upload" type="file" accept=".key" className="hidden" onChange={(e) => handleCsdUpload(e, 'key')} disabled={isUploadingCsd} />
+              </Label>
+              {config.facturacion?.llave_key_path ? (
+                <p className="text-xs text-[#2e9e9b] truncate">✓ {String(config.facturacion.llave_key_path)}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Sin archivo</p>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Reemplaza los archivos existentes al subir uno nuevo. Máx 5MB cada uno.</p>
+        </CardContent>
+      </Card>
 
       {totalPending > 0 && (
         <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-background border border-border rounded-lg shadow-lg p-3">

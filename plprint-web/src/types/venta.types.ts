@@ -33,6 +33,9 @@ export interface Venta {
   created_at: string;
   sucursal_id?: number | null;
   cliente_id?: number | null;
+  iva_porcentaje?: number | string | null;
+  base_gravable?: number | string | null;
+  iva?: number | string | null;
   cliente?: { nombre: string };
   clientes?: { nombre: string };
   usuarios?: { nombre: string };

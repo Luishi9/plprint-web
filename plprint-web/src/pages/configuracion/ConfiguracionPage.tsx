@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Icon } from '@/components/ui/Icon';
 import GeneralTab from './components/GeneralTab';
+import DatosFacturacionTab from './components/DatosFacturacionTab';
 import RolesTab from './components/RolesTab';
 import MetodosPagoTab from './components/MetodosPagoTab';
 import RespaldoTab from './components/RespaldoTab';
@@ -23,6 +24,9 @@ export default function ConfiguracionPage() {
             <TabsTrigger value="general" className="data-[state=active]:bg-[#2e9e9b]/10 data-[state=active]:text-[#2e9e9b] rounded-b-none border-b-2 border-transparent data-[state=active]:border-[#2e9e9b] py-2.5">
               <Icon name="apartment" size={14} className="mr-1.5" /> General
             </TabsTrigger>
+            <TabsTrigger value="facturacion" className="data-[state=active]:bg-[#2e9e9b]/10 data-[state=active]:text-[#2e9e9b] rounded-b-none border-b-2 border-transparent data-[state=active]:border-[#2e9e9b] py-2.5">
+              <Icon name="receipt_long" size={14} className="mr-1.5" /> Datos de facturación
+            </TabsTrigger>
             <TabsTrigger value="roles" className="data-[state=active]:bg-[#2e9e9b]/10 data-[state=active]:text-[#2e9e9b] rounded-b-none border-b-2 border-transparent data-[state=active]:border-[#2e9e9b] py-2.5">
               <Icon name="shield" size={14} className="mr-1.5" /> Roles
             </TabsTrigger>
@@ -43,6 +47,7 @@ export default function ConfiguracionPage() {
 
         <div className="flex-1 overflow-y-auto pt-4">
           <TabsContent value="general" className="mt-0"><GeneralTab /></TabsContent>
+          <TabsContent value="facturacion" className="mt-0"><DatosFacturacionTab /></TabsContent>
           <TabsContent value="roles" className="mt-0"><RolesTab /></TabsContent>
           <TabsContent value="metodos-pago" className="mt-0"><MetodosPagoTab /></TabsContent>
           <TabsContent value="notificaciones" className="mt-0"><NotificacionesTab /></TabsContent>

@@ -12,6 +12,10 @@ const clienteSchema = z.object({
   telefono: z.string().max(20).optional(),
   email: z.string().email().optional(),
   direccion: z.string().optional(),
+  rfc: z.string().max(39).optional(),
+  uso_cfdi: z.string().max(3).optional(),
+  regimen_fiscal_receptor: z.string().max(3).optional(),
+  domicilio_fiscal_cp: z.string().max(5).optional(),
 });
 
 router.get('/', controller.getAll);

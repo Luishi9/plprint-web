@@ -22,4 +22,12 @@ export const configuracionApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  uploadCsd: (file: File, tipo: 'cer' | 'key') => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('tipo', tipo);
+    return apiClient.post('/configuracion/csd', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
