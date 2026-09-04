@@ -11,15 +11,10 @@ import { audit } from '../middleware/audit.middleware';
 const router = Router();
 const controller = new ProductosController(new ProductosService());
 
-const storage = multer.diskStorage({
-  destination: 'uploads/',
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `producto-${unique}${path.extname(file.originalname)}`);
-  },
-});
+const memoryStorage = multer.memoryStorage();
+
 const upload = multer({
-  storage,
+  storage: memoryStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
@@ -28,7 +23,7 @@ const upload = multer({
 });
 
 const excelUpload = multer({
-  dest: 'uploads/',
+  storage: memoryStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();

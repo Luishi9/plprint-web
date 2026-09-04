@@ -18,11 +18,11 @@ export class ProveedoresService {
       activo: true,
       ...(search && {
         OR: [
-          { nombre: { contains: search } },
-          { contacto: { contains: search } },
-          { telefono: { contains: search } },
-          { email: { contains: search } },
-          { rfc: { contains: search } },
+          { nombre: { contains: search, mode: 'insensitive' as const } },
+          { contacto: { contains: search, mode: 'insensitive' as const } },
+          { telefono: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
+          { rfc: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
     };

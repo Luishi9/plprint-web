@@ -23,9 +23,9 @@ export class ComprasService {
     const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
-        { insumos: { nombre: { contains: search } } },
-        { proveedores: { nombre: { contains: search } } },
-        { notas: { contains: search } },
+        { insumos: { nombre: { contains: search, mode: 'insensitive' as const } } },
+        { proveedores: { nombre: { contains: search, mode: 'insensitive' as const } } },
+        { notas: { contains: search, mode: 'insensitive' as const } },
       ];
     }
     if (fechaDesde || fechaHasta) {

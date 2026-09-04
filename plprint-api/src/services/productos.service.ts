@@ -161,8 +161,8 @@ export class ProductosService {
       activo: true,
       ...(search && {
         OR: [
-          { nombre: { contains: search } },
-          { codigo: { contains: search } },
+          { nombre: { contains: search, mode: 'insensitive' as const } },
+          { codigo: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
       ...(categoriaId && { categoria_id: categoriaId }),
@@ -528,8 +528,8 @@ export class ProductosService {
     return Buffer.from(buffer);
   }
 
-  async previewImport(filePath: string, sucursalId: number): Promise<{ token: string; total: number; nuevos: number; duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string; cambios: string[] }>; errores: Array<{ fila: number; codigo: string; razon: string }>; warnings: Array<{ fila: number; codigo: string; mensaje: string }> }> {
-    const wb = XLSX.readFile(filePath);
+  async previewImport(fileBuffer: Buffer, sucursalId: number): Promise<{ token: string; total: number; nuevos: number; duplicados: Array<{ fila: number; codigo: string; nombreExistente: string; nombreNuevo: string; cambios: string[] }>; errores: Array<{ fila: number; codigo: string; razon: string }>; warnings: Array<{ fila: number; codigo: string; mensaje: string }> }> {
+    const wb = XLSX.read(fileBuffer, { type: 'buffer' });
     const wsname = wb.SheetNames[0];
     const rows = XLSX.utils.sheet_to_json<(string | number | null | undefined)[]>(wb.Sheets[wsname], { header: 1 });
 
@@ -726,7 +726,7 @@ export class ProductosService {
 
     const token = crypto.randomUUID();
     const data: ImportPreviewData = { rows: previewRows, duplicados };
-    setTemp(token, data);
+    await setTemp(token, data);
 
     return {
       token,
@@ -744,10 +744,10 @@ export class ProductosService {
     sucursalId: number,
     usuarioId: number
   ) {
-    const data = getTemp<ImportPreviewData>(token);
+    const data = await getTemp<ImportPreviewData>(token);
     if (!data) throw new NotFoundError('Token de preview expirado o invalido');
 
-    deleteTemp(token);
+    await deleteTemp(token);
 
     let importados = 0;
     let actualizados = 0;

@@ -24,8 +24,8 @@ export class InventarioService {
           activo: true,
           ...(search && {
             OR: [
-              { nombre: { contains: search } },
-              { codigo: { contains: search } },
+              { nombre: { contains: search, mode: 'insensitive' as const } },
+              { codigo: { contains: search, mode: 'insensitive' as const } },
             ],
           }),
         },

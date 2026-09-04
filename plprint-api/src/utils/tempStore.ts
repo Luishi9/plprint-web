@@ -1,28 +1,40 @@
-const store = new Map<string, { data: unknown; expiresAt: number }>();
+import { Prisma } from '@prisma/client';
+import { prisma } from '../config/database';
 
-const TTL = 30 * 60 * 1000;
+const TTL_MS = 30 * 60 * 1000;
 
-export function setTemp<T>(key: string, data: T): void {
-  store.set(key, { data, expiresAt: Date.now() + TTL });
+// Limpieza probabilistica de expirados (1 de cada 50 escrituras).
+// Evita bloquear el hot path con un delete pesado en cada set.
+async function cleanupExpired(): Promise<void> {
+  try {
+    await prisma.temp_store.deleteMany({
+      where: { expires_at: { lt: new Date() } },
+    });
+  } catch {
+    // cleanup best-effort
+  }
 }
 
-export function getTemp<T>(key: string): T | null {
-  const entry = store.get(key);
+export async function setTemp<T>(key: string, data: T): Promise<void> {
+  const expiresAt = new Date(Date.now() + TTL_MS);
+  await prisma.temp_store.upsert({
+    where: { key },
+    create: { key, data: data as Prisma.InputJsonValue, expires_at: expiresAt },
+    update: { data: data as Prisma.InputJsonValue, expires_at: expiresAt },
+  });
+  if (Math.random() < 0.02) void cleanupExpired();
+}
+
+export async function getTemp<T>(key: string): Promise<T | null> {
+  const entry = await prisma.temp_store.findUnique({ where: { key } });
   if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    store.delete(key);
+  if (entry.expires_at.getTime() < Date.now()) {
+    await prisma.temp_store.delete({ where: { key } }).catch(() => {});
     return null;
   }
   return entry.data as T;
 }
 
-export function deleteTemp(key: string): void {
-  store.delete(key);
+export async function deleteTemp(key: string): Promise<void> {
+  await prisma.temp_store.delete({ where: { key } }).catch(() => {});
 }
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now > entry.expiresAt) store.delete(key);
-  }
-}, 60 * 1000);

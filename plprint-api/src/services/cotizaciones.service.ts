@@ -32,9 +32,9 @@ export class CotizacionesService {
     const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
-        { folio: { contains: search } },
-        { clientes: { nombre: { contains: search } } },
-        { notas: { contains: search } },
+        { folio: { contains: search, mode: 'insensitive' as const } },
+        { clientes: { nombre: { contains: search, mode: 'insensitive' as const } } },
+        { notas: { contains: search, mode: 'insensitive' as const } },
       ];
     }
     if (estado) where.estado = estado;

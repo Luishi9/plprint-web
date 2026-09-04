@@ -21,10 +21,10 @@ export class MaquinasService {
     const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
-        { nombre: { contains: search } },
-        { tipo: { contains: search } },
-        { marca: { contains: search } },
-        { modelo: { contains: search } },
+        { nombre: { contains: search, mode: 'insensitive' as const } },
+        { tipo: { contains: search, mode: 'insensitive' as const } },
+        { marca: { contains: search, mode: 'insensitive' as const } },
+        { modelo: { contains: search, mode: 'insensitive' as const } },
       ];
     }
     if (sucursalId) where.sucursal_id = sucursalId;

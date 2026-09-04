@@ -25,6 +25,10 @@ const envSchema = z.object({
     .transform((val) => val.split(',').map((origin) => origin.trim()).filter(Boolean)),
   UPLOAD_DIR: z.preprocess(trimEnvValue, z.string()).default('uploads'),
   MAX_FILE_SIZE_MB: z.coerce.number().default(5),
+  // Supabase Storage (requerido en Vercel; opcional en local si no se suben archivos)
+  SUPABASE_URL: z.preprocess(trimEnvValue, z.string().optional()),
+  SUPABASE_SERVICE_ROLE_KEY: z.preprocess(trimEnvValue, z.string().optional()),
+  SUPABASE_STORAGE_BUCKET: z.preprocess(trimEnvValue, z.string()).default('plprint'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().default(500),
 });

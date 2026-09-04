@@ -72,10 +72,10 @@ export class VentasService {
         ? {
             OR: [
               { id: { equals: parseInt(search) || 0 } },
-              { folio: { contains: search } },
-              { clientes: { nombre: { contains: search } } },
-              { usuarios: { nombre: { contains: search } } },
-              { venta_detalle: { some: { productos: { nombre: { contains: search } } } } },
+              { folio: { contains: search, mode: 'insensitive' as const } },
+              { clientes: { nombre: { contains: search, mode: 'insensitive' as const } } },
+              { usuarios: { nombre: { contains: search, mode: 'insensitive' as const } } },
+              { venta_detalle: { some: { productos: { nombre: { contains: search, mode: 'insensitive' as const } } } } },
             ],
           }
         : {}),
@@ -191,14 +191,12 @@ export class VentasService {
 
     const fechaStr = `${yyyy}-${mm}-${dd}`;
 
-    await prisma.$executeRaw`
+    // Upsert atómico (Postgres): incrementa seq y lo retorna en una sola query
+    const row = await prisma.$queryRaw<[{ seq: number }]>`
       INSERT INTO folio_counter (fecha, seq)
       VALUES (CAST(${fechaStr} AS DATE), 1)
-      ON DUPLICATE KEY UPDATE seq = LAST_INSERT_ID(seq) + 1
-    `;
-
-    const row = await prisma.$queryRaw<[{ seq: bigint }]>`
-      SELECT LAST_INSERT_ID() AS seq
+      ON CONFLICT (fecha) DO UPDATE SET seq = folio_counter.seq + 1, updated_at = NOW()
+      RETURNING seq
     `;
 
     const seq = Number(row[0].seq);

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ConfiguracionService } from '../services/configuracion.service';
 import { sendSuccess } from '../utils/response';
+import { uploadFile, uploadImage } from '../utils/storage';
 
 export class ConfiguracionController {
   constructor(private configuracionService: ConfiguracionService) {}
@@ -45,7 +46,7 @@ export class ConfiguracionController {
         return;
       }
 
-      const logoUrl = `/uploads/${req.file.filename}`;
+      const logoUrl = await uploadImage('logo', req.file.originalname, req.file.buffer, req.file.mimetype);
       await this.configuracionService.updateLogoUrl(logoUrl);
 
       sendSuccess(res, { logo_url: logoUrl });
@@ -74,7 +75,7 @@ export class ConfiguracionController {
         return;
       }
 
-      const fileUrl = `/uploads/csd/${req.file.filename}`;
+      const fileUrl = await uploadFile('csd', req.file.originalname, req.file.buffer, req.file.mimetype || 'application/octet-stream');
       const clave = tipo === 'cer' ? 'certificado_cer_path' : 'llave_key_path';
       await this.configuracionService.updateCsdPath(clave, fileUrl);
 

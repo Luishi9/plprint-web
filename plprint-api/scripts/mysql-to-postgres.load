@@ -1,0 +1,25 @@
+-- ============================================================
+-- pgloader: migra datos MySQL -> Postgres
+-- El schema en Postgres ya debe existir (via `prisma migrate deploy`).
+--
+-- Uso:
+--   1) Reemplazar MYSQL_URL y PG_URL con las conexiones reales
+--      (o copia este archivo y editalo).
+--   2) Ejecutar:
+--        pgloader scripts/mysql-to-postgres.load
+-- ============================================================
+
+LOAD DATABASE
+  FROM mysql://pgl_tmp:PglTmp_2026_mig@127.0.0.1:3306/plprint
+  INTO postgresql://appuser:LXNZRqSQECCP8JaNklUj@127.0.0.1:5432/plprint
+
+WITH data only,
+     batch rows = 1000,
+     workers = 4,
+     reset sequences,
+     quote identifiers
+
+EXCLUDING TABLE NAMES MATCHING '_prisma_migrations'
+
+CAST type datetime to timestamptz drop default drop not null using zero-dates-to-null,
+     type date to date drop not null using zero-dates-to-null;

@@ -1,14 +1,27 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import { env } from '../config/env';
 import { prisma } from '../config/database';
-import { NotFoundError, ValidationError } from '../utils/errors';
+import { AppError, NotFoundError, ValidationError } from '../utils/errors';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 const BACKUP_DIR = path.join(process.cwd(), 'backups');
+
+// En serverless no hay disco persistente ni mysqldump; Supabase provee backups propios.
+const IS_SERVERLESS = !!process.env.VERCEL;
+
+function assertNotServerless(): void {
+  if (IS_SERVERLESS) {
+    throw new AppError(
+      'Los respaldos manuales no estan disponibles en este despliegue. Usa los backups automaticos del proveedor de base de datos (Supabase).',
+      501,
+      'NOT_AVAILABLE',
+    );
+  }
+}
 
 interface BackupInfo {
   filename: string;
@@ -26,16 +39,18 @@ interface ParsedDbUrl {
 }
 
 function parseDatabaseUrl(url: string): ParsedDbUrl {
-  const regex = /^mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/;
-  const match = url.match(regex);
+  // Acepta postgres://user:pass@host[:port]/db y postgresql://...
+  const regex = /^postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:/]+)(?::(\d+))?\/([^?]+)/;
+  const clean = decodeURIComponent(url);
+  const match = clean.match(regex);
   if (!match) {
-    throw new Error('DATABASE_URL invalida. Formato esperado: mysql://user:pass@host:port/db');
+    throw new Error('DATABASE_URL invalida. Formato esperado: postgresql://user:pass@host[:port]/db');
   }
   return {
     user: match[1],
     password: match[2],
     host: match[3],
-    port: match[4],
+    port: match[4] ?? '5432',
     database: match[5],
   };
 }
@@ -50,20 +65,33 @@ export class RespaldoService {
   }
 
   async generateBackup(): Promise<BackupInfo> {
+    assertNotServerless();
     await this.ensureBackupDir();
 
     const dbConfig = parseDatabaseUrl(env.DATABASE_URL);
     const filename = `plprint_backup_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.sql`;
     const filePath = path.join(BACKUP_DIR, filename);
 
-    const command = `mysqldump -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" --single-transaction --routines --triggers --events ${dbConfig.database} > "${filePath}"`;
+    // pg_dump portable: schema evita ownership del proveedor (Supabase u otro)
+    const args = [
+      '-h', dbConfig.host,
+      '-p', dbConfig.port,
+      '-U', dbConfig.user,
+      '-d', dbConfig.database,
+      '--no-owner',
+      '--no-privileges',
+      '-f', filePath,
+    ];
 
     try {
-      await execAsync(command);
+      await execFileAsync('pg_dump', args, {
+        env: { ...process.env, PGPASSWORD: dbConfig.password },
+        maxBuffer: 16 * 1024 * 1024,
+      });
     } catch (err: unknown) {
       const error = err as { stderr?: string; message?: string };
       const msg = error.stderr || error.message || 'Error desconocido';
-      throw new Error(`Error ejecutando mysqldump: ${msg}`);
+      throw new Error(`Error ejecutando pg_dump: ${msg}. Requiere postgresql-client instalado.`);
     }
 
     const stats = await fs.stat(filePath);
@@ -76,6 +104,7 @@ export class RespaldoService {
   }
 
   async listBackups(): Promise<BackupInfo[]> {
+    assertNotServerless();
     await this.ensureBackupDir();
 
     const files = await fs.readdir(BACKUP_DIR);
@@ -101,6 +130,7 @@ export class RespaldoService {
   }
 
   async getBackupPath(filename: string): Promise<{ path: string; filename: string }> {
+    assertNotServerless();
     if (!filename.endsWith('.sql') || filename.includes('..') || filename.includes('/')) {
       throw new ValidationError('Nombre de archivo invalido');
     }
@@ -118,6 +148,7 @@ export class RespaldoService {
   }
 
   async deleteBackup(filename: string): Promise<void> {
+    assertNotServerless();
     if (!filename.endsWith('.sql') || filename.includes('..') || filename.includes('/')) {
       throw new ValidationError('Nombre de archivo invalido');
     }
@@ -138,9 +169,9 @@ export class RespaldoService {
     totalTablas: number;
   }> {
     const tablas = await prisma.$queryRaw<Array<Record<string, string>>>`
-      SELECT TABLE_NAME FROM information_schema.tables
-      WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'
-      ORDER BY TABLE_NAME ASC
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+      ORDER BY table_name ASC
     `;
 
     const counts: Array<{ nombre: string; registros: number }> = [];
@@ -149,7 +180,7 @@ export class RespaldoService {
       if (!tableName) continue;
       try {
         const result = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
-          `SELECT COUNT(*) as count FROM \`${tableName}\``,
+          `SELECT COUNT(*) as count FROM "${tableName}"`,
         );
         counts.push({ nombre: tableName, registros: Number(result[0]?.count ?? 0) });
       } catch {

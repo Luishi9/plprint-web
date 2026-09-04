@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -718,6 +718,14 @@ model cortes_maquinas_detalle {
 
   @@unique([cortes_maquinas_id, maquina_id])
   @@index([maquina_id])
+}
+
+model temp_store {
+  key        String   @id @db.VarChar(64)
+  data       Json
+  expires_at DateTime
+
+  @@index([expires_at])
 }
 
 model folio_counter {

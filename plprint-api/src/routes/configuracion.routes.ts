@@ -10,15 +10,8 @@ import { authorize, ROLES } from '../middleware/rbac.middleware';
 const router = Router();
 const controller = new ConfiguracionController(new ConfiguracionService());
 
-const storage = multer.diskStorage({
-  destination: 'uploads/',
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `logo-${unique}${path.extname(file.originalname)}`);
-  },
-});
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
@@ -26,16 +19,9 @@ const upload = multer({
   },
 });
 
-// Multer para CSD (CFDI 4.0): .cer y .key en uploads/csd/
-const csdStorage = multer.diskStorage({
-  destination: 'uploads/csd/',
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${path.extname(file.originalname)}`);
-  },
-});
+// Multer para CSD (CFDI 4.0): .cer y .key (en memoria, se suben a Supabase Storage)
 const csdUpload = multer({
-  storage: csdStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();

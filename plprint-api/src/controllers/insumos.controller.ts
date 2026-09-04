@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import * as fs from 'fs';
 import { InsumosService } from '../services/insumos.service';
 import { sendSuccess, sendCreated, sendNoContent, buildPaginationMeta } from '../utils/response';
 
@@ -112,11 +111,9 @@ export class InsumosController {
         res.status(400).json({ error: 'sucursalId es requerido' });
         return;
       }
-      const result = await this.insumosService.previewImport(req.file.path, sucursalId);
-      fs.unlink(req.file.path, () => {});
+      const result = await this.insumosService.previewImport(req.file.buffer, sucursalId);
       sendSuccess(res, result);
     } catch (err) {
-      if (req.file) fs.unlink(req.file.path, () => {});
       next(err);
     }
   };

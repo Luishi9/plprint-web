@@ -2,6 +2,9 @@
 
 > Documento de referencia arquitectónica. Actualizar cuando se agreguen módulos, cambien rutas o se modifique la estructura de carpetas.
 
+> **Migración Postgres/Supabase/Vercel (2026-09):** El backend migró de MySQL a **PostgreSQL** (`provider = "postgresql"`). Migraciones MySQL archivadas en `prisma/migrations_mysql_legacy/`; baseline PG en `prisma/migrations/0_init_postgres`. Uploads (imágenes, logo, CSD) van a **Supabase Storage** (util `src/utils/storage.ts`); `tempStore` usa tabla `temp_store` en Postgres. Respaldos usan `pg_dump` (deshabilitados en Vercel, donde Supabase cubre backups). Entrypoint serverless: `plprint-api/api/index.ts` + `vercel.json`. Migración de datos: `scripts/mysql-to-postgres.load` (pgloader) + `scripts/MIGRACION.md`.
+
+
 ---
 
 ## 1. Estructura General

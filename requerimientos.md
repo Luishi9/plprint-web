@@ -1248,3 +1248,57 @@ al entrar al modal "Reporte de Máquinas y Categorías" ya estaba un valor en "c
 - Endpoint POST /ventas/:id/facturar → XML CFDI + sellado + Finkok
 - Columnas uuid_timbre/xml_cfdi_path/estado_factura en ventas
 - Catálogos SAT completos (hoy hardcodeados en selects)
+
+### MEJORAS DE OPTIMIZACION
+
+1. [x] Indice en las busquedas - no es necesario ya que ya esta optimizado para eso
+2. [] optimziar como guardar las imagenes
+3. [] bloquear mientras procesa para evitar peticiones repetidas
+4. [] optimizar cuando se muestran productos, insumos, etc. no mostrar todos si no es necesario
+5. [] prepararnos para alto flujo de conexiones, conexion pooling, cache en memoria de informacion que no cambie constantemente, 
+
+
+### Estado actual (limitantes)
+
+- Node single-process → 1 CPU core usado. Resto ocioso.
+- Prisma singleton → pool conexiones DB por defecto (~connection_limit MySQL interno, típico 9-10).
+- Rate limiter global 500/15min por IP → bajo tráfico real, usuarios detrás de NAT/proxy comparten IP y topan límite.
+- Sin caché → productos, categorías, config se consultan DB cada request.
+- N+1 posibles en servicios con includes anidados.
+- MySQL sin tuning confirmado.
+
+Mejoras, ordenadas por impacto/esfuerzo
+
+## 1. Alto impacto, esfuerzo bajo
+PM2 cluster mode — corre N procesos Node (1 por CPU core). Cambio solo de deploy:
+pm2 start dist/server.js -i max --name plprint-api
+Multiplica throughput xN cores sin tocar código. Cuidado: tempStore.ts es memoria en proceso → rompe imports con múltiples instancias. Migrar a Redis (ver #3).
+Pool Prisma — DATABASE_URL agrega ?connection_limit=20&pool_timeout=20. Ajustar según max_connections MySQL repartido entre instancias.
+Rate limiter — hoy 500/15min global es bajo para POS activo. Subir límite global (ej 2000/15min) o aplicar límites por ruta: estricto solo en login, laxo en consultas. Considerar key por usuario (req.user.sub) en vez de IP.
+
+## 2. Alto impacto, esfuerzo medio
+
+Caché Redis para catálogos estáticos:
+- productos (búsquedas POS), categorías, métodos de pago, configuración, unidades de medida
+- invalidación en create/update/delete del service correspondiente
+- reduce 60-80% queries en operación POS típica
+tempStore → Redis — requerido si cluster PM2 (memoria compartida entre procesos). utils/tempStore.ts API ya definida; swap backend interno.
+Índices DB — revisar con EXPLAIN queries calientes: búsqueda productos por nombre/codigo, ventas por fecha/sucursal, kardex por producto. Agregar índices faltantes en migration.
+
+## 3. Mediano impacto
+- Paginación obligatoria en listas grandes (productos, ventas) — verificar que frontend no pida "todos".
+- select en vez de include completo en queries de listado — menos data por wire.
+- Nginx reverse proxy delante: keepalive, gzip/brotli, cache de estáticos /uploads, buffer de conexiones lentas, TLS termination.
+- MySQL tuning: innodb_buffer_pool_size ~60-70% RAM, max_connections coherent con pool total.
+- Transactions cortas — venta completa (venta+detalle+kardex+inventario) revisar que $transaction no incluya llamadas lentas (Finkok futuro sí sería problema).
+
+## 4. Escala mayor (si crece más)
+- Read replicas MySQL para reportes/dashboard (no bloquean POS).
+- Separar reportes pesados a worker/cola (BullMQ).
+- Load balancer + múltiples servers si un VPS no basta.
+
+## RECOMENDACIONES, FASES:
+1. PM2 cluster + Redis tempStore + pool Prisma + rate limit por usuario
+2. Caché Redis catálogos + índices DB + Nginx
+3. Paginación + select optimización + MySQL tuning
+4. Replicas + workers

@@ -42,8 +42,8 @@ export class GastosService {
     const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
-        { concepto: { contains: search } },
-        { notas: { contains: search } },
+        { concepto: { contains: search, mode: 'insensitive' as const } },
+        { notas: { contains: search, mode: 'insensitive' as const } },
       ];
     }
     if (fechaDesde || fechaHasta) {

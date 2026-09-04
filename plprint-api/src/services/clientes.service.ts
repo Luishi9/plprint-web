@@ -8,9 +8,9 @@ export class ClientesService {
       activo: true,
       ...(search && {
         OR: [
-          { nombre: { contains: search } },
-          { telefono: { contains: search } },
-          { email: { contains: search } },
+          { nombre: { contains: search, mode: 'insensitive' as const } },
+          { telefono: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
     };

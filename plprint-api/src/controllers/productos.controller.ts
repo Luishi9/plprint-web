@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProductosService } from '../services/productos.service';
 import { sendSuccess, sendCreated, sendNoContent, buildPaginationMeta } from '../utils/response';
-import fs from 'fs';
+import { uploadImage } from '../utils/storage';
 
 export class ProductosController {
   constructor(private productosService: ProductosService) {}
@@ -37,8 +37,10 @@ export class ProductosController {
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const imagenUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-      
+      const imagenUrl = req.file
+        ? await uploadImage('productos', req.file.originalname, req.file.buffer, req.file.mimetype)
+        : undefined;
+
       // Parsear insumos si viene como string JSON
       let insumos = req.body.insumos;
       if (typeof insumos === 'string') {
@@ -48,7 +50,7 @@ export class ProductosController {
           insumos = undefined;
         }
       }
-      
+
       const producto = await this.productosService.create({
         ...req.body,
         insumos,
@@ -64,7 +66,9 @@ export class ProductosController {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const imagenUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+      const imagenUrl = req.file
+        ? await uploadImage('productos', req.file.originalname, req.file.buffer, req.file.mimetype)
+        : undefined;
       
       // Parsear insumos si viene como string JSON
       let insumos = req.body.insumos;
@@ -127,11 +131,9 @@ export class ProductosController {
         res.status(400).json({ error: 'sucursalId es requerido' });
         return;
       }
-      const result = await this.productosService.previewImport(req.file.path, sucursalId);
-      fs.unlink(req.file.path, () => {});
+      const result = await this.productosService.previewImport(req.file.buffer, sucursalId);
       sendSuccess(res, result);
     } catch (err) {
-      if (req.file) fs.unlink(req.file.path, () => {});
       next(err);
     }
   };

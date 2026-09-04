@@ -25,9 +25,9 @@ export class MermasService {
     const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
-        { motivo: { contains: search } },
-        { productos: { nombre: { contains: search } } },
-        { insumos: { nombre: { contains: search } } },
+        { motivo: { contains: search, mode: 'insensitive' as const } },
+        { productos: { nombre: { contains: search, mode: 'insensitive' as const } } },
+        { insumos: { nombre: { contains: search, mode: 'insensitive' as const } } },
       ];
     }
     if (tipo) where.tipo = tipo;

@@ -94,9 +94,9 @@ export class OrdenesProduccionService {
     if (filters.search) {
       const term = filters.search.trim();
       where.OR = [
-        { productos: { nombre: { contains: term } } },
-        { productos: { codigo: { contains: term } } },
-        { notas: { contains: term } },
+        { productos: { nombre: { contains: term, mode: 'insensitive' as const } } },
+        { productos: { codigo: { contains: term, mode: 'insensitive' as const } } },
+        { notas: { contains: term, mode: 'insensitive' as const } },
       ];
     }
 
