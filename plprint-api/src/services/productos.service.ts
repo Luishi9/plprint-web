@@ -181,8 +181,8 @@ export class ProductosService {
           categorias: { select: { nombre: true } },
           maquinas: { select: { id: true, nombre: true } },
           inventario: {
-            //select: { cantidad: true },
-            include: { sucursales: { select: { id: true, nombre: true } } },
+            // Solo los campos que usa la UI (suma de stock); evita el JOIN a sucursales
+            select: { cantidad: true, stock_minimo: true, sucursal_id: true },
           },
           producto_precios: {
             where: { activo: true },

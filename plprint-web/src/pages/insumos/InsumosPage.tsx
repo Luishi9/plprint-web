@@ -26,8 +26,13 @@ import { usePermisos } from '@/hooks/usePermisos';
 import { InsumosToolbar } from './InsumosToolbar';
 import { InsumosTable } from './InsumosTable';
 
+const PAGE_SIZE = 50;
+
 export default function InsumosPage() {
   const [insumos, setInsumos] = useState<Insumo[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1); // última página cargada
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [inventarioMap, setInventarioMap] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
@@ -54,9 +59,19 @@ export default function InsumosPage() {
     if (isInitial) setIsLoading(true);
     else setIsSearching(true);
 
+    // Recargas (post crear/editar/eliminar) mantienen lo ya mostrado
+    const limit = isInitial ? PAGE_SIZE : Math.max(PAGE_SIZE, page * PAGE_SIZE);
     try {
-      const res = await insumosApi.getAll({ search: query || undefined, sucursalId: sucursalEfectiva?.id });
-      setInsumos(res.data?.data || []);
+      const res = await insumosApi.getAll({
+        search: query || undefined,
+        sucursalId: sucursalEfectiva?.id,
+        page: 1,
+        limit,
+      });
+      const items = (res.data?.data || []) as Insumo[];
+      setTotal(res.data?.meta?.total ?? 0);
+      setPage(limit / PAGE_SIZE);
+      setInsumos(items);
     } catch (error: any) {
       if (error?.name !== 'CanceledError' && error?.code !== 'ERR_CANCELED') {
         console.error('Error al cargar insumos:', error);
@@ -64,6 +79,30 @@ export default function InsumosPage() {
     } finally {
       setIsLoading(false);
       setIsSearching(false);
+    }
+  };
+
+  const handleCargarMas = async () => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    setIsLoadingMore(true);
+    try {
+      const res = await insumosApi.getAll({
+        search: searchQuery || undefined,
+        sucursalId: sucursalEfectiva?.id,
+        page: page + 1,
+        limit: PAGE_SIZE,
+      });
+      const items = (res.data?.data || []) as Insumo[];
+      setTotal(res.data?.meta?.total ?? 0);
+      setPage((p) => p + 1);
+      setInsumos((prev) => [...prev, ...items]);
+    } catch (error: any) {
+      if (error?.name !== 'CanceledError' && error?.code !== 'ERR_CANCELED') {
+        console.error('Error al cargar insumos:', error);
+      }
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -174,6 +213,22 @@ export default function InsumosPage() {
         onEditar={handleEditar}
         onEliminar={setInsumoAEliminar}
       />
+
+      {insumos.length < total && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            onClick={handleCargarMas}
+            disabled={isLoadingMore}
+            className="border-[#2e9e9b]/30 text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
+          >
+            {isLoadingMore
+              ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} />
+              : <Icon name="add_circle" className="mr-2" size={16} />}
+            Cargar más ({insumos.length} de {total})
+          </Button>
+        </div>
+      )}
 
       <InsumoFormModal
         open={isModalOpen}

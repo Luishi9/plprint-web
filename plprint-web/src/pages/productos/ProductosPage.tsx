@@ -25,9 +25,14 @@ import { ImportarProductosModal } from './components/ImportarProductosModal';
 import { useMoney } from '@/hooks/useMoney';
 import { ProductosTable } from './ProductosTable';
 
+const PAGE_SIZE = 50;
+
 export default function ProductosPage() {
   const { sucursalActiva } = useSucursalStore();
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1); // última página cargada
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);   // solo carga inicial
   const [isSearching, setIsSearching] = useState(false); // búsqueda sin borrar tabla
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,16 +44,29 @@ export default function ProductosPage() {
   const abortRef = useRef<AbortController | null>(null);
   const { format: money } = useMoney();
 
-  const fetchProductos = async (query: string, isInitial = false) => {
+  const cargarProductos = async (
+    pageDestino: number,
+    opts: { query?: string; append?: boolean; limit?: number; isInitial?: boolean } = {},
+  ) => {
+    const { query = searchQuery, append = false, limit = PAGE_SIZE, isInitial = false } = opts;
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
-    if (isInitial) setIsLoading(true);
+    if (append) setIsLoadingMore(true);
+    else if (isInitial) setIsLoading(true);
     else setIsSearching(true);
 
     try {
-      const res = await productosApi.getAll({ search: query || undefined, sucursalId: sucursalActiva?.id });
-      setProductos(res.data?.data || []);
+      const res = await productosApi.getAll({
+        search: query || undefined,
+        sucursalId: sucursalActiva?.id,
+        page: pageDestino,
+        limit,
+      });
+      const items = (res.data?.data || []) as Producto[];
+      setTotal(res.data?.meta?.total ?? 0);
+      setPage(pageDestino);
+      setProductos((prev) => (append ? [...prev, ...items] : items));
     } catch (error: any) {
       if (error?.name !== 'CanceledError' && error?.code !== 'ERR_CANCELED') {
         console.error('Error al cargar productos:', error);
@@ -56,29 +74,25 @@ export default function ProductosPage() {
     } finally {
       setIsLoading(false);
       setIsSearching(false);
+      setIsLoadingMore(false);
     }
   };
 
+  // Recarga tras crear/editar/eliminar: mantiene lo ya mostrado sin perder la vista
+  const fetchProductos = (query: string) => {
+    void cargarProductos(1, { query, limit: Math.max(PAGE_SIZE, page * PAGE_SIZE) });
+  };
+
   useEffect(() => {
-    let cancelled = false;
     const timer = setTimeout(() => {
-      (async () => {
-        try {
-          setIsLoading(true);
-          const res = await productosApi.getAll({ search: searchQuery || undefined, sucursalId: sucursalActiva?.id });
-          if (cancelled) return;
-          setProductos(res.data?.data || []);
-        } catch (error: any) {
-          if (error?.name !== 'CanceledError' && error?.code !== 'ERR_CANCELED' && !cancelled) {
-            console.error('Error al cargar productos:', error);
-          }
-        } finally {
-          if (!cancelled) setIsLoading(false);
-        }
-      })();
+      void cargarProductos(1, { query: searchQuery, isInitial: true });
     }, 300);
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => { clearTimeout(timer); abortRef.current?.abort(); };
   }, [sucursalActiva?.id, searchQuery]);
+
+  const handleCargarMas = () => {
+    void cargarProductos(page + 1, { query: searchQuery, append: true });
+  };
 
   const handleEditar = async (producto: Producto) => {
     try {
@@ -215,6 +229,22 @@ export default function ProductosPage() {
         onEditar={handleEditar as never}
         onEliminar={setProductoAEliminar as never}
       />
+
+      {productos.length < total && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            onClick={handleCargarMas}
+            disabled={isLoadingMore}
+            className="h-10 px-4 border-[#2e9e9b]/30 text-[#2e9e9b] hover:bg-[#2e9e9b]/10"
+          >
+            {isLoadingMore
+              ? <Icon name="progress_activity" className="animate-spin mr-2" size={16} />
+              : <Icon name="add_circle" className="mr-2" size={16} />}
+            Cargar más ({productos.length} de {total})
+          </Button>
+        </div>
+      )}
 
       {/* DIÁLOGO CONFIRMAR ELIMINACIÓN */}
       <Dialog open={!!productoAEliminar} onOpenChange={(v) => { if (!v) setProductoAEliminar(null); }}>

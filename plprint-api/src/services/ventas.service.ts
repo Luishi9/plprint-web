@@ -182,7 +182,7 @@ export class VentasService {
     return venta;
   }
 
-  private async generarFolio(): Promise<string> {
+  private async generarFolio(tx?: Prisma.TransactionClient): Promise<string> {
     const hoy = new Date();
     const yyyy = hoy.getFullYear().toString();
     const mm = (hoy.getMonth() + 1).toString().padStart(2, '0');
@@ -191,8 +191,10 @@ export class VentasService {
 
     const fechaStr = `${yyyy}-${mm}-${dd}`;
 
-    // Upsert atómico (Postgres): incrementa seq y lo retorna en una sola query
-    const row = await prisma.$queryRaw<[{ seq: number }]>`
+    // Upsert atómico (Postgres): incrementa seq y lo retorna en una sola query.
+    // Con tx, el folio se revierte si la venta falla (sin huecos de numeración).
+    const client = tx ?? prisma;
+    const row = await client.$queryRaw<[{ seq: number }]>`
       INSERT INTO folio_counter (fecha, seq)
       VALUES (CAST(${fechaStr} AS DATE), 1)
       ON CONFLICT (fecha) DO UPDATE SET seq = folio_counter.seq + 1, updated_at = NOW()
@@ -263,7 +265,7 @@ export class VentasService {
       const estadoPago = dto.estadoPago || 'pagada';
       const saldo = estadoPago === 'pagada' ? 0 : (dto.saldoInicial ?? total);
 
-          const folio = await this.generarFolio();
+          const folio = await this.generarFolio(tx);
       const venta = await tx.ventas.create({
         data: {
           folio,
@@ -312,15 +314,20 @@ export class VentasService {
         ]);
 
         if (invRecord && productoInsumos.length === 0) {
-          await tx.inventario.update({
+          // Decremento condicional: si otro cajero vendio lo ultimo en esta
+          // misma transaccion, count=0 y se aborta la venta completa.
+          const descontado = await tx.inventario.updateMany({
             where: {
-              producto_id_sucursal_id: {
-                producto_id: item.productoId,
-                sucursal_id: dto.sucursalId,
-              },
+              producto_id: item.productoId,
+              sucursal_id: dto.sucursalId,
+              cantidad: { gte: item.cantidad },
             },
             data: { cantidad: { decrement: item.cantidad } },
           });
+          if (descontado.count === 0) {
+            const prod = await tx.productos.findUnique({ where: { id: item.productoId }, select: { nombre: true } });
+            throw new ValidationError(`Stock insuficiente para "${prod?.nombre}"`);
+          }
         }
 
         const producto = await tx.productos.findUnique({
@@ -374,15 +381,18 @@ export class VentasService {
             ? Number(item.alto_m)
             : item.cantidad;
           const cantidadDescontar = Number(pi.cantidad_requerida) * factorConsumo;
-          await tx.insumos_inventario.update({
+          const insumoDescontado = await tx.insumos_inventario.updateMany({
             where: {
-              insumo_id_sucursal_id: {
-                insumo_id: pi.insumo_id,
-                sucursal_id: dto.sucursalId,
-              },
+              insumo_id: pi.insumo_id,
+              sucursal_id: dto.sucursalId,
+              cantidad: { gte: cantidadDescontar },
             },
             data: { cantidad: { decrement: cantidadDescontar } },
           });
+          if (insumoDescontado.count === 0) {
+            const insumo = await tx.insumos.findUnique({ where: { id: pi.insumo_id }, select: { nombre: true } });
+            throw new ValidationError(`Stock insuficiente del insumo "${insumo?.nombre}"`);
+          }
         }
       }
 
@@ -408,10 +418,16 @@ export class VentasService {
     );
 
     return prisma.$transaction(async (tx) => {
-      const updated = await tx.ventas.update({
-        where: { id },
+      // Update condicional: si otro usuario cancelo la misma venta en este
+      // instante, count=0 y se aborta sin revertir el inventario dos veces.
+      const cancelled = await tx.ventas.updateMany({
+        where: { id, estado: 'completada' },
         data: { estado: 'cancelada' },
       });
+      if (cancelled.count === 0) {
+        throw new ValidationError('La venta ya fue cancelada');
+      }
+      const updated = await tx.ventas.findUniqueOrThrow({ where: { id } });
 
       // Revertir inventario
       for (const detalle of venta.venta_detalle) {

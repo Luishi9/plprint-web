@@ -1252,8 +1252,8 @@ al entrar al modal "Reporte de Máquinas y Categorías" ya estaba un valor en "c
 ### MEJORAS DE OPTIMIZACION
 
 1. [x] Indice en las busquedas - no es necesario ya que ya esta optimizado para eso
-2. [] optimziar como guardar las imagenes
-3. [] bloquear mientras procesa para evitar peticiones repetidas
+2. [x] optimziar como guardar las imagenes
+3. [x] bloquear mientras procesa para evitar peticiones repetidas
 4. [] optimizar cuando se muestran productos, insumos, etc. no mostrar todos si no es necesario
 5. [] prepararnos para alto flujo de conexiones, conexion pooling, cache en memoria de informacion que no cambie constantemente, 
 
